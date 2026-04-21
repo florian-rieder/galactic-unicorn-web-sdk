@@ -1,0 +1,5 @@
+.DS_Store
+dist/
+src/generated/
+docs/generated/
+.old

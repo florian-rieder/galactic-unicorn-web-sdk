@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lua API Documentation</title>
+    <style>
+      body {
+        margin: 0;
+        line-height: 1.5;
+        font-family: Inter, Arial, sans-serif;
+        background: #1e1e1e;
+        color: #e5e7eb;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 0;
+        min-height: 100vh;
+      }
+      .toc {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 1.25rem 1rem;
+        border-right: 1px solid #2f333a;
+        background: #181818;
+      }
+      .toc h2 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #9ca3af;
+      }
+      .toc-search {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #3a3f46;
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+        margin: 0 0 0.9rem 0;
+        font-size: 0.9rem;
+        color: #f3f4f6;
+        background: #1f2329;
+      }
+      .toc-search:focus {
+        outline: none;
+        border-color: #6b7280;
+        box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.25);
+      }
+      .toc-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .toc-list li {
+        margin: 0.2rem 0;
+      }
+      .toc-list a {
+        color: #d1d5db;
+        text-decoration: none;
+        font-size: 0.92rem;
+      }
+      .toc-list a:hover {
+        color: #ffffff;
+        text-decoration: underline;
+      }
+      .toc-level-3 {
+        padding-left: 0.85rem;
+      }
+      .content {
+        margin: 0;
+        max-width: 980px;
+        padding: 2rem 2.25rem;
+      }
+      code,
+      pre {
+        font-family: "Fira Code", "SFMono-Regular", Consolas, monospace;
+      }
+      pre {
+        background: #07090d;
+        color: #f3f4f6;
+        padding: 0.75rem;
+        overflow-x: auto;
+        border-radius: 6px;
+      }
+      :target {
+        scroll-margin-top: 1rem;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #3a3f46;
+        padding: 0.5rem;
+        text-align: left;
+      }
+      th {
+        background: #22252b;
+      }
+      code {
+        color: #f3f4f6;
+        padding: 0.08rem 0.28rem;
+        border-radius: 4px;
+      }
+      a {
+        color: #7dd3fc;
+      }
+      a:hover {
+        color: #bae6fd;
+      }
+      h2 {
+        margin-top: 3rem;
+      }
+      h3 {
+        margin-top: 2.5rem;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+      }
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .toc {
+          position: static;
+          height: auto;
+          border-right: none;
+          border-bottom: 1px solid #2f333a;
+        }
+        .content {
+          padding: 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="toc">
+        <h2>On this page</h2>
+        <input
+          id="toc-search"
+          class="toc-search"
+          type="search"
+          placeholder="Filter sections..."
+          aria-label="Filter table of contents"
+        />
+        <nav aria-label="Document outline">{{TOC_HTML}}</nav>
+      </aside>
+      <main class="content">{{HTML_BODY}}</main>
+    </div>
+    <script>
+      (function () {
+        const input = document.getElementById("toc-search");
+        if (!input) return;
+        const tocItems = Array.from(document.querySelectorAll(".toc-list li"));
+        input.addEventListener("input", function () {
+          const query = input.value.trim().toLowerCase();
+          for (const item of tocItems) {
+            const text = item.textContent.toLowerCase();
+            item.style.display =
+              query === "" || text.includes(query) ? "" : "none";
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
