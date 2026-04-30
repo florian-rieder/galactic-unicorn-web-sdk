@@ -1,7 +1,7 @@
 local SNAKE_INITIAL_LENGTH = 4
 local SNAKE_MOVE_DELAY_S = 0.25
-local SNAKE_COLOR = {200, 200, 200}
-local FOOD_COLOR = {255, 0, 0}
+local SNAKE_COLOR = rgb(200, 200, 200)
+local FOOD_COLOR = rgb(255, 0, 0)
 
 local snake = {}
 local snake_direction = {x=1, y=0} -- goes to the right initially
@@ -30,8 +30,10 @@ function setup()
 end
 
 function spawn_food()
-  food_position.x = math.random(0, SCREEN_W-1)
-  food_position.y = math.random(0, SCREEN_H-1)
+  repeat
+    food_position.x = math.random(0, SCREEN_W-1)
+    food_position.y = math.random(0, SCREEN_H-1)
+  until not is_collision(food_position.x, food_position.y)
 end
 
 function update(dt)
@@ -81,10 +83,10 @@ end
 function on_press(btn)
   local new_dir = {}
 
-  if btn == "LEFT_LEFT" then new_dir = {x=-1, y=0}
-  elseif btn == "LEFT_RIGHT" then new_dir = {x=1, y=0}
-  elseif btn == "LEFT_UP" then new_dir = {x=0, y=-1}
-  elseif btn == "LEFT_DOWN" then new_dir = {x=0, y=1}
+  if btn == "L_LEFT" or btn == "R_LEFT" then new_dir = {x=-1, y=0}
+  elseif btn == "L_RIGHT" or btn == "R_RIGHT" then new_dir = {x=1, y=0}
+  elseif btn == "L_UP" or btn == "R_UP" then new_dir = {x=0, y=-1}
+  elseif btn == "L_DOWN" or btn == "R_DOWN" then new_dir = {x=0, y=1}
   else return end -- Ignore other inputs
 
   -- Check if the new direction is the opposite of the current direction
@@ -98,10 +100,10 @@ function draw()
   clear()
 
   -- Draw food
-  set_pixel(food_position.x, food_position.y, FOOD_COLOR[1], FOOD_COLOR[2], FOOD_COLOR[3])
+  set_pixel(food_position.x, food_position.y, FOOD_COLOR)
 
   -- Draw snake
   for _, coords in ipairs(snake) do
-    set_pixel(coords.x, coords.y, SNAKE_COLOR[1], SNAKE_COLOR[2], SNAKE_COLOR[3])
+    set_pixel(coords.x, coords.y, SNAKE_COLOR)
   end
 end

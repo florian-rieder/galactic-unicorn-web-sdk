@@ -1,5 +1,7 @@
 -- Pong, the demo: jagged vs smooth, two players.
 
+local COLOR = hsl(0, 0, 0.2)
+
 local PADDLE_HEIGHT = 3
 local PADDLE_SPEED  = 12.0
 local BALL_SPEED_0  = 9.0
@@ -26,13 +28,11 @@ function setup()
   left_paddle_y = (SCREEN_H - PADDLE_HEIGHT) * 0.5
   right_paddle_y = (SCREEN_H - PADDLE_HEIGHT) * 0.5
   serve(math.random(0, 1) == 0 and 1 or -1)
-  print("Ok let's go ! [AWM5ZNdWlqw]")
 end
 
 function on_press(key)
   if key == "MENU" then
     smooth = not smooth
-    print(smooth and "smooth (subpixel draw)" or "jagged (integer draw)")
   end
 end
 
@@ -74,7 +74,7 @@ function update(dt)
     end
   end
 
-  -- Keep matches continuous: immediately re-serve when the ball leaves the screen.
+  -- immediately re-serve when the ball leaves the screen.
   if ball_x < 0 then
     serve(-1)
   elseif ball_x > SCREEN_W - 1 then
@@ -86,12 +86,12 @@ function draw()
   clear()
 
   if smooth then
-    rect_f(0, left_paddle_y, 1, PADDLE_HEIGHT, 255, 255, 255)
-    rect_f(SCREEN_W - 1, right_paddle_y, 1, PADDLE_HEIGHT, 255, 255, 255)
-    set_pixel_f(ball_x, ball_y, 255, 255, 255)
+    rect_f(0, left_paddle_y, 1, PADDLE_HEIGHT, COLOR)
+    rect_f(SCREEN_W - 1, right_paddle_y, 1, PADDLE_HEIGHT, COLOR)
+    set_pixel_f(ball_x, ball_y, COLOR)
   else
-    rect(0, math.floor(left_paddle_y + 0.5), 1, PADDLE_HEIGHT, 255, 255, 255)
-    rect(SCREEN_W - 1, math.floor(right_paddle_y + 0.5), 1, PADDLE_HEIGHT, 255, 255, 255)
-    set_pixel(math.floor(ball_x + 0.5), math.floor(ball_y + 0.5), 255, 255, 255)
+    rect(0, math.floor(left_paddle_y + 0.5), 1, PADDLE_HEIGHT, COLOR)
+    rect(SCREEN_W - 1, math.floor(right_paddle_y + 0.5), 1, PADDLE_HEIGHT, COLOR)
+    set_pixel(math.floor(ball_x + 0.5), math.floor(ball_y + 0.5), COLOR)
   end
 end

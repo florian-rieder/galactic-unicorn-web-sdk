@@ -2,18 +2,18 @@ import { luaCallIfExists } from "./lua.js";
 
 // Map of keyboard events to button names
 export const keyMap = {
-  w: "LEFT_UP",
-  a: "LEFT_LEFT",
-  s: "LEFT_DOWN",
-  d: "LEFT_RIGHT",
-  ArrowUp: "RIGHT_UP",
-  ArrowLeft: "RIGHT_LEFT",
-  ArrowDown: "RIGHT_DOWN",
-  ArrowRight: "RIGHT_RIGHT",
-  q: "LEFT_TRIGGER",
-  e: "RIGHT_TRIGGER",
-  Enter: "MENU",
-  Escape: "ESCAPE",
+  w: "L_UP",
+  a: "L_LEFT",
+  s: "L_DOWN",
+  d: "L_RIGHT",
+  ArrowUp: "R_UP",
+  ArrowLeft: "R_LEFT",
+  ArrowDown: "R_DOWN",
+  ArrowRight: "R_RIGHT",
+  q: "L_BUMP",
+  e: "R_BUMP",
+  1: "MENU",
+  2: "ESC",
 };
 
 const keysPressed = new Set();

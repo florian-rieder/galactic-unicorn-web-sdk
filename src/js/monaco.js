@@ -9,6 +9,83 @@ const editorOptions = {
   automaticLayout: true, // Enable resizing of the editor
 };
 
+const { clampByte, hslToRgb, rgbToHsl } = window.ColorUtils;
+
+function registerLuaColorProvider() {
+  monaco.languages.registerColorProvider("lua", {
+    provideDocumentColors(model) {
+      const text = model.getValue();
+      const infos = [];
+
+      const rgbPattern =
+        /\brgb\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*\)/g;
+      let rgbMatch;
+      while ((rgbMatch = rgbPattern.exec(text)) !== null) {
+        const r = clampByte(Number(rgbMatch[1]));
+        const g = clampByte(Number(rgbMatch[2]));
+        const b = clampByte(Number(rgbMatch[3]));
+        const start = model.getPositionAt(rgbMatch.index);
+        const end = model.getPositionAt(rgbMatch.index + rgbMatch[0].length);
+        infos.push({
+          color: { red: r / 255, green: g / 255, blue: b / 255, alpha: 1 },
+          range: new monaco.Range(
+            start.lineNumber,
+            start.column,
+            end.lineNumber,
+            end.column,
+          ),
+        });
+      }
+
+      const hslPattern =
+        /\bhsl\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*,\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*\)/g;
+      let hslMatch;
+      while ((hslMatch = hslPattern.exec(text)) !== null) {
+        const h = Number(hslMatch[1]);
+        const s = Number(hslMatch[2]);
+        const l = Number(hslMatch[3]);
+        const rgb = hslToRgb(h, s, l);
+        const start = model.getPositionAt(hslMatch.index);
+        const end = model.getPositionAt(hslMatch.index + hslMatch[0].length);
+        infos.push({
+          color: {
+            red: rgb.r / 255,
+            green: rgb.g / 255,
+            blue: rgb.b / 255,
+            alpha: 1,
+          },
+          range: new monaco.Range(
+            start.lineNumber,
+            start.column,
+            end.lineNumber,
+            end.column,
+          ),
+        });
+      }
+
+      return infos;
+    },
+
+    provideColorPresentations(model, colorInfo) {
+      const source = model.getValueInRange(colorInfo.range);
+      const r = clampByte(colorInfo.color.red * 255);
+      const g = clampByte(colorInfo.color.green * 255);
+      const b = clampByte(colorInfo.color.blue * 255);
+      const hsl = rgbToHsl(r, g, b);
+
+      const rgbLabel = `rgb(${r}, ${g}, ${b})`;
+      const hslLabel = `hsl(${hsl.h}, ${hsl.s}, ${hsl.l})`;
+      const rgbPresentation = { label: rgbLabel, textEdit: { range: colorInfo.range, text: rgbLabel } };
+      const hslPresentation = { label: hslLabel, textEdit: { range: colorInfo.range, text: hslLabel } };
+
+      if (/^\s*hsl\s*\(/.test(source)) {
+        return [hslPresentation, rgbPresentation];
+      }
+      return [rgbPresentation, hslPresentation];
+    },
+  });
+}
+
 function buildSignature(item) {
   const params = (item.params || []).map((param) => param.name).join(", ");
   return `${item.lua_name}(${params})`;
@@ -321,6 +398,7 @@ require.config({
 require(["vs/editor/editor.main"], function () {
   let sdkApi = null;
   let highlightsInstalled = false;
+  registerLuaColorProvider();
 
   // Monaco loads before our generated API metadata is available, so fetch it
   // asynchronously and register SDK-specific DX (hover/completion/highlights)

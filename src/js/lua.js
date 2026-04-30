@@ -23,6 +23,8 @@ const { lua, lauxlib, lualib, to_luastring } = fengari;
  */
 const luaApiFunctions = [
   { luaName: "print", luaFunction: lua_print },
+  { luaName: "rgb", luaFunction: lua_rgb },
+  { luaName: "hsl", luaFunction: lua_hsl },
   { luaName: "get_pixel", luaFunction: lua_getPixel },
   { luaName: "set_pixel", luaFunction: lua_setPixel },
   { luaName: "set_pixel_blend", luaFunction: lua_setPixelBlend },
@@ -38,6 +40,7 @@ const luaApiFunctions = [
   { luaName: "get_time", luaFunction: lua_getTime },
   //{ luaName: "get_frame", luaFunction: lua_getFrame },
   { luaName: "clear", luaFunction: lua_clear },
+  { luaName: "buzz", luaFunction: lua_buzz },
 ];
 
 /**
@@ -89,7 +92,7 @@ const dangerousFunctions = [
   "collectgarbage",
 ];
 
-const LUA_EXECUTION_BUDGET_MS = 20; // Stop Lua execution after 20ms.
+const LUA_EXECUTION_BUDGET_MS = 100; // Stop Lua execution after this many ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every 1000 instructions.
 
 let currentLuaState = null;
@@ -293,6 +296,111 @@ function lua_print(L) {
 }
 
 /**
+ * Create an RGB color table.
+ *
+ * Lua API: `rgb(r, g, b)` → `{r, g, b}`
+ *
+ * @luaName rgb
+ * @luaKind function
+ * @luaCategory color
+ * @luaParams r:number red channel (0-255)
+ * @luaParams g:number green channel (0-255)
+ * @luaParams b:number blue channel (0-255)
+ * @luaReturns table RGB color table `{r, g, b}`
+ * @luaExample local red = rgb(255, 0, 0)
+ *
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_rgb(L) {
+  const r = lauxlib.luaL_checkinteger(L, 1);
+  const g = lauxlib.luaL_checkinteger(L, 2);
+  const b = lauxlib.luaL_checkinteger(L, 3);
+
+  lauxlib.luaL_argcheck(L, r >= 0 && r <= 255, 1, "r out of range 0..255");
+  lauxlib.luaL_argcheck(L, g >= 0 && g <= 255, 2, "g out of range 0..255");
+  lauxlib.luaL_argcheck(L, b >= 0 && b <= 255, 3, "b out of range 0..255");
+
+  pushRgbTable(L, r, g, b);
+  return 1;
+}
+
+/**
+ * Convert HSL values to an RGB color table.
+ *
+ * Lua API: `hsl(h, s, l)` → `{r, g, b}`
+ *
+ * `h` is wrapped over 360 degrees, `s` and `l` are clamped to `0..1`.
+ *
+ * @luaName hsl
+ * @luaKind function
+ * @luaCategory color
+ * @luaParams h:number hue in degrees (any number, wrapped mod 360)
+ * @luaParams s:number saturation (0.0..1.0)
+ * @luaParams l:number lightness (0.0..1.0)
+ * @luaReturns table RGB color table `{r, g, b}`
+ * @luaExample local cyan = hsl(180, 1.0, 0.5)
+ *
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_hsl(L) {
+  const hInput = lua.lua_tonumber(L, 1);
+  const sInput = lua.lua_tonumber(L, 2);
+  const lInput = lua.lua_tonumber(L, 3);
+  const rgb = window.ColorUtils.hslToRgb(hInput, sInput, lInput);
+  pushRgbTable(L, rgb.r, rgb.g, rgb.b);
+  return 1;
+}
+
+function readRgbTableArg(L, colorArgIndex) {
+  lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
+
+  lua.lua_rawgeti(L, colorArgIndex, 1);
+  const r = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 2);
+  const g = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 3);
+  const b = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lauxlib.luaL_argcheck(
+    L,
+    r >= 0 && r <= 255,
+    colorArgIndex,
+    "r out of range 0..255",
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    g >= 0 && g <= 255,
+    colorArgIndex,
+    "g out of range 0..255",
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    b >= 0 && b <= 255,
+    colorArgIndex,
+    "b out of range 0..255",
+  );
+
+  return [r, g, b];
+}
+
+function pushRgbTable(L, r, g, b) {
+  lua.lua_createtable(L, 3, 0);
+  lua.lua_pushinteger(L, r);
+  lua.lua_rawseti(L, -2, 1);
+  lua.lua_pushinteger(L, g);
+  lua.lua_rawseti(L, -2, 2);
+  lua.lua_pushinteger(L, b);
+  lua.lua_rawseti(L, -2, 3);
+}
+
+/**
  * Read the current color of one pixel.
  *
  * Useful for effects that react to what is already drawn (sampling, simple
@@ -330,18 +438,16 @@ function lua_getPixel(L) {
  * This is the most direct drawing primitive: great for point effects, particles,
  * and any algorithm that draws pixel-by-pixel.
  *
- * Lua API: `set_pixel(x, y, r, g, b)`
+ * Lua API: `set_pixel(x, y, {r, g, b})`
  *
  * @luaName set_pixel
  * @luaKind function
  * @luaCategory display
  * @luaParams x:number pixel x coordinate (0-based)
  * @luaParams y:number pixel y coordinate (0-based)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample set_pixel(3, 2, 255, 0, 0)
+ * @luaExample set_pixel(3, 2, rgb(255, 0, 0))
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
  * @returns {number} Number of values returned to Lua (always 0).
@@ -349,9 +455,8 @@ function lua_getPixel(L) {
 function lua_setPixel(L) {
   const x = lua.lua_tointeger(L, 1);
   const y = lua.lua_tointeger(L, 2);
-  const r = lua.lua_tointeger(L, 3);
-  const g = lua.lua_tointeger(L, 4);
-  const b = lua.lua_tointeger(L, 5);
+  const [r, g, b] = readRgbTableArg(L, 3);
+
   setPixel(x, y, r, g, b);
   return 0;
 }
@@ -362,19 +467,17 @@ function lua_setPixel(L) {
  * Use this for transparency and softer visuals (trails, fades, glow-like overlays) by mixing
  * with the color that is already on screen.
  *
- * Lua API: `set_pixel_blend(x, y, r, g, b, alpha)`
+ * Lua API: `set_pixel_blend(x, y, {r, g, b}, alpha)`
  *
  * @luaName set_pixel_blend
  * @luaKind function
  * @luaCategory display
  * @luaParams x:number integer pixel x coordinate (0-based)
  * @luaParams y:number integer pixel y coordinate (0-based)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
- * @luaExample set_pixel_blend(3, 2, 255, 0, 0, 0.5)
+ * @luaExample set_pixel_blend(3, 2, rgb(255, 0, 0), 0.5)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..6.
  * @returns {number} Number of values returned to Lua (always 0).
@@ -382,10 +485,9 @@ function lua_setPixel(L) {
 function lua_setPixelBlend(L) {
   const x = lua.lua_tointeger(L, 1);
   const y = lua.lua_tointeger(L, 2);
-  const r = lua.lua_tointeger(L, 3);
-  const g = lua.lua_tointeger(L, 4);
-  const b = lua.lua_tointeger(L, 5);
-  const alpha = lua.lua_tonumber(L, 6);
+  const [r, g, b] = readRgbTableArg(L, 3);
+  const alpha = lua.lua_tonumber(L, 4);
+
   setPixelBlend(x, y, r, g, b, alpha);
   return 0;
 }
@@ -396,18 +498,16 @@ function lua_setPixelBlend(L) {
  * This is useful when positions come from smooth/physics movement and you do
  * not want to round everything to integer coordinates yourself.
  *
- * Lua API: `set_pixel_f(x, y, r, g, b)`
+ * Lua API: `set_pixel_f(x, y, {r, g, b})`
  *
  * @luaName set_pixel_f
  * @luaKind function
  * @luaCategory display
  * @luaParams x:number subpixel x coordinate (float, 0-based)
  * @luaParams y:number subpixel y coordinate (float, 0-based)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample set_pixel_f(3.25, 2.75, 0, 255, 0)
+ * @luaExample set_pixel_f(3.25, 2.75, rgb(0, 255, 0))
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
  * @returns {number} Number of values returned to Lua (always 0).
@@ -415,9 +515,8 @@ function lua_setPixelBlend(L) {
 function lua_setPixelF(L) {
   const x = lua.lua_tonumber(L, 1);
   const y = lua.lua_tonumber(L, 2);
-  const r = lua.lua_tointeger(L, 3);
-  const g = lua.lua_tointeger(L, 4);
-  const b = lua.lua_tointeger(L, 5);
+  const [r, g, b] = readRgbTableArg(L, 3);
+
   setPixelF(x, y, r, g, b);
   return 0;
 }
@@ -428,7 +527,7 @@ function lua_setPixelF(L) {
  * Good for smooth movement/animation where object positions are not always on
  * exact integer pixel boundaries.
  *
- * Lua API: `rect_f(x, y, w, h, r, g, b)`
+ * Lua API: `rect_f(x, y, w, h, {r, g, b})`
  *
  * @luaName rect_f
  * @luaKind function
@@ -437,13 +536,11 @@ function lua_setPixelF(L) {
  * @luaParams y:number rectangle y coordinate (float, 0-based)
  * @luaParams w:number rectangle width (float)
  * @luaParams h:number rectangle height (float)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample rect_f(1.2, 1.2, 5.5, 3.5, 0, 0, 255)
+ * @luaExample rect_f(1.2, 1.2, 5.5, 3.5, rgb(0, 0, 255))
  *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..7.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_rectF(L) {
@@ -451,9 +548,7 @@ function lua_rectF(L) {
   const y = lua.lua_tonumber(L, 2);
   const w = lua.lua_tonumber(L, 3);
   const h = lua.lua_tonumber(L, 4);
-  const r = lua.lua_tointeger(L, 5);
-  const g = lua.lua_tointeger(L, 6);
-  const b = lua.lua_tointeger(L, 7);
+  const [r, g, b] = readRgbTableArg(L, 5);
   rectF(x, y, w, h, r, g, b);
   return 0;
 }
@@ -463,7 +558,7 @@ function lua_rectF(L) {
  *
  * Great for UI blocks, paddles, bars, and simple game objects.
  *
- * Lua API: `rect(x, y, w, h, r, g, b)`
+ * Lua API: `rect(x, y, w, h, {r, g, b})`
  *
  * Notes:
  * - The host accepts floats for `x`, `y`, `w`, `h` and floors geometry internally.
@@ -475,13 +570,11 @@ function lua_rectF(L) {
  * @luaParams y:number rectangle y coordinate (float accepted; floored)
  * @luaParams w:number rectangle width (float accepted; floored)
  * @luaParams h:number rectangle height (float accepted; floored)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample rect(1, 1, 5, 3, 255, 255, 255)
+ * @luaExample rect(1, 1, 5, 3, rgb(255, 255, 255))
  *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..7.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_rect(L) {
@@ -489,9 +582,7 @@ function lua_rect(L) {
   const y = lua.lua_tonumber(L, 2);
   const w = lua.lua_tonumber(L, 3);
   const h = lua.lua_tonumber(L, 4);
-  const r = lua.lua_tointeger(L, 5);
-  const g = lua.lua_tointeger(L, 6);
-  const b = lua.lua_tointeger(L, 7);
+  const [r, g, b] = readRgbTableArg(L, 5);
   rect(x, y, w, h, r, g, b);
   return 0;
 }
@@ -501,6 +592,8 @@ function lua_rect(L) {
  *
  * Useful for overlays, tint zones, and soft UI panels.
  *
+ * Lua API: `rect_blend(x, y, w, h, {r, g, b}, alpha)`
+ *
  * @luaName rect_blend
  * @luaKind function
  * @luaCategory display
@@ -508,14 +601,12 @@ function lua_rect(L) {
  * @luaParams y:number rectangle y coordinate (float, 0-based)
  * @luaParams w:number rectangle width (float)
  * @luaParams h:number rectangle height (float)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
- * @luaExample rect_blend(0, 0, SCREEN_W, SCREEN_H, 255, 0, 0, 0.5)
+ * @luaExample rect_blend(0, 0, SCREEN_W, SCREEN_H, rgb(255, 0, 0), 0.5)
 
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..8.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..6.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_rectBlend(L) {
@@ -523,10 +614,8 @@ function lua_rectBlend(L) {
   const y = lua.lua_tonumber(L, 2);
   const w = lua.lua_tonumber(L, 3);
   const h = lua.lua_tonumber(L, 4);
-  const r = lua.lua_tointeger(L, 5);
-  const g = lua.lua_tointeger(L, 6);
-  const b = lua.lua_tointeger(L, 7);
-  const alpha = lua.lua_tonumber(L, 8);
+  const [r, g, b] = readRgbTableArg(L, 5);
+  const alpha = lua.lua_tonumber(L, 6);
   rectBlend(x, y, w, h, r, g, b, alpha);
   return 0;
 }
@@ -537,24 +626,20 @@ function lua_rectBlend(L) {
  * Most scripts call this at the start of `draw()` to clear the previous frame
  * and paint a background color in one call.
  *
- * Lua API: `fill(r, g, b)`
+ * Lua API: `fill({r, g, b})`
  *
  * @luaName fill
  * @luaKind function
  * @luaCategory display
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample fill(255, 0, 0)
+ * @luaExample fill(rgb(255, 0, 0))
  *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack index 1.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_fill(L) {
-  const r = lua.lua_tointeger(L, 1);
-  const g = lua.lua_tointeger(L, 2);
-  const b = lua.lua_tointeger(L, 3);
+  const [r, g, b] = readRgbTableArg(L, 1);
   fill(r, g, b);
   return 0;
 }
@@ -565,26 +650,22 @@ function lua_fill(L) {
  * This keeps existing pixels visible while tinting the frame, which is useful
  * for fades, flashes, and mood/color shifts.
  *
- * Lua API: `fill_blend(r, g, b, alpha)`
+ * Lua API: `fill_blend({r, g, b}, alpha)`
  *
  * @luaName fill_blend
  * @luaKind function
  * @luaCategory display
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
- * @luaExample fill_blend(255, 0, 0, 0.5)
+ * @luaExample fill_blend(rgb(255, 0, 0), 0.5)
  *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..4.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_fillBlend(L) {
-  const r = lua.lua_tointeger(L, 1);
-  const g = lua.lua_tointeger(L, 2);
-  const b = lua.lua_tointeger(L, 3);
-  const alpha = lua.lua_tonumber(L, 4);
+  const [r, g, b] = readRgbTableArg(L, 1);
+  const alpha = lua.lua_tonumber(L, 2);
   fillBlend(r, g, b, alpha);
   return 0;
 }
@@ -595,7 +676,7 @@ function lua_fillBlend(L) {
  * Useful for vectors, separators, debug overlays, and lightweight wireframe
  * style visuals.
  *
- * Lua API: `line(x0, y0, x1, y1, r, g, b)`
+ * Lua API: `line(x0, y0, x1, y1, {r, g, b})`
  *
  * @luaName line
  * @luaKind function
@@ -604,13 +685,11 @@ function lua_fillBlend(L) {
  * @luaParams y0:number integer start y coordinate (0-based)
  * @luaParams x1:number integer end x coordinate (0-based)
  * @luaParams y1:number integer end y coordinate (0-based)
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
- * @luaExample line(0, 0, SCREEN_W - 1, SCREEN_H - 1, 255, 0, 0)
+ * @luaExample line(0, 0, SCREEN_W - 1, SCREEN_H - 1, rgb(255, 0, 0))
  *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..7.
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_line(L) {
@@ -618,9 +697,7 @@ function lua_line(L) {
   const y0 = lua.lua_tointeger(L, 2);
   const x1 = lua.lua_tointeger(L, 3);
   const y1 = lua.lua_tointeger(L, 4);
-  const r = lua.lua_tointeger(L, 5);
-  const g = lua.lua_tointeger(L, 6);
-  const b = lua.lua_tointeger(L, 7);
+  const [r, g, b] = readRgbTableArg(L, 5);
   drawLine(x0, y0, x1, y1, r, g, b);
   return 0;
 }
@@ -688,6 +765,30 @@ function lua_getTime(L) {
   const time = (performance.now() - L.luaStartTimeMs) / 1000.0; // Convert milliseconds to seconds
   lua.lua_pushnumber(L, time);
   return 1;
+}
+
+/**
+ * Make a sound.
+ *
+ * Lua API: `buzz(frequency, duration)`
+ *
+ * @luaName buzz
+ * @luaKind function
+ * @luaCategory sound
+ * @luaParams frequency:number frequency in Hz
+ * @luaParams duration:number duration in milliseconds
+ * @luaReturns nil
+ * @luaExample buzz(440, 1000)
+ *
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
+ * @returns {number} Number of values returned to Lua (always 0).
+ */
+function lua_buzz(L) {
+  const frequency = lua.lua_tointeger(L, 1);
+  const duration = lua.lua_tointeger(L, 2);
+  // TODO: make a sound
+
+  return 0
 }
 
 // function lua_getFrame(L) {
@@ -791,7 +892,7 @@ function lua_callback_draw() {}
  * @luaReturns nil
  * @luaExample function on_press(button_name)
  *   if button_name == "LEFT_UP" then
- *     set_pixel(2, 2, 0, 255, 0)
+ *     set_pixel(2, 2, rgb(0, 255, 0))
  *   end
  * end
  */
