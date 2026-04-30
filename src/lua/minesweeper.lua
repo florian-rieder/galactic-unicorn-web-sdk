@@ -1,37 +1,43 @@
-local grid = {}
-
 local CURSOR_X = math.floor(SCREEN_W / 2)
 local CURSOR_Y = math.floor(SCREEN_H / 2)
 
-local MINE_PROBABILITY = 20
+local MINE_PROBABILITY = 20 -- 10%=easy 20%=hard
 local MAX_START_TRIES = 20
 
-local COLOR_BACKGROUND = {10, 10, 10}
-local COLOR_MINE = {120, 0, 0}
-local COLOR_FLAG = {200, 100, 0}
-local COLOR_UNREVEALED = {50, 50, 50}
-local COLOR_CURSOR = {200, 200, 200}
+local BACKGROUND_COLOR = rgb(10, 10, 10)
+local MINE_COLOR = rgb(255, 153, 0)
+local MINE_COLOR_BLINK = rgb(255, 185, 80)
+local FLAG_COLOR = rgb(255, 128, 0)
+local UNREVEALED_COLOR = rgb(50, 50, 50)
+local COLOR_CURSOR = rgb(200, 200, 200)
 -- Blink effects: full on/off phases each last 1/(2*BLINK_HZ) seconds.
 local CURSOR_BLINK_HZ = 1.5
 local GAME_OVER_BLINK_HZ = 2.0
+local MINE_BLINK_HZ = 1.1
+-- Cursor input move repeat
+local INITIAL_DELAY = 0.25
+local REPEAT_INTERVAL = 0.1
 
 -- Colors for numbers around mines, based on the colors of the original game
-local COLOR_NUMBERS = {
-  [1] = {0, 0, 255},     -- Blue
-  [2] = {0, 255, 0},     -- Green
-  [3] = {255, 0, 0},     -- Red
-  [4] = {0, 0, 128},     -- Dark Blue
-  [5] = {128, 0, 0},     -- Dark Red
-  [6] = {0, 128, 128},   -- Cyan
-  [7] = {132, 0, 132},   -- Magenta
-  [8] = {117, 117, 117}, -- Gray
+local NUMBERS_COLORS = {
+  [1] = rgb(0, 0, 255),     -- Blue       - 1 adjacent mine
+  [2] = rgb(0, 255, 0),     -- Green.     - 2 adjacent mines
+  [3] = rgb(255, 0, 0),     -- Red        - 3 adjacent mines
+  [4] = rgb(0, 0, 128),     -- Dark Blue  - 4 adjacent mines
+  [5] = rgb(128, 0, 0),     -- Dark Red   - 5 adjacent mines
+  [6] = rgb(0, 128, 128),   -- Cyan       - 6 adjacent mines
+  [7] = rgb(132, 0, 132),   -- Magenta    - 7 adjacent mines
+  [8] = rgb(117, 117, 117), -- Gray       - 8 adjacent mines
 }
 
+local grid = {}
 local first_move = true
 local game_over = false
 local is_lost = false
 local is_win = false
 local remaining_safe_cells = 0
+local held = {}
+local hold_state = {}
 
 function math.clamp(n, low, high) return math.min(math.max(n, low), high) end 
 
@@ -51,7 +57,6 @@ local function for_each_neighbor(x, y, fn)
     end
   end
 end
-
 
 local function count_mines_around(x, y)
   local count = 0
@@ -140,6 +145,7 @@ function reveal_cell(x, y)
   if cell.is_revealed then
     return
   end
+
   cell.is_revealed = true
   remaining_safe_cells = remaining_safe_cells - 1
 
@@ -201,8 +207,35 @@ function init_grid()
   first_move = true
 end
 
+function reset()
+  is_win = false
+  is_lost = false
+  CURSOR_X = math.floor(SCREEN_W/2)
+  CURSOR_Y = math.floor(SCREEN_H/2)
+  init_grid()
+end
+
 function setup()
   init_grid()
+end
+
+function update()
+  local now = get_time()
+
+  for button, _ in pairs(held) do
+    local state = hold_state[button]
+
+    if state then
+      local held_time = now - state.start
+
+      if held_time > INITIAL_DELAY then
+        if (now - state.last) > REPEAT_INTERVAL then
+          move_cursor(button)
+          state.last = now
+        end
+      end
+    end
+  end
 end
 
 function draw()
@@ -212,23 +245,26 @@ function draw()
       local cell = grid[y][x]
 
       if cell.is_revealed then
-        if cell.is_mine then
-          set_pixel(x, y, COLOR_MINE[1], COLOR_MINE[2], COLOR_MINE[3])
-        elseif cell.neighbor_mines_count > 0 then
-          local c = COLOR_NUMBERS[cell.neighbor_mines_count]
-          set_pixel(x, y, c[1], c[2], c[3])
+        if cell.neighbor_mines_count > 0 then
+          local c = NUMBERS_COLORS[cell.neighbor_mines_count]
+          set_pixel(x, y, c)
         else
-          set_pixel(x, y, COLOR_BACKGROUND[1], COLOR_BACKGROUND[2], COLOR_BACKGROUND[3])
+          set_pixel(x, y, BACKGROUND_COLOR)
         end
       elseif cell.is_flagged then
-        set_pixel(x, y, COLOR_FLAG[1], COLOR_FLAG[2], COLOR_FLAG[3])
+        set_pixel(x, y, FLAG_COLOR)
       else
-        set_pixel(x, y, COLOR_UNREVEALED[1], COLOR_UNREVEALED[2], COLOR_UNREVEALED[3])
+        set_pixel(x, y, UNREVEALED_COLOR)
       end
 
       if cell.is_mine and game_over and is_lost then
-        -- Show all the mines
-        set_pixel(x, y, COLOR_MINE[1], COLOR_MINE[2], COLOR_MINE[3])
+        -- Show all the mines (blinky edition)
+        local mine_blink_phase = math.floor(get_time() * 2 * MINE_BLINK_HZ) % 2
+        if mine_blink_phase == 0 then
+          set_pixel(x, y, MINE_COLOR_BLINK)
+        else
+          set_pixel(x, y, MINE_COLOR)
+        end
       end
     end
   end
@@ -238,16 +274,16 @@ function draw()
     -- blink the whole screen in red
     if game_over_phase == 0 then
       if is_lost then
-        fill_blend(200, 0, 0, 0.5)
+        fill_blend(rgb(200, 0, 0), 0.2)
       elseif is_win then
-        fill_blend(0, 200, 0, 0.5)
+        fill_blend(rgb(0, 200, 0), 0.2)
       end
     end
-  else 
+  else
     -- Cursor
     local phase = math.floor(get_time() * 2 * CURSOR_BLINK_HZ) % 2
     if phase == 0 then
-      set_pixel(CURSOR_X, CURSOR_Y, COLOR_CURSOR[1], COLOR_CURSOR[2], COLOR_CURSOR[3])
+      set_pixel(CURSOR_X, CURSOR_Y, COLOR_CURSOR)
     end
   end
 end
@@ -256,24 +292,37 @@ function on_press(button)
   if game_over then
     -- Any button press resets the game
     game_over = false
-    is_win = false
-    is_lost = false
-    CURSOR_X = math.floor(SCREEN_W/2)
-    CURSOR_Y = math.floor(SCREEN_H/2)
-    init_grid()
+    reset()
     return
   end
 
-  -- Move the cursor
-  if button == "LEFT_LEFT" then CURSOR_X = CURSOR_X - 1 end
-  if button == "LEFT_RIGHT" then CURSOR_X = CURSOR_X + 1 end
-  if button == "LEFT_UP" then CURSOR_Y = CURSOR_Y - 1 end
-  if button == "LEFT_DOWN" then CURSOR_Y = CURSOR_Y + 1 end
+    held[button] = true
+    hold_state[button] = {
+    start = get_time(),
+    last = get_time()
+  }
 
   -- Reveal the cell
-  if button == "RIGHT_DOWN" then reveal_cell(CURSOR_X, CURSOR_Y) end
+  if button == "MENU" then reveal_cell(CURSOR_X, CURSOR_Y)
   -- Flag suspected mine
-  if button == "RIGHT_UP" then flag_cell(CURSOR_X, CURSOR_Y) end
+  elseif button == "ESC" then flag_cell(CURSOR_X, CURSOR_Y)
+  -- Move the cursor
+  else move_cursor(button)
+  end
+end
+
+function on_release(button)
+  held[button] = nil
+  hold_state[button] = nil
+end
+
+function move_cursor(button)
+  -- Move the cursor
+  if button == "R_LEFT" then CURSOR_X = CURSOR_X - 1 end
+  if button == "R_RIGHT" then CURSOR_X = CURSOR_X + 1 end
+  if button == "R_UP" then CURSOR_Y = CURSOR_Y - 1 end
+  if button == "R_DOWN" then CURSOR_Y = CURSOR_Y + 1 end
+
 
   CURSOR_X = math.clamp(CURSOR_X, 0, SCREEN_W - 1)
   CURSOR_Y = math.clamp(CURSOR_Y, 0, SCREEN_H - 1)
