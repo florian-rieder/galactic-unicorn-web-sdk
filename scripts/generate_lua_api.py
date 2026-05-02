@@ -62,7 +62,7 @@ def parse_function_registry(lua_js_content: str) -> list[dict[str, str]]:
     body = re.sub(r"^\s*//.*$", "", body, flags=re.MULTILINE)
 
     entries = re.findall(
-        r'\{\s*luaName:\s*"([^"]+)"\s*,\s*(?:luaFunction):\s*([A-Za-z_]\w*)\s*\}',
+        r'\{\s*luaName:\s*"([^"]+)"\s*,\s*(?:luaFunction):\s*([A-Za-z_]\w*)\s*(?:,\s*)?\}',
         body,
     )
     return [{"lua_name": lua_name, "js_name": js_name} for lua_name, js_name in entries]
@@ -82,7 +82,7 @@ def parse_callback_registry(lua_js_content: str) -> list[dict[str, str]]:
     body = re.sub(r"^\s*//.*$", "", body, flags=re.MULTILINE)
 
     entries = re.findall(
-        r'\{\s*luaName:\s*"([^"]+)"\s*,\s*(?:luaFunction|function):\s*([A-Za-z_]\w*)\s*\}',
+        r'\{\s*luaName:\s*"([^"]+)"\s*,\s*(?:luaFunction|function):\s*([A-Za-z_]\w*)\s*(?:,\s*)?\}',
         body,
     )
     return [{"lua_name": lua_name, "js_name": js_name} for lua_name, js_name in entries]
