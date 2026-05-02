@@ -75,8 +75,14 @@ function registerLuaColorProvider() {
 
       const rgbLabel = `rgb(${r}, ${g}, ${b})`;
       const hslLabel = `hsl(${hsl.h}, ${hsl.s}, ${hsl.l})`;
-      const rgbPresentation = { label: rgbLabel, textEdit: { range: colorInfo.range, text: rgbLabel } };
-      const hslPresentation = { label: hslLabel, textEdit: { range: colorInfo.range, text: hslLabel } };
+      const rgbPresentation = {
+        label: rgbLabel,
+        textEdit: { range: colorInfo.range, text: rgbLabel },
+      };
+      const hslPresentation = {
+        label: hslLabel,
+        textEdit: { range: colorInfo.range, text: hslLabel },
+      };
 
       if (/^\s*hsl\s*\(/.test(source)) {
         return [hslPresentation, rgbPresentation];
@@ -442,7 +448,7 @@ require(["vs/editor/editor.main"], function () {
     createEditor(savedCode);
   } else {
     // Get default script from src/lua/
-    fetch("src/lua/pong.lua")
+    fetch("src/lua/snake.lua")
       .then((res) => res.text())
       .then((defaultScript) => {
         createEditor(defaultScript);
