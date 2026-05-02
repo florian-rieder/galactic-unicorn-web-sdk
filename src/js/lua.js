@@ -23,12 +23,17 @@ const { lua, lauxlib, lualib, to_luastring } = fengari;
  */
 const luaApiFunctions = [
   { luaName: "print", luaFunction: lua_print },
+  { luaName: "clamp", luaFunction: lua_clamp },
   { luaName: "rgb", luaFunction: lua_rgb },
   { luaName: "hsl", luaFunction: lua_hsl },
   { luaName: "get_pixel", luaFunction: lua_getPixel },
   { luaName: "set_pixel", luaFunction: lua_setPixel },
   { luaName: "set_pixel_blend", luaFunction: lua_setPixelBlend },
   { luaName: "set_pixel_f", luaFunction: lua_setPixelF },
+  {
+    luaName: "set_unsafe_pixel_brightness",
+    luaFunction: lua_setUnsafePixelBrightness,
+  },
   { luaName: "rect", luaFunction: lua_rect },
   { luaName: "rect_blend", luaFunction: lua_rectBlend },
   { luaName: "rect_f", luaFunction: lua_rectF },
@@ -296,6 +301,32 @@ function lua_print(L) {
 }
 
 /**
+ * Clamp a value between a minimum and maximum.
+ *
+ * Lua API: `clamp(value, min, max)` → `clamped`
+ *
+ * @luaName clamp
+ * @luaKind function
+ * @luaCategory math
+ * @luaParams value:number value to clamp
+ * @luaParams min:number minimum value
+ * @luaParams max:number maximum value
+ * @luaReturns number clamped value
+ * @luaExample local clamped = clamp(10, 0, 20)
+ *
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_clamp(L) {
+  const value = lua.lua_tonumber(L, 1);
+  const min = lua.lua_tonumber(L, 2);
+  const max = lua.lua_tonumber(L, 3);
+  const clamped = Math.max(min, Math.min(max, value));
+  lua.lua_pushnumber(L, clamped);
+  return 1;
+}
+
+/**
  * Create an RGB color table.
  *
  * Lua API: `rgb(r, g, b)` → `{r, g, b}`
@@ -518,6 +549,48 @@ function lua_setPixelF(L) {
   const [r, g, b] = readRgbTableArg(L, 3);
 
   setPixelF(x, y, r, g, b);
+  return 0;
+}
+
+/**
+ * UNSAFE !!! Set the brightness of a pixel.
+ * If the total current exceeds the limit, an error checkerboard pattern will be displayed.
+ * Does nothing in the web version, but available on the hardware.
+ *
+ * This is useful for setting the brightness of a pixel to a value that different from
+ * the default brightness, for short-term effects like flashing.
+ *
+ * Use with moderation.
+ *
+ * Lua API: `set_unsafe_pixel_brightness(x, y, brightness)`
+ *
+ * @luaName set_unsafe_pixel_brightness
+ * @luaKind function
+ * @luaCategory display
+ * @luaParams x:number pixel x coordinate (0-based)
+ * @luaParams y:number pixel y coordinate (0-based)
+ * @luaParams brightness:number brightness value (0..9)
+ * @luaReturns nil
+ * @luaExample set_unsafe_pixel_brightness(3, 2, 5)
+ *
+ * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
+ * @returns {number} Number of values returned to Lua (always 0).
+ */
+function lua_setUnsafePixelBrightness(L) {
+  const _x = lua.lua_tointeger(L, 1);
+  const _y = lua.lua_tointeger(L, 2);
+  const brightness = lua.lua_tonumber(L, 3);
+
+  lauxlib.luaL_argcheck(
+    L,
+    brightness >= 0 && brightness <= 9,
+    3,
+    "brightness out of range 0..9",
+  );
+
+  // Does nothing in the web version, but available on the hardware.
+  // TODO: emulate the error behavior in the web version.
+
   return 0;
 }
 
@@ -788,7 +861,7 @@ function lua_buzz(L) {
   const duration = lua.lua_tointeger(L, 2);
   // TODO: make a sound
 
-  return 0
+  return 0;
 }
 
 // function lua_getFrame(L) {
