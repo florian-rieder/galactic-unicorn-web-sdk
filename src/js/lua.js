@@ -871,9 +871,9 @@ function lua_buzz(L) {
 // }
 
 /**
- * Clear the screen to black (`0, 0, 0`).
+ * Clear the screen to black (`rgb(0, 0, 0)`).
  *
- * Equivalent to `fill(0, 0, 0)` and commonly used at the start of `draw()`.
+ * Equivalent to `fill(rgb(0, 0, 0))` and commonly used at the start of `draw()`.
  *
  * Lua API: `clear()`
  *
