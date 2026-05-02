@@ -1,6 +1,6 @@
 -- Pong, the demo: jagged vs smooth, two players.
 
-local COLOR = hsl(0, 0, 0.2)
+local COLOR = hsl(0, 0, 0.5)
 
 local PADDLE_HEIGHT = 3
 local PADDLE_SPEED  = 12.0
@@ -37,10 +37,10 @@ function on_press(key)
 end
 
 function update(dt)
-  if is_pressed("LEFT_UP")    then left_paddle_y = math.max(0, left_paddle_y - PADDLE_SPEED * dt) end
-  if is_pressed("LEFT_DOWN")  then left_paddle_y = math.min(SCREEN_H - PADDLE_HEIGHT, left_paddle_y + PADDLE_SPEED * dt) end
-  if is_pressed("RIGHT_UP")   then right_paddle_y = math.max(0, right_paddle_y - PADDLE_SPEED * dt) end
-  if is_pressed("RIGHT_DOWN") then right_paddle_y = math.min(SCREEN_H - PADDLE_HEIGHT, right_paddle_y + PADDLE_SPEED * dt) end
+  if is_pressed("L_UP")    then left_paddle_y = math.max(0, left_paddle_y - PADDLE_SPEED * dt) end
+  if is_pressed("L_DOWN")  then left_paddle_y = math.min(SCREEN_H - PADDLE_HEIGHT, left_paddle_y + PADDLE_SPEED * dt) end
+  if is_pressed("R_UP")   then right_paddle_y = math.max(0, right_paddle_y - PADDLE_SPEED * dt) end
+  if is_pressed("R_DOWN") then right_paddle_y = math.min(SCREEN_H - PADDLE_HEIGHT, right_paddle_y + PADDLE_SPEED * dt) end
 
   ball_x = ball_x + ball_vel_x * dt
   ball_y = ball_y + ball_vel_y * dt
