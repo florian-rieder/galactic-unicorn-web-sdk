@@ -17,6 +17,7 @@ Developing directly on device is slow when every test requires another flash cyc
 ## Project status
 
 This project is currently **experimental** and still evolving toward a stable public release.
+The Lua API is still subject to breaking changes.
 
 ## Run locally
 

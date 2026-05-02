@@ -22,8 +22,8 @@ Paste this and press Run:
 local x = 0
 local y = 4
 
-function update(dt)
-  x = x + 6 * dt
+function update(delta_time)
+  x = x + 6 * delta_time
   if x > SCREEN_W - 1 then
     x = 0
   end
@@ -31,17 +31,11 @@ end
 
 function draw()
   clear()
-  set_pixel(math.floor(x), y, 255, 100, 40)
+  set_pixel(math.floor(x), y, rgb(255, 100, 40))
 end
 ```
 
 What you should see: one bright pixel moving left-to-right, then restarting.
-
-Why this is useful:
-
-- it shows the loop (`update` and `draw`)
-- it uses constants (`SCREEN_W`)
-- it introduces time-based motion (`dt`)
 
 ## Input basics
 
@@ -87,6 +81,6 @@ These are the default keyboard keys and button names used by `is_pressed`,
 | `R_RIGHT` | Arrow Right |
 | `L_TRIGGER` | `q` |
 | `R_TRIGGER` | `e` |
-| `MENU` | Enter |
-| `ESC` | Escape |
+| `MENU` | `1` |
+| `ESC` | `2` |
 
