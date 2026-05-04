@@ -11,8 +11,6 @@ import {
   fill,
   fillBlend,
   drawLine,
-  SCREEN_W,
-  SCREEN_H,
 } from "./display.js";
 import { isPressed } from "./input.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
@@ -46,6 +44,7 @@ const luaApiFunctions = [
   //{ luaName: "get_frame", luaFunction: lua_getFrame },
   { luaName: "clear", luaFunction: lua_clear },
   { luaName: "buzz", luaFunction: lua_buzz },
+  { luaName: "sprite", luaFunction: lua_sprite },
 ];
 
 /**
@@ -311,7 +310,7 @@ function lua_print(L) {
  * @luaParams value:number value to clamp
  * @luaParams min:number minimum value
  * @luaParams max:number maximum value
- * @luaReturns number clamped value
+ * @luaReturns `number` clamped value
  * @luaExample local clamped = clamp(10, 0, 20)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -337,7 +336,7 @@ function lua_clamp(L) {
  * @luaParams r:number red channel (0-255)
  * @luaParams g:number green channel (0-255)
  * @luaParams b:number blue channel (0-255)
- * @luaReturns table RGB color table `{r, g, b}`
+ * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local red = rgb(255, 0, 0)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -369,7 +368,7 @@ function lua_rgb(L) {
  * @luaParams h:number hue in degrees (any number, wrapped mod 360)
  * @luaParams s:number saturation (0.0..1.0)
  * @luaParams l:number lightness (0.0..1.0)
- * @luaReturns table RGB color table `{r, g, b}`
+ * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local cyan = hsl(180, 1.0, 0.5)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -526,8 +525,8 @@ function lua_setPixelBlend(L) {
 /**
  * Draw a point using floating-point coordinates.
  *
- * This is useful when positions come from smooth/physics movement and you do
- * not want to round everything to integer coordinates yourself.
+ * Applies bilinear interpolation to spread out brightness on the surrounding pixels
+ * This is useful when positions come from smooth/physics movement.
  *
  * Lua API: `set_pixel_f(x, y, {r, g, b})`
  *
@@ -597,6 +596,7 @@ function lua_setUnsafePixelBrightness(L) {
 /**
  * Draw a rectangle using floating-point coordinates.
  *
+ * Applies bilinear interpolation to spread out brightness on the surrounding pixels
  * Good for smooth movement/animation where object positions are not always on
  * exact integer pixel boundaries.
  *
@@ -774,20 +774,6 @@ function lua_line(L) {
   drawLine(x0, y0, x1, y1, r, g, b);
   return 0;
 }
-
-// Already provided by the math standard library !
-// But maybe we want to use our own RNG ?
-// And make it the same between the emulator and the actual hardware ?
-// Maybe with a set_random_seed function as well ?
-// function lua_random(L) {
-//   let min = lua.lua_tointeger(L, 1);
-//   let max = lua.lua_tointeger(L, 2);
-//   if (min > max) [max, min] = [min, max]; // Quite self-explanatory, no ? Swap the two values if min is greater than max.
-//   // Generate a random integer between min and max inclusive.
-//   const random = Math.floor(Math.random() * (max - min + 1)) + min;
-//   lua.lua_pushnumber(L, random);
-//   return 1;
-// }
 
 /**
  * Check whether a mapped button is currently held down.
