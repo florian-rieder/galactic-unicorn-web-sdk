@@ -1,6 +1,7 @@
 import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
 import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
+import { stopMusic } from "./music.js";
 
 initResizers();
 render(); // Render the initial state of the display
@@ -36,6 +37,7 @@ function start() {
 
 function stop() {
   closeLua();
+  stopMusic();
   lastTime = null;
   cancelAnimationFrame(frameId);
   clearTimeout(timeoutId);
