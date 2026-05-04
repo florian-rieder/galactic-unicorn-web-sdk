@@ -11,10 +11,9 @@ import {
   fill,
   fillBlend,
   drawLine,
-  SCREEN_W,
-  SCREEN_H,
 } from "./display.js";
 import { isPressed } from "./input.js";
+import { playBuzzTone } from "./audio.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 /**
@@ -303,7 +302,7 @@ function lua_print(L) {
 /**
  * Clamp a value between a minimum and maximum.
  *
- * Lua API: `clamp(value, min, max)` → `clamped`
+ * Lua API: `clamp(value, min, max)` -> `clamped`
  *
  * @luaName clamp
  * @luaKind function
@@ -311,7 +310,7 @@ function lua_print(L) {
  * @luaParams value:number value to clamp
  * @luaParams min:number minimum value
  * @luaParams max:number maximum value
- * @luaReturns number clamped value
+ * @luaReturns `number` clamped value
  * @luaExample local clamped = clamp(10, 0, 20)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -329,7 +328,7 @@ function lua_clamp(L) {
 /**
  * Create an RGB color table.
  *
- * Lua API: `rgb(r, g, b)` → `{r, g, b}`
+ * Lua API: `rgb(r, g, b)` -> `{r, g, b}`
  *
  * @luaName rgb
  * @luaKind function
@@ -337,7 +336,7 @@ function lua_clamp(L) {
  * @luaParams r:number red channel (0-255)
  * @luaParams g:number green channel (0-255)
  * @luaParams b:number blue channel (0-255)
- * @luaReturns table RGB color table `{r, g, b}`
+ * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local red = rgb(255, 0, 0)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -359,7 +358,7 @@ function lua_rgb(L) {
 /**
  * Convert HSL values to an RGB color table.
  *
- * Lua API: `hsl(h, s, l)` → `{r, g, b}`
+ * Lua API: `hsl(h, s, l)` -> `{r, g, b}`
  *
  * `h` is wrapped over 360 degrees, `s` and `l` are clamped to `0..1`.
  *
@@ -369,7 +368,7 @@ function lua_rgb(L) {
  * @luaParams h:number hue in degrees (any number, wrapped mod 360)
  * @luaParams s:number saturation (0.0..1.0)
  * @luaParams l:number lightness (0.0..1.0)
- * @luaReturns table RGB color table `{r, g, b}`
+ * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local cyan = hsl(180, 1.0, 0.5)
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
@@ -437,18 +436,24 @@ function pushRgbTable(L, r, g, b) {
  * Useful for effects that react to what is already drawn (sampling, simple
  * collision checks against color, post-processing tricks, etc.).
  *
- * Lua API: `get_pixel(x, y)` → `r, g, b`
+ * Lua API: `get_pixel(x, y)` -> `{r, g, b}`
  *
  * @luaName get_pixel
  * @luaKind function
  * @luaCategory display
  * @luaParams x:number integer pixel x coordinate (0-based)
  * @luaParams y:number integer pixel y coordinate (0-based)
- * @luaReturns r:number, g:number, b:number
- * @luaExample local r, g, b = get_pixel(3, 2)
+ * @luaReturns `table` RGB color table `{r, g, b}`
+ * @luaExample set_pixel(0, 0, rgb(42, 0, 134))
+ *
+ * local my_color = get_pixel(0, 0)
+ *
+ * print(my_color[1]) # 42
+ * print(my_color[2]) # 0
+ * print(my_color[3]) # 134
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
- * @returns {number} Number of values pushed to Lua (always 3).
+ * @returns {number} Number of values returned to Lua (always 1).
  */
 function lua_getPixel(L) {
   const x = lua.lua_tointeger(L, 1);
@@ -457,17 +462,16 @@ function lua_getPixel(L) {
   if (pixel === undefined) {
     pixel = [0, 0, 0]; // Default to black if the pixel is out of bounds.
   }
-  lua.lua_pushnumber(L, pixel[0]);
-  lua.lua_pushnumber(L, pixel[1]);
-  lua.lua_pushnumber(L, pixel[2]);
-  return 3;
+
+  pushRgbTable(L, pixel[0], pixel[1], pixel[2]);
+  return 1;
 }
 
 /**
  * Set one pixel to an RGB color.
  *
  * This is the most direct drawing primitive: great for point effects, particles,
- * and any algorithm that draws pixel-by-pixel.
+ * and any algorithm that draws pixel by pixel.
  *
  * Lua API: `set_pixel(x, y, {r, g, b})`
  *
@@ -495,7 +499,7 @@ function lua_setPixel(L) {
 /**
  * Blend a color onto one pixel instead of replacing it.
  *
- * Use this for transparency and softer visuals (trails, fades, glow-like overlays) by mixing
+ * Use this for transparency and softer visuals (trails, fades...) by mixing
  * with the color that is already on screen.
  *
  * Lua API: `set_pixel_blend(x, y, {r, g, b}, alpha)`
@@ -526,8 +530,10 @@ function lua_setPixelBlend(L) {
 /**
  * Draw a point using floating-point coordinates.
  *
- * This is useful when positions come from smooth/physics movement and you do
- * not want to round everything to integer coordinates yourself.
+ * Applies bilinear interpolation to spread out brightness on the surrounding pixels
+ * based on floating-point coordinates.
+ * Useful for smooth movement/animation where object positions are in floating-point
+ * coordinates.
  *
  * Lua API: `set_pixel_f(x, y, {r, g, b})`
  *
@@ -597,8 +603,10 @@ function lua_setUnsafePixelBrightness(L) {
 /**
  * Draw a rectangle using floating-point coordinates.
  *
- * Good for smooth movement/animation where object positions are not always on
- * exact integer pixel boundaries.
+ * Applies bilinear interpolation to spread out brightness on the surrounding pixels
+ * based on floating-point coordinates.
+ * Useful for smooth movement/animation where object positions are in floating-point
+ * coordinates.
  *
  * Lua API: `rect_f(x, y, w, h, {r, g, b})`
  *
@@ -775,27 +783,13 @@ function lua_line(L) {
   return 0;
 }
 
-// Already provided by the math standard library !
-// But maybe we want to use our own RNG ?
-// And make it the same between the emulator and the actual hardware ?
-// Maybe with a set_random_seed function as well ?
-// function lua_random(L) {
-//   let min = lua.lua_tointeger(L, 1);
-//   let max = lua.lua_tointeger(L, 2);
-//   if (min > max) [max, min] = [min, max]; // Quite self-explanatory, no ? Swap the two values if min is greater than max.
-//   // Generate a random integer between min and max inclusive.
-//   const random = Math.floor(Math.random() * (max - min + 1)) + min;
-//   lua.lua_pushnumber(L, random);
-//   return 1;
-// }
-
 /**
  * Check whether a mapped button is currently held down.
  *
  * Use this inside `update()` for continuous input (movement while a key is
  * held), as opposed to one-shot input events from `on_press`/`on_release`.
  *
- * Lua API: `is_pressed(key)` → `boolean`
+ * Lua API: `is_pressed(key)` -> `boolean`
  *
  * The `key` string must match the host's key map, e.g.:
  * - `LEFT_UP` / `LEFT_LEFT` / `LEFT_DOWN` / `LEFT_RIGHT`
@@ -823,12 +817,12 @@ function lua_isPressed(L) {
  *
  * Useful for timers, cooldowns, oscillations, and any time-based animation.
  *
- * Lua API: `get_time()` → `number`
+ * Lua API: `get_time()` -> `number`
  *
  * @luaName get_time
  * @luaKind function
  * @luaCategory time
- * @luaReturns number Seconds (floating point) since the Lua state was created.
+ * @luaReturns `number` Seconds (floating point) since the Lua state was created.
  * @luaExample local t = get_time()
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -841,17 +835,19 @@ function lua_getTime(L) {
 }
 
 /**
- * Make a sound.
+ * Play a tone at the given frequency for the given duration.
+ *
+ * Useful for beeps, notifications, and simple audio effects.
  *
  * Lua API: `buzz(frequency, duration)`
  *
  * @luaName buzz
  * @luaKind function
- * @luaCategory sound
+ * @luaCategory audio
  * @luaParams frequency:number frequency in Hz
- * @luaParams duration:number duration in milliseconds
+ * @luaParams duration:number duration in milliseconds (max 30s)
  * @luaReturns nil
- * @luaExample buzz(440, 1000)
+ * @luaExample buzz(440, 1000) # Play a 440Hz tone for 1 second
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
  * @returns {number} Number of values returned to Lua (always 0).
@@ -859,7 +855,9 @@ function lua_getTime(L) {
 function lua_buzz(L) {
   const frequency = lua.lua_tointeger(L, 1);
   const duration = lua.lua_tointeger(L, 2);
-  // TODO: make a sound
+
+  // Play the given frequency for the given duration.
+  playBuzzTone(frequency, duration);
 
   return 0;
 }
@@ -897,8 +895,8 @@ function lua_clear(L) {
 /**
  * Called once after your script is loaded and before the first frame starts.
  *
- * Use this to initialize game state, clear/fill the screen, and set up any
- * values that should persist across frames.
+ * Use this to initialize game state and set up any values that should persist across
+ * frames.
  *
  * Lua API: `setup()`
  *
