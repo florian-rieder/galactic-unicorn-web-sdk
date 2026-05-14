@@ -21,6 +21,7 @@ let music = null;
 let noteTimeout = null;
 let musicIndex = 0;
 let musicLoop = false;
+let musicPlaying = false;
 
 export function setTempo(new_bpm) {
   if (new_bpm <= 0) {
@@ -37,11 +38,8 @@ export function setTicksPerBeat(new_ticks_per_beat) {
 }
 
 export function loadMusic(music_string) {
-  console.log("loadMusic", music_string);
   // Parse the music string and create a list of notes and durations
   music = parseMusic(music_string);
-
-  console.log("loadMusic", music);
 }
 
 export function playMusic(loop) {
@@ -56,12 +54,14 @@ export function playMusic(loop) {
     throw new Error("No music to play. Call loadMusic() first.");
   }
 
+  musicPlaying = true;
   playNextNote();
 }
 
 export function pauseMusic() {
   clearTimeout(noteTimeout);
   noteTimeout = null;
+  musicPlaying = false;
 }
 
 export function resumeMusic() {
@@ -70,6 +70,7 @@ export function resumeMusic() {
     return;
   }
 
+  musicPlaying = true;
   playNextNote();
 }
 
@@ -81,9 +82,14 @@ export function stopMusic() {
   musicIndex = 0;
   clearTimeout(noteTimeout);
   noteTimeout = null;
+  musicPlaying = false;
 }
 
-function tickToMilliseconds(ticks) {
+export function isMusicPlaying() {
+  return musicPlaying;
+}
+
+function tickToMs(ticks) {
   return (ticks / ticksPerBeat) * (60 / bpm) * 1000;
 }
 
@@ -97,7 +103,7 @@ function parseMusic(music_string) {
     const frequency = noteToFrequency(noteText);
 
     // Convert the duration ticks to milliseconds
-    const duration = tickToMilliseconds(parseInt(durationTicks));
+    const duration = tickToMs(parseInt(durationTicks));
 
     return { frequency, duration };
   });

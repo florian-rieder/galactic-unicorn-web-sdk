@@ -61,6 +61,7 @@ const luaApiFunctions = [
   { luaName: "pause_music", luaFunction: lua_pauseMusic },
   { luaName: "resume_music", luaFunction: lua_resumeMusic },
   { luaName: "stop_music", luaFunction: lua_stopMusic },
+  { luaName: "is_music_playing", luaFunction: lua_isMusicPlaying },
 ];
 
 /**
@@ -1091,6 +1092,26 @@ function lua_stopMusic(L) {
     return 0;
   }
   return 0;
+}
+
+/**
+ * Check if music is currently playing.
+ *
+ * Lua API: `is_music_playing()`
+ *
+ * @luaName is_music_playing
+ * @luaKind function
+ * @luaCategory sound
+ * @luaReturns boolean `true` if music is playing, otherwise `false`
+ * @luaExample if is_music_playing() then ... end
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_isMusicPlaying(L) {
+  const isMusicPlaying = isMusicPlaying();
+  lua.lua_pushboolean(L, isMusicPlaying);
+  return 1;
 }
 
 // Callbacks, for documentation purposes only. We define dummy js functions just so that
