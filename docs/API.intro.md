@@ -79,8 +79,8 @@ These are the default keyboard keys and button names used by `is_pressed`,
 | `R_LEFT` | Arrow Left |
 | `R_DOWN` | Arrow Down |
 | `R_RIGHT` | Arrow Right |
-| `L_TRIGGER` | `q` |
-| `R_TRIGGER` | `e` |
+| `L_BUMP` | `q` |
+| `R_BUMP` | `e` |
 | `MENU` | `1` |
 | `ESC` | `2` |
 
