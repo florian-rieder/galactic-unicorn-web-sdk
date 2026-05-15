@@ -2,12 +2,15 @@ import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
 import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
-import { readFile, writeFile } from "./file-system.js";
+import { listFiles, readFile, writeFile } from "./file-system.js";
+import { initFileExplorer } from "./file-explorer.js";
 
 initResizers();
+initFileExplorer();
 render(); // Render the initial state of the display
 
-const targetDeltaTime = 1000 / 30; // 30fps
+const TARGET_FPS = 60
+const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-button");
@@ -36,6 +39,8 @@ fileInput.addEventListener("change", () => {
     reader.readAsArrayBuffer(file);
   }
 });
+
+listFiles()
 
 function startSession() {
   // If a loop is already running, stop it.
@@ -93,7 +98,7 @@ function mainLoop() {
   render();
 
   // Time management: aim for a 30fps update rate.
-  const timeToWait = targetDeltaTime - deltaTime;
+  const timeToWait = TARGET_DELTA_TIME - deltaTime;
   if (timeToWait > 0) {
     timeoutId = setTimeout(() => {
       frameId = requestAnimationFrame(mainLoop);

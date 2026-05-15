@@ -65,3 +65,22 @@ export function fileSizeAtPath(path) {
   let file = readFile(path);
   return file.length;
 }
+
+/**
+ * List files in the file system
+ * @param {String} prefix defaults to "/"
+ * @returns list of file paths that begin with the prefix
+ */
+export function listFiles(prefix="/") {
+  // Prevent listing localStorage methods as file paths
+  if (prefix === "") prefix = "/";
+
+  let filesList = []
+  for (let key in localStorage) {
+    if (key.startsWith(prefix)) {
+      filesList.push(key)
+    }
+  }
+
+  return filesList;
+}

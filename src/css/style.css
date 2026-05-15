@@ -2,13 +2,20 @@ html {
     overflow: hidden;
 }
 
+:root {
+    --primary-bg: #1e1e1e;
+    --primary-border: #2c2c2c;
+    --tree-icon-folder-color: #e69c2d;
+    --tree-icon-file-color: #529dfa;
+}
+
 body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100vh;
     overflow: hidden;
-    background-color: #1e1e1e;
+    background-color: var(--primary-bg);
     display: flex;
     flex-direction: column;
     color: white;
@@ -17,8 +24,8 @@ body {
 #console {
     flex: 1;
     min-height: 0;
-    background-color: #1e1e1e;
-    border-top: 1px solid #2c2c2c;
+    background-color: var(--primary-bg);
+    border-top: 1px solid var(--primary-border);
     padding: 10px;
     font-family: monospace;
     font-size: 12px;
@@ -43,7 +50,7 @@ body {
 .resizer-h {
     height: 5px;
     cursor: row-resize;
-    background: #2c2c2c;
+    background: var(--primary-border);
     flex-shrink: 0;
     transition: background 0.1s;
 }
@@ -51,7 +58,7 @@ body {
 .resizer-v {
     width: 5px;
     cursor: col-resize;
-    background: #2c2c2c;
+    background: var(--primary-border);
     flex-shrink: 0;
     transition: background 0.1s;
 }
@@ -61,7 +68,7 @@ body {
     background: #444;
 }
 #toolbar {
-    border-bottom: 1px solid #2c2c2c;
+    border-bottom: 1px solid var(--primary-border);
     padding: 0 12px;
     height: 42px;
     flex-shrink: 0;
@@ -106,7 +113,7 @@ body {
     top: calc(100% + 6px);
     left: 50%;
     transform: translateX(-50%);
-    background: #2c2c2c;
+    background: var(--primary-border);
     color: #ccc;
     font-size: 12px;
     font-family: sans-serif;
@@ -146,9 +153,75 @@ body {
     min-width: 0;
 }
 
+#editor-pane {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    border-left: 1px solid var(--primary-border);
+}
+
 #monaco-container {
     flex: 1;
     min-width: 0;
     min-height: 0;
-    border-left: 1px solid #2c2c2c;
+}
+
+#file-explorer {
+    flex: 0 0 220px;
+    min-width: 120px;
+    min-height: 0;
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 8px;
+    background-color: var(--primary-bg);
+    border-left: 1px solid var(--primary-border);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+#file-explorer ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 1em;
+}
+
+#file-explorer > .file-tree {
+    padding-left: 0;
+}
+
+#file-explorer button {
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+#file-explorer summary {
+    cursor: pointer;
+}
+
+#file-explorer .tree-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: -3px;
+    background-color: currentColor;
+    mask: center / 16px no-repeat;
+}
+
+/* mask + color for svg icons: tints external SVGs (background-image can't be recolored) */
+#file-explorer .tree-icon--folder {
+    color: var(--tree-icon-folder-color);
+    mask-image: url("/assets/images/folder.svg");
+}
+
+#file-explorer .tree-icon--file {
+    color: var(--tree-icon-file-color);
+    mask-image: url("/assets/images/file.svg");
 }

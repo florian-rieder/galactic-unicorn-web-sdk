@@ -11,7 +11,7 @@ const editorOptions = {
 
 const { clampByte, hslToRgb, rgbToHsl } = window.ColorUtils;
 
-const LOCAL_STORAGE_LUA_USER_CODE_KEY = "__lua_user_code"
+const LOCAL_STORAGE_LUA_USER_CODE_KEY = "/main.lua"
 const UPDATE_TIMEOUT_DURATION_MS = 100
 
 function registerLuaColorProvider() {

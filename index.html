@@ -11,25 +11,11 @@
   <body>
     <div id="toolbar">
       <button id="run-button" class="toolbar-btn" title="Run" disabled>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-        >
-          <polygon points="5,3 19,12 5,21" fill="#4ec94e" />
-        </svg>
+        <img src="/assets/images/play-button.svg" alt="Run">
         <span class="tooltip">Run</span>
       </button>
       <button id="stop-button" class="toolbar-btn" title="Stop">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-        >
-          <rect x="4" y="4" width="16" height="16" fill="#ec4e4e" />
-        </svg>
+        <img src="/assets/images/stop-button.svg" alt="Stop">
         <span class="tooltip">Stop</span>
       </button>
       <input id="fileUpload" type="file" />
@@ -40,38 +26,26 @@
         class="toolbar-btn toolbar-btn-docs"
         title="Open Lua API docs"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-        >
-          <circle cx="12" cy="12" r="9" fill="#cfd8dc" />
-          <path
-            d="M9.8 9.5a2.2 2.2 0 1 1 3.4 1.8c-.9.6-1.4 1.1-1.4 2.1"
-            fill="none"
-            stroke="#1e1e1e"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <circle cx="11.8" cy="16.8" r="0.9" fill="#1e1e1e" />
-        </svg>
+      <img src="/assets/images/help.svg" alt="Help icon">
         <span class="tooltip">API docs</span>
       </a>
     </div>
     <div id="container">
       <div id="app">
-        <div id="display-wrapper">
+        <div id="display-wrapper" aria-label="LED Matrix emulator">
           <canvas id="display"></canvas>
         </div>
         <div class="resizer resizer-h"></div>
-        <div id="console">
+        <div id="console" aria-label="Serial output">
           <pre id="console-output"></pre>
         </div>
       </div>
       <div class="resizer resizer-v"></div>
-      <div id="monaco-container"></div>
+      <div id="editor-pane">
+        <div id="monaco-container" aria-label="Text editor"></div>
+        <div class="resizer resizer-v"></div>
+        <aside id="file-explorer" aria-label="Project files"></aside>
+      </div>
     </div>
 
     <!-- Load Fengari -->
