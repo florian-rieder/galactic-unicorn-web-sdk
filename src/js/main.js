@@ -19,7 +19,7 @@ runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 
 // Upload files
-const fileInput = document.querySelector("#fileUpload");
+const fileInput = document.querySelector("#file-upload-input");
 fileInput.addEventListener("change", () => {
   for (const file of fileInput.files) {
     console.log(file);

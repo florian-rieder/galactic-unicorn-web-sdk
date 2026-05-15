@@ -169,17 +169,31 @@ body {
     min-height: 0;
 }
 
-#file-explorer {
+#file-explorer-pane {
+    display: flex;
+    flex-direction: column;
     flex: 0 0 220px;
     min-width: 120px;
     min-height: 0;
-    overflow: auto;
-    box-sizing: border-box;
     padding: 8px;
+    gap: 10px;
+    box-sizing: border-box;
     background-color: var(--primary-bg);
     border-left: 1px solid var(--primary-border);
+    overflow: hidden;
+}
+
+#file-explorer-pane #file-upload-input {
+    flex-shrink: 0;
+}
+
+#file-explorer {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
     font-family: monospace;
-    font-size: 12px;
+    font-size: 14px;
+    overflow: auto;
 }
 
 #file-explorer ul {
@@ -199,14 +213,21 @@ body {
     font: inherit;
     cursor: pointer;
     padding: 0;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
 #file-explorer summary {
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
 #file-explorer .tree-icon {
     display: inline-block;
+    flex-shrink: 0;
     width: 16px;
     height: 16px;
     margin-right: 4px;

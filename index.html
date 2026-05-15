@@ -11,14 +11,13 @@
   <body>
     <div id="toolbar">
       <button id="run-button" class="toolbar-btn" title="Run" disabled>
-        <img src="/assets/images/play-button.svg" alt="Run">
+        <img src="/assets/images/play-button.svg" alt="Run" />
         <span class="tooltip">Run</span>
       </button>
       <button id="stop-button" class="toolbar-btn" title="Stop">
-        <img src="/assets/images/stop-button.svg" alt="Stop">
+        <img src="/assets/images/stop-button.svg" alt="Stop" />
         <span class="tooltip">Stop</span>
       </button>
-      <input id="fileUpload" type="file" />
       <a
         href="docs/generated/api.html"
         target="_blank"
@@ -26,7 +25,7 @@
         class="toolbar-btn toolbar-btn-docs"
         title="Open Lua API docs"
       >
-      <img src="/assets/images/help.svg" alt="Help icon">
+        <img src="/assets/images/help.svg" alt="Help icon" />
         <span class="tooltip">API docs</span>
       </a>
     </div>
@@ -44,7 +43,10 @@
       <div id="editor-pane">
         <div id="monaco-container" aria-label="Text editor"></div>
         <div class="resizer resizer-v"></div>
-        <aside id="file-explorer" aria-label="Project files"></aside>
+        <aside id="file-explorer-pane" aria-label="Project files">
+          <input id="file-upload-input" type="file" />
+          <div id="file-explorer"></div>
+        </aside>
       </div>
     </div>
 
