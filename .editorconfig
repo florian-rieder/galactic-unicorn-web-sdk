@@ -11,3 +11,7 @@ insert_final_newline = true
 [*.lua]
 indent_style = space
 indent_size = 2
+
+[*.js]
+indent_style = space
+indent_size = 2
