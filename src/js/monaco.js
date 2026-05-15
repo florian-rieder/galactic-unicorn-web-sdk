@@ -11,6 +11,9 @@ const editorOptions = {
 
 const { clampByte, hslToRgb, rgbToHsl } = window.ColorUtils;
 
+const LOCAL_STORAGE_LUA_USER_CODE_KEY = "__lua_user_code"
+const UPDATE_TIMEOUT_DURATION_MS = 100
+
 function registerLuaColorProvider() {
   monaco.languages.registerColorProvider("lua", {
     provideDocumentColors(model) {
@@ -384,7 +387,7 @@ function installSdkNameHighlights(editor, api) {
     // Debounce decoration updates so fast typing/scrolling does not trigger
     // a full visible-range scan on every single event.
     if (updateTimeoutId != null) clearTimeout(updateTimeoutId);
-    updateTimeoutId = setTimeout(() => computeDecorations(), 100);
+    updateTimeoutId = setTimeout(() => computeDecorations(), UPDATE_TIMEOUT_DURATION_MS);
   }
 
   // Initial render + updates on edits.
@@ -443,7 +446,7 @@ require(["vs/editor/editor.main"], function () {
     document.getElementById("run-button").disabled = false;
   }
 
-  const savedCode = localStorage.getItem("lua_code");
+  const savedCode = localStorage.getItem(LOCAL_STORAGE_LUA_USER_CODE_KEY);
   if (savedCode) {
     createEditor(savedCode);
   } else {
@@ -461,11 +464,11 @@ function save() {
   var value = window.editor.getValue();
 
   if (value === "") {
-    localStorage.removeItem("lua_code");
+    localStorage.removeItem(LOCAL_STORAGE_LUA_USER_CODE_KEY);
     return;
   }
 
-  localStorage.setItem("lua_code", value);
+  localStorage.setItem(LOCAL_STORAGE_LUA_USER_CODE_KEY, value);
 }
 
 window.addEventListener("keydown", (event) => {

@@ -23,6 +23,7 @@ import {
   setTempo,
   setTicksPerBeat,
 } from "./music.js";
+import { fileSizeAtPath, readFile, readFileChunk } from "./file-system.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 /**
@@ -48,7 +49,6 @@ const luaApiFunctions = [
   { luaName: "fill", luaFunction: lua_fill },
   { luaName: "fill_blend", luaFunction: lua_fillBlend },
   { luaName: "line", luaFunction: lua_line },
-  // { luaName: "random", luaFunction: lua_random },
   { luaName: "is_pressed", luaFunction: lua_isPressed },
   { luaName: "get_time", luaFunction: lua_getTime },
   //{ luaName: "get_frame", luaFunction: lua_getFrame },
@@ -62,6 +62,9 @@ const luaApiFunctions = [
   { luaName: "resume_music", luaFunction: lua_resumeMusic },
   { luaName: "stop_music", luaFunction: lua_stopMusic },
   { luaName: "is_music_playing", luaFunction: lua_isMusicPlaying },
+  { luaName: "read_file", luaFunction: lua_readFile },
+  { luaName: "read_file_chunk", luaFunction: lua_readFileChunk },
+  { luaName: "file_size", luaFunction: lua_fileSize },
 ];
 
 /**
@@ -113,7 +116,7 @@ const dangerousFunctions = [
   "collectgarbage",
 ];
 
-const LUA_EXECUTION_BUDGET_MS = 100; // Stop Lua execution after this many ms.
+const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after this many ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every 1000 instructions.
 
 let currentLuaState = null;
@@ -1111,6 +1114,85 @@ function lua_stopMusic(L) {
 function lua_isMusicPlaying(L) {
   const isMusicPlaying = isMusicPlaying();
   lua.lua_pushboolean(L, isMusicPlaying);
+  return 1;
+}
+
+/**
+ * Read a complete file at the given path
+ *
+ * Lua API: `read_file(path)`
+ *
+ * @luaName read_file
+ * @luaKind function
+ * @luaCategory file-system
+ * @luaParams path:string path to the file
+ * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaExample my_file = read_file("/file.bin")
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_readFile(L) {
+  const path = lua.lua_tojsstring(L, 1);
+
+  let file = readFile(path);
+
+  lua.lua_pushlstring(L, file, file.length);
+
+  return 1;
+}
+
+/**
+ * Read a chunk of data from the file at the given path, offset and size
+ *
+ * Lua API: `read_file_chunk(path)`
+ *
+ * @luaName read_file_chunk
+ * @luaKind function
+ * @luaCategory file-system
+ * @luaParams path:string path to the file
+ * @luaParams offset:int offset since the start of the file in bytes
+ * @luaParams size:int size of the chunk to read in bytes
+ * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaExample my_file = read_file("/file.bin")
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_readFileChunk(L) {
+  const path = lua.lua_tojsstring(L, 1);
+  const offset = lua.lua_tointeger(L, 2);
+  const size = lua.lua_tointeger(L, 3);
+
+  let chunk = readFileChunk(path, offset, size);
+
+  lua.lua_pushlstring(L, chunk, chunk.length);
+
+  return 1;
+}
+
+/**
+ * Get the size of the file at path
+ *
+ * Lua API: `file_size(path)`
+ *
+ * @luaName file_size
+ * @luaKind function
+ * @luaCategory file-system
+ * @luaParams path:string path to the file
+ * @luaReturns int: size of the file in bytes
+ * @luaExample size = file_size("/file.bin")
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_fileSize(L) {
+  const path = lua.lua_tojsstring(L, 1);
+
+  let size = fileSizeAtPath(path);
+
+  lua.lua_pushinteger(L, size);
+
   return 1;
 }
 

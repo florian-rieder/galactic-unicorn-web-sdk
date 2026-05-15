@@ -2,6 +2,7 @@ import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
 import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
+import { readFile, writeFile } from "./file-system.js";
 
 initResizers();
 render(); // Render the initial state of the display
@@ -11,13 +12,35 @@ const targetDeltaTime = 1000 / 30; // 30fps
 // Toolbar control buttons
 const runButton = document.getElementById("run-button");
 const stopButton = document.getElementById("stop-button");
-runButton.addEventListener("click", start);
-stopButton.addEventListener("click", stop);
+runButton.addEventListener("click", startSession);
+stopButton.addEventListener("click", stopSession);
 
-function start() {
+// Upload files
+const fileInput = document.querySelector("#fileUpload");
+fileInput.addEventListener("change", () => {
+  for (const file of fileInput.files) {
+    console.log(file);
+    const reader = new FileReader();
+
+    // When the reader reads the file, it encodes it as base64 and writes it to localStorage
+    reader.onload = (event) => {
+      console.log(event.target.result);
+      // Get the file as a raw byte array buffer
+      const arrayBuffer = event.target.result;
+      // Create a Uint8Array view to be able to read the array buffer
+      const view = new Uint8Array(arrayBuffer);
+
+      writeFile("/video/rickroll.guv", view);
+    };
+    // Convert the file contents to a byte array suitable for storage
+    reader.readAsArrayBuffer(file);
+  }
+});
+
+function startSession() {
   // If a loop is already running, stop it.
   if (frameId != null || timeoutId != null) {
-    stop();
+    stopSession();
   }
 
   const code = window.editor.getValue();
@@ -35,7 +58,7 @@ function start() {
   frameId = requestAnimationFrame(mainLoop);
 }
 
-function stop() {
+function stopSession() {
   closeLua();
   stopMusic();
   lastTime = null;
