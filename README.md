@@ -37,7 +37,7 @@ Use any static local web server from the repository root.
 
 Example options:
 
-- VS Code Five Server extension (recommended if that is your current workflow)
+- VS Code Five Server extension
 - Python: `python3 -m http.server 5500`
 - [Simple Web Server](https://simplewebserver.org/)
 
@@ -50,9 +50,8 @@ Lua host bindings documentation are generated from `src/js/lua.js` JSDoc + API r
 Generate artifacts with:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python scripts/generate_lua_api.py
+pip install -r requirements.txt
+python scripts/generate_lua_api.py
 ```
 
 This writes:

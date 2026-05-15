@@ -8,12 +8,12 @@ snake = {}
 snake_direction = SNAKE_INITIAL_DIRECTION
 food_position = {x=0, y=0}
 time_since_last_move = 0
-game_over = false
 
 function setup()
   -- Reset snake
   snake = {}
   snake_direction = SNAKE_INITIAL_DIRECTION
+  time_since_last_move = 0
 
   -- Initialize the snake
   for i = 1, SNAKE_INITIAL_LENGTH do
@@ -38,14 +38,25 @@ function update(dt)
   end
 
   -- Move
-  new_x = snake[1].x + snake_direction.x
-  new_y = snake[1].y + snake_direction.y
+  local new_x = snake[1].x + snake_direction.x
+  local new_y = snake[1].y + snake_direction.y
 
   -- Loop around the screen edges
   if new_x < 0 then new_x = SCREEN_W - 1 end
   if new_x > SCREEN_W - 1 then new_x = 0 end
   if new_y < 0 then new_y = SCREEN_H - 1 end
   if new_y > SCREEN_H - 1 then new_y = 0 end
+
+  local ate_food = false
+
+  -- Eat food or remove the tail
+  if food_position.x == new_x and food_position.y == new_y then
+    -- If we ate food, we leave the tail, making the snake longer by 1
+    ate_food = true
+  else
+    -- Remove the tail first so moving into where it was is allowed
+    table.remove(snake)
+  end
 
   if is_collision(new_x, new_y) then
     -- Die
@@ -56,20 +67,16 @@ function update(dt)
   -- Insert a new head at the next position
   table.insert(snake, 1, {x = new_x, y = new_y})
 
-  -- Eat food or remove the tail
-  if food_position.x == new_x and food_position.y == new_y then
-    -- If we ate food, we leave the tail, making the snake longer by 1
+  -- Spawn a new food at the end, after the new snake position is known
+  if ate_food then
     spawn_food()
-  else
-    -- Remove the tail
-    table.remove(snake)
   end
 
   time_since_last_move = 0
 end
 
 function on_press(btn)
-  local new_dir = {}
+  local new_dir
 
   if btn == "L_LEFT" or btn == "R_LEFT" then new_dir = {x=-1, y=0}
   elseif btn == "L_RIGHT" or btn == "R_RIGHT" then new_dir = {x=1, y=0}
@@ -77,7 +84,7 @@ function on_press(btn)
   elseif btn == "L_DOWN" or btn == "R_DOWN" then new_dir = {x=0, y=1}
   else return end -- Ignore other inputs
 
-  -- Ignore new direction if it is the opposite of the current direction
+  -- Prevent 180 degrees turns
   if new_dir.x + snake_direction.x == 0 then return end
   if new_dir.y + snake_direction.y == 0 then return end
 
