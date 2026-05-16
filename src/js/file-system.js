@@ -16,7 +16,6 @@ export function writeFile(path, data) {
   const base64EncodedData = btoa(binaryString);
 
   try {
-    console.log("Writing file " + path);
     localStorage.setItem(path, base64EncodedData);
   } catch (e) {
     console.error(e);

@@ -51,7 +51,7 @@ export function openFile(path) {
     currentOpenPath = path;
   } else {
     // Binary file: show file size
-    setEditorText(`Binary (${fileSizeAtPath(path)}b)`)
+    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`)
     // If we load binary into the editor we need to NOT save it upon exit!
     currentOpenPath = null;
   }
