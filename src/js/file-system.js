@@ -16,6 +16,7 @@ export function writeFile(path, data) {
   const base64EncodedData = btoa(binaryString);
 
   try {
+    console.log("Writing file " + path);
     localStorage.setItem(path, base64EncodedData);
   } catch (e) {
     console.error(e);
@@ -52,19 +53,45 @@ export function readFile(path) {
   return bytes;
 }
 
+/**
+ * Read a specific chunk of a file in the virtual file system
+ * @param {String} path path of the file in the virtual file system
+ * @param {int} offset start position of the chunk in bytes
+ * @param {int} size size of the chunk in bytes
+ * @returns {Uint8Array|null} raw byte array representing the chunk of data from the file
+ */
 export function readFileChunk(path, offset, size) {
   // Inefficient emulation of chunked reading. We can't really read only a chunk
   // of a value from localStorage
   const file = readFile(path);
+  if (file === null) return null;
   return file.subarray(offset, offset + size);
 }
 
+/**
+ * Get the size of a file in the virtual file system
+ * @param {String} path 
+ * @returns {int} size of the file in bytes
+ */
 export function fileSizeAtPath(path) {
   // This is inefficient. We could probably store the file size in the
   // localStorage item as metadata in some way instead.
   let file = readFile(path);
-  return file.length;
+  let size = 0;
+  if (file !== null) {
+    size = file.length;
+  }
+  return size;
 }
+
+/**
+ * Check if a file exists in the virtual file system
+ * @param {String} path 
+ * @returns {bool} whether the file exists 
+ */
+export function fileExists(path) {
+  return localStorage.getItem(path) !== null;
+} 
 
 /**
  * List files in the file system

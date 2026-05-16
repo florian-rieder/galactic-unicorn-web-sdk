@@ -4,15 +4,19 @@ import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
 import { writeFile } from "./file-system.js";
 import { initFileExplorer } from "./file-explorer.js";
-import { initMonaco } from "./monaco.js";
+import { initMonaco, getEditorText } from "./monaco.js";
+import { initWorkspace, maybeLoadDefaultScript } from "./workspace.js";
 
 await initMonaco();
+maybeLoadDefaultScript();
 
 initResizers();
 initFileExplorer();
+initWorkspace()
+
 render(); // Render the initial state of the display
 
-const TARGET_FPS = 60
+const TARGET_FPS = 60;
 const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
 
 // Toolbar control buttons
@@ -21,35 +25,13 @@ const stopButton = document.getElementById("stop-button");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 
-// Upload files
-const fileInput = document.querySelector("#file-upload-input");
-fileInput.addEventListener("change", () => {
-  for (const file of fileInput.files) {
-    console.log(file);
-    const reader = new FileReader();
-
-    // When the reader reads the file, it encodes it as base64 and writes it to localStorage
-    reader.onload = (event) => {
-      console.log(event.target.result);
-      // Get the file as a raw byte array buffer
-      const arrayBuffer = event.target.result;
-      // Create a Uint8Array view to be able to read the array buffer
-      const view = new Uint8Array(arrayBuffer);
-
-      writeFile("/video/rickroll.guv", view);
-    };
-    // Convert the file contents to a byte array suitable for storage
-    reader.readAsArrayBuffer(file);
-  }
-});
-
 function startSession() {
   // If a loop is already running, stop it.
   if (frameId != null || timeoutId != null) {
     stopSession();
   }
 
-  const code = window.editor.getValue();
+  const code = getEditorText();
   // Initialize the Lua session.
   initLua();
   // Load the code into Lua

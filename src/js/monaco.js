@@ -1,7 +1,6 @@
 import * as monaco from "monaco-editor";
 import "monaco-editor/min/vs/editor/editor.main.css";
 import { clampByte, hslToRgb, rgbToHsl } from "./color.js";
-import defaultSnakeLua from "../lua/snake.lua?raw";
 
 const editorOptions = {
   language: "lua", // Language (supports html, css, python, etc.)
@@ -14,8 +13,9 @@ const editorOptions = {
   automaticLayout: true, // Enable resizing of the editor
 };
 
-const LOCAL_STORAGE_LUA_USER_CODE_KEY = "/main.lua"
 const UPDATE_TIMEOUT_DURATION_MS = 100
+
+let editor;
 
 function registerLuaColorProvider() {
   monaco.languages.registerColorProvider("lua", {
@@ -401,8 +401,10 @@ function installSdkNameHighlights(editor, api) {
 
 /**
  * Creates the Monaco editor and registers Lua SDK helpers. Call once at startup.
+ * 
+ * @param {String} defaultTextContent text content to load as the default buffer upon load
  */
-export async function initMonaco() {
+export async function initMonaco(defaultTextContent = "") {
   let sdkApi = null;
   let highlightsInstalled = false;
   registerLuaColorProvider();
@@ -421,43 +423,30 @@ export async function initMonaco() {
 
   const container = document.getElementById("monaco-container");
 
-  function createEditor(defaultCode = "") {
-    editorOptions.value = defaultCode;
-    window.editor = monaco.editor.create(container, editorOptions);
-    if (sdkApi && !highlightsInstalled) {
-      highlightsInstalled = true;
-      installSdkNameHighlights(window.editor, sdkApi);
-    }
-    document.getElementById("run-button").disabled = false;
+  // Create the editor
+  editorOptions.value = defaultTextContent;
+  editor = monaco.editor.create(container, editorOptions);
+  if (sdkApi && !highlightsInstalled) {
+    highlightsInstalled = true;
+    installSdkNameHighlights(editor, sdkApi);
   }
 
-  const savedCode = localStorage.getItem(LOCAL_STORAGE_LUA_USER_CODE_KEY);
-  if (savedCode) {
-    createEditor(savedCode);
-  } else {
-    createEditor(defaultSnakeLua);
-  }
+  // Enable the play button only after the editor has successfully loaded
+  document.getElementById("run-button").disabled = false;
 }
 
-/** Persist the current editor buffer (Ctrl/Cmd+S). */
-export function save() {
-  // get the value of the data
-  var value = window.editor.getValue();
-
-  if (value === "") {
-    localStorage.removeItem(LOCAL_STORAGE_LUA_USER_CODE_KEY);
-    return;
-  }
-
-  localStorage.setItem(LOCAL_STORAGE_LUA_USER_CODE_KEY, value);
+/**
+ * Set a given string as the open buffer in the monaco editor
+ * @param {String} text 
+ */
+export function setEditorText(text) {
+  editor.setValue(text);
 }
 
-window.addEventListener("keydown", (event) => {
-  if (
-    (event.key === "s" && event.ctrlKey) ||
-    (event.key === "s" && event.metaKey)
-  ) {
-    event.preventDefault();
-    save();
-  }
-});
+/**
+ * Get the currently open buffer in the monaco editor
+ * @returns {String} the open buffer in the monaco editor
+ */
+export function getEditorText() {
+  return editor.getValue();
+}
