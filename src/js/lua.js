@@ -126,6 +126,58 @@ let currentLuaState = null;
 
 const consoleOutput = document.getElementById("console-output");
 
+function lua_virtualFsPackageSearcher(L) {
+  const modulePath = lua.lua_tojsstring(L, 1);
+
+  // TODO: Transform moduleName into host path (?)
+  // require("utils") -> current_script_directory/utils.lua
+  // require("module.utils") -> current_script_directory/module/utils.lua
+
+  const rawFile = readFile(modulePath);
+  if (!rawFile) {
+    lua.lua_pushstring(
+      L,
+      to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`),
+    );
+    return 1;
+  }
+
+  const loadStatus = lauxlib.luaL_loadbuffer(
+    L,
+    rawFile,
+    rawFile.length,
+    to_luastring(modulePath),
+  );
+  if (loadStatus !== lua.LUA_OK) {
+    const err = lua.lua_tojsstring(L, -1);
+    lua.lua_pop(L, 1);
+    lua.lua_pushstring(
+      L,
+      to_luastring(
+        `\n\terror loading '${modulePath}' from virtual filesystem:\n\t${err}`,
+      ),
+    );
+    return 1;
+  }
+
+  // We return the loaded chunk (luaL_loadbuffer pushes it to the stack) so 1 is the number of return values.
+  return 1;
+}
+
+function registerVirtualFsPackageSearchers(L) {
+  lua.lua_getglobal(L, "package");
+  // Create a new table for the searchers
+  lua.lua_createtable(L, 1, 0);
+  // Push the searcher function to the stack.
+  lua.lua_pushcfunction(L, lua_virtualFsPackageSearcher);
+  // Set the searcher function at index 1 in the searchers table.
+  lua.lua_rawseti(L, -2, 1);
+  // Set the searchers table as the value of the "searchers" field in the package table.
+  lua.lua_setfield(L, -2, "searchers");
+  // Pop the package table from the stack.
+  lua.lua_pop(L, 1);
+}
+
 export function initLua() {
   if (currentLuaState !== null) {
     console.warn("Lua session already initialized. Call closeLua() first.");
@@ -159,8 +211,8 @@ export function initLua() {
   lua.lua_pop(L, 1);
   lauxlib.luaL_requiref(L, to_luastring("table"), lualib.luaopen_table, 1);
   lua.lua_pop(L, 1);
-
-  L.luaStartTimeMs = performance.now();
+  lauxlib.luaL_requiref(L, to_luastring("package"), lualib.luaopen_package, 1);
+  lua.lua_pop(L, 1);
 
   // -- Constants registration
 
@@ -181,6 +233,9 @@ export function initLua() {
     lua.lua_setglobal(L, to_luastring(luaName));
   }
 
+  registerVirtualFsPackageSearchers(L);
+
+  L.luaStartTimeMs = performance.now();
   currentLuaState = L;
 }
 
