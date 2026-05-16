@@ -24,6 +24,9 @@ import {
   setTicksPerBeat,
 } from "./music.js";
 import { fileSizeAtPath, readFile, readFileChunk } from "./file-system.js";
+import fengari from "./vendor/fengari.js";
+import { hslToRgb } from "./color.js";
+
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 /**
@@ -398,7 +401,7 @@ function lua_hsl(L) {
   const hInput = lua.lua_tonumber(L, 1);
   const sInput = lua.lua_tonumber(L, 2);
   const lInput = lua.lua_tonumber(L, 3);
-  const rgb = window.ColorUtils.hslToRgb(hInput, sInput, lInput);
+  const rgb = hslToRgb(hInput, sInput, lInput);
   pushRgbTable(L, rgb.r, rgb.g, rgb.b);
   return 1;
 }
@@ -1124,7 +1127,7 @@ function lua_isMusicPlaying(L) {
  *
  * @luaName read_file
  * @luaKind function
- * @luaCategory file-system
+ * @luaCategory file system
  * @luaParams path:string path to the file
  * @luaReturns string binary string representing the file contents or null if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
@@ -1149,7 +1152,7 @@ function lua_readFile(L) {
  *
  * @luaName read_file_chunk
  * @luaKind function
- * @luaCategory file-system
+ * @luaCategory file system
  * @luaParams path:string path to the file
  * @luaParams offset:int offset since the start of the file in bytes
  * @luaParams size:int size of the chunk to read in bytes
@@ -1178,7 +1181,7 @@ function lua_readFileChunk(L) {
  *
  * @luaName file_size
  * @luaKind function
- * @luaCategory file-system
+ * @luaCategory file system
  * @luaParams path:string path to the file
  * @luaReturns int: size of the file in bytes
  * @luaExample size = file_size("/file.bin")

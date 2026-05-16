@@ -1,6 +1,7 @@
 .DS_Store
+node_modules/
 dist/
-src/generated/
-docs/generated/
+src/js/vendor/
+public/docs/
 .old
 .vscode/

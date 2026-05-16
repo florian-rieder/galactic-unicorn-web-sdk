@@ -5,27 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Galactic Unicorn SDK</title>
 
-    <link rel="stylesheet" href="src/css/style.css" />
+    <link rel="stylesheet" href="/src/css/style.css" />
   </head>
 
   <body>
     <div id="toolbar">
       <button id="run-button" class="toolbar-btn" title="Run" disabled>
-        <img src="/assets/images/play-button.svg" alt="Run" />
+        <img src="./assets/images/play-button.svg" alt="Run" />
         <span class="tooltip">Run</span>
       </button>
       <button id="stop-button" class="toolbar-btn" title="Stop">
-        <img src="/assets/images/stop-button.svg" alt="Stop" />
+        <img src="./assets/images/stop-button.svg" alt="Stop" />
         <span class="tooltip">Stop</span>
       </button>
       <a
-        href="docs/generated/api.html"
+        href="./docs/api.html"
         target="_blank"
         rel="noopener noreferrer"
         class="toolbar-btn toolbar-btn-docs"
         title="Open Lua API docs"
       >
-        <img src="/assets/images/help.svg" alt="Help icon" />
+        <img src="./assets/images/help.svg" alt="Help icon" />
         <span class="tooltip">API docs</span>
       </a>
     </div>
@@ -50,16 +50,6 @@
       </div>
     </div>
 
-    <!-- Load Fengari -->
-    <script src="dist/fengari.js"></script>
-    <!-- Shared color conversion utilities (global for module + AMD scripts) -->
-    <script src="src/js/color.js"></script>
-    <!-- Load Monaco's AMD loader -->
-    <script src="https://unpkg.com/monaco-editor@0.55.1/min/vs/loader.js"></script>
-
-    <!-- Configure the loader to use the CDN (must stay a plain script: uses AMD require()) -->
-    <script src="src/js/monaco.js"></script>
-    <!-- App entry point -->
-    <script type="module" src="src/js/main.js"></script>
+    <script type="module" src="/src/js/main.js"></script>
   </body>
 </html>

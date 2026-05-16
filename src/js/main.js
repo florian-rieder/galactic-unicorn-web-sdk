@@ -2,8 +2,11 @@ import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
 import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
-import { listFiles, readFile, writeFile } from "./file-system.js";
+import { writeFile } from "./file-system.js";
 import { initFileExplorer } from "./file-explorer.js";
+import { initMonaco } from "./monaco.js";
+
+await initMonaco();
 
 initResizers();
 initFileExplorer();
@@ -39,8 +42,6 @@ fileInput.addEventListener("change", () => {
     reader.readAsArrayBuffer(file);
   }
 });
-
-listFiles()
 
 function startSession() {
   // If a loop is already running, stop it.

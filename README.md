@@ -2,9 +2,11 @@
 
 Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser editor, and serial-style console output so you can iterate without reflashing hardware on every change.
 
+[Try now](https://florian-rieder.github.io/galactic-unicorn-web-sdk/)
+
 ## Why this exists
 
-Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat.
+Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
 
 ## What is included
 
@@ -21,50 +23,74 @@ The Lua API is still subject to breaking changes.
 
 ## Run locally
 
-The app must be served over a local web server (opening `index.html` directly will cause browser restrictions/CORS issues, especially around Monaco/module loading).
+The app is built with [Vite](https://vitejs.dev/). Use Node.js 18+.
 
-### 1) Build `fengari.js`
+### 1) Install dependencies
 
 ```bash
-bash build.sh
+npm install
 ```
 
-This script clones Fengari temporarily, builds a browser bundle, and writes it to `dist/fengari.js`.
+**`esbuild`** is used both by `vite-plugin-monaco-editor` and by the `build:fengari` script that bundles Fengari for the browser (runs automatically before `dev` / `build`).
 
-### 2) Serve the project
+### 2) Development server
 
-Use any static local web server from the repository root.
+```bash
+npm run dev
+```
 
-Example options:
+Open the URL Vite prints. The app is built with `base: '/galactic-unicorn-web-sdk/'` (GitHub Pages), so the dev entry is:
 
-- VS Code Five Server extension
-- Python: `python3 -m http.server 5500`
-- [Simple Web Server](https://simplewebserver.org/)
+`http://localhost:5173/galactic-unicorn-web-sdk/`
 
-Then open the served URL in your browser.
+Use that path (with trailing slash) so relative links like `./assets/...` resolve correctly. Hot reload is enabled.
+
+### 3) Production build
+
+```bash
+npm run build
+npm run preview
+```
+
+Static output goes to `dist/` for deployment. GitHub Pages serves this repo at  
+`https://florian-rieder.github.io/galactic-unicorn-web-sdk/` — the Vite `base` option matches that path.
+
+To test the production bundle locally, use `npm run preview` (serves `dist/` at the correct base).
+
+### Notes
+
+- Opening `index.html` directly from disk is **not** supported; always use `npm run dev` or serve `dist/` after `npm run build`.
+- UI assets live under `public/` (e.g. `public/assets/images/`).
+- Inlined UI assets live under `/src/assets` (because they're inlined by Vite when bundling and therefore don't need to be served statically)
 
 ## API documentation
 
 Lua host bindings documentation are generated from `src/js/lua.js` JSDoc + API registries.
 
-Generate artifacts with:
+During `npm run dev`, Vite watches `src/js/lua.js`, `docs/API.intro.md`, and `docs/templates/api.template.html`; each save reruns the generator and triggers a full reload when it succeeds. If `python` is missing from PATH or the script fails, the dev server keeps running and a warning is printed.
+
+Generate or refresh artifacts manually with:
 
 ```bash
 pip install -r requirements.txt
 python scripts/generate_lua_api.py
 ```
 
-This writes:
+This writes (all under the gitignored `public/docs/` so Vite serves them):
 
- - `docs/generated/API.md`
- - `src/generated/lua-api.json` (used by Monaco completion/hover)
- - `docs/generated/api.html` (opened from the toolbar "API docs" button)
+- `public/docs/API.md`
+- `public/docs/api.html` (opened from the toolbar "API docs" button)
+- `public/docs/lua-api.json` (consumed by Monaco completions/hover)
+
+Without manual generation or a successful dev-time run, Monaco completions stay empty and the toolbar API docs link 404s until `public/docs/` exists. For production, this generation step is done in CI.
 
 ## Key project files
 
-- `index.html` - main web app shell
-- `src/js/main.js` - run/stop flow and frame loop
-- `src/js/lua.js` - Lua state setup and host API bindings
-- `src/js/input.js` - keyboard mapping and button events
-- `src/js/display.js` - framebuffer and drawing helpers
-- `src/lua/` - example/demo Lua scripts
+- `index.html` — Vite app shell (entry script: `src/js/main.js`)
+- `vite.config.js` — Vite, Monaco plugin, and dev watcher that regenerates Lua API docs
+- `src/js/main.js` — run/stop flow and frame loop
+- `src/js/lua.js` — Lua state setup and host API bindings
+- `src/js/monaco.js` — editor bootstrap (ESM `monaco-editor`)
+- `src/js/input.js` — keyboard mapping and button events
+- `src/js/display.js` — framebuffer and drawing helpers
+- `src/lua/` — example/demo Lua scripts

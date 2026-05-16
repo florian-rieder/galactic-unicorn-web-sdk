@@ -1,0 +1,34 @@
+{
+  "name": "galactic-unicorn-web-sdk",
+  "version": "1.0.0",
+  "description": "Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser editor, and serial-style console output so you can iterate without reflashing hardware on every change.",
+  "type": "module",
+  "scripts": {
+    "build:fengari": "esbuild node_modules/fengari/src/fengari.js --bundle --format=esm --platform=browser --define:process.env.FENGARICONF=undefined --define:process.env.NODE_DEBUG=undefined --define:process.platform='\"browser\"' --external:os --external:fs --external:path --external:child_process --external:readline-sync --external:tmp --outfile=src/js/vendor/fengari.js",
+    "predev": "npm run build:fengari",
+    "prebuild": "npm run build:fengari",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florian-rieder/galactic-unicorn-web-sdk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/florian-rieder/galactic-unicorn-web-sdk/issues"
+  },
+  "homepage": "https://github.com/florian-rieder/galactic-unicorn-web-sdk#readme",
+  "dependencies": {
+    "fengari": "^0.1.5",
+    "monaco-editor": "^0.55.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "vite": "^8.0.13",
+    "vite-plugin-monaco-editor": "^1.1.0"
+  }
+}

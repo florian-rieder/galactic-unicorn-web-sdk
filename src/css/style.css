@@ -239,10 +239,10 @@ body {
 /* mask + color for svg icons: tints external SVGs (background-image can't be recolored) */
 #file-explorer .tree-icon--folder {
     color: var(--tree-icon-folder-color);
-    mask-image: url("/assets/images/folder.svg");
+    mask-image: url("../assets/images/folder.svg");
 }
 
 #file-explorer .tree-icon--file {
     color: var(--tree-icon-file-color);
-    mask-image: url("/assets/images/file.svg");
+    mask-image: url("../assets/images/file.svg");
 }

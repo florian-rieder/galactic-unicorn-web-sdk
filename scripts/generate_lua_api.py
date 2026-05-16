@@ -19,10 +19,13 @@ except ImportError as exc:  # pragma: no cover
 ROOT = Path(__file__).resolve().parent.parent
 LUA_JS_PATH = ROOT / "src/js/lua.js"
 INTRO_MD_PATH = ROOT / "docs/API.intro.md"
-API_MD_PATH = ROOT / "docs/generated/API.md"
-API_HTML_PATH = ROOT / "docs/generated/api.html"
-API_JSON_PATH = ROOT / "src/generated/lua-api.json"
 TEMPLATE_PATH = ROOT / "docs/templates/api.template.html"
+
+# All generated artifacts live under public/docs/ (gitignored, served by Vite).
+OUTPUT_DIR = ROOT / "public/docs"
+API_MD_PATH = OUTPUT_DIR / "API.md"
+API_HTML_PATH = OUTPUT_DIR / "api.html"
+API_JSON_PATH = OUTPUT_DIR / "lua-api.json"
 
 
 @dataclass
@@ -480,17 +483,9 @@ def add_heading_ids_and_build_toc(html_body: str) -> tuple[str, str]:
     return html_with_ids, "\n".join(toc_lines)
 
 
-def ensure_parent_dirs() -> None:
-    """Create target output directories when missing."""
-    API_HTML_PATH.parent.mkdir(parents=True, exist_ok=True)
-    API_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
-    INTRO_MD_PATH.parent.mkdir(parents=True, exist_ok=True)
-    API_MD_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-
 def main() -> None:
     """Generate markdown, HTML, and JSON API artifacts."""
-    ensure_parent_dirs()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     lua_js_content = LUA_JS_PATH.read_text(encoding="utf-8")
     intro_markdown = INTRO_MD_PATH.read_text(encoding="utf-8")
     model = normalize_model(lua_js_content)

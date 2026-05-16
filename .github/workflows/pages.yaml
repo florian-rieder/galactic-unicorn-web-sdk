@@ -30,15 +30,17 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: bash build.sh
-
       - run: python scripts/generate_lua_api.py
+
+      - run: npm ci
+
+      - run: npm run build
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
   deploy:
     needs: build

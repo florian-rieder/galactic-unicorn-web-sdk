@@ -1,3 +1,8 @@
+import * as monaco from "monaco-editor";
+import "monaco-editor/min/vs/editor/editor.main.css";
+import { clampByte, hslToRgb, rgbToHsl } from "./color.js";
+import defaultSnakeLua from "../lua/snake.lua?raw";
+
 const editorOptions = {
   language: "lua", // Language (supports html, css, python, etc.)
   theme: "vs-dark", // Theme (vs, vs-dark, hc-black)
@@ -8,8 +13,6 @@ const editorOptions = {
   scrollBeyondLastLine: false, // Disable scrolling beyond the last line
   automaticLayout: true, // Enable resizing of the editor
 };
-
-const { clampByte, hslToRgb, rgbToHsl } = window.ColorUtils;
 
 const LOCAL_STORAGE_LUA_USER_CODE_KEY = "/main.lua"
 const UPDATE_TIMEOUT_DURATION_MS = 100
@@ -396,43 +399,25 @@ function installSdkNameHighlights(editor, api) {
   editor.onDidScrollChange(() => scheduleUpdate());
 }
 
-// Tell the loader where to find Monaco's modules
-require.config({
-  paths: {
-    vs: "https://unpkg.com/monaco-editor@0.55.1/min/vs", // CDN path for "vs" module
-  },
-});
-
-// Load the main editor module and initialize
-require(["vs/editor/editor.main"], function () {
+/**
+ * Creates the Monaco editor and registers Lua SDK helpers. Call once at startup.
+ */
+export async function initMonaco() {
   let sdkApi = null;
   let highlightsInstalled = false;
   registerLuaColorProvider();
 
-  // Monaco loads before our generated API metadata is available, so fetch it
-  // asynchronously and register SDK-specific DX (hover/completion/highlights)
-  // once the JSON is ready.
-  fetch("src/generated/lua-api.json")
-    .then((res) => {
-      if (!res.ok) {
-        throw new Error(`Failed to load generated API data (${res.status})`);
-      }
-      return res.json();
-    })
-    .then((api) => {
-      sdkApi = api;
-      registerLuaApiProviders(api);
-      // The editor may already exist at this point (depending on load order),
-      // so install highlights here too instead of assuming editor creation
-      // always happens after the API fetch finishes.
-      if (window.editor && !highlightsInstalled) {
-        highlightsInstalled = true;
-        installSdkNameHighlights(window.editor, sdkApi);
-      }
-    })
-    .catch((err) => {
-      console.warn("Monaco Lua API docs unavailable:", err);
-    });
+  const apiJsonUrl = `${import.meta.env.BASE_URL}docs/lua-api.json`;
+  try {
+    const res = await fetch(apiJsonUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to load generated API data (${res.status})`);
+    }
+    sdkApi = await res.json();
+    registerLuaApiProviders(sdkApi);
+  } catch (err) {
+    console.warn("Monaco Lua API docs unavailable:", err);
+  }
 
   const container = document.getElementById("monaco-container");
 
@@ -450,16 +435,12 @@ require(["vs/editor/editor.main"], function () {
   if (savedCode) {
     createEditor(savedCode);
   } else {
-    // Get default script from src/lua/
-    fetch("src/lua/snake.lua")
-      .then((res) => res.text())
-      .then((defaultScript) => {
-        createEditor(defaultScript);
-      });
+    createEditor(defaultSnakeLua);
   }
-});
+}
 
-function save() {
+/** Persist the current editor buffer (Ctrl/Cmd+S). */
+export function save() {
   // get the value of the data
   var value = window.editor.getValue();
 
