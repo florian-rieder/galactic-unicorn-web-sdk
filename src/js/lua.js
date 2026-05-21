@@ -307,7 +307,9 @@ export function runLua(code) {
 }
 
 /**
- * Run a Lua function with a maximum execution time budget.
+ * Run a Lua function with a maximum execution time budget. Used to catch runaway loops in user
+ * code.
+ * 
  * @param {LuaState} L - The Lua state.
  * @param {Function} fn - The function to run.
  * @returns {any} - The result of the function.
@@ -359,22 +361,38 @@ export function closeLua() {
  * Handy for quick debugging while you are iterating on game logic.
  *
  * Lua API: `print(message)`
- * (This replaces the default Lua `print` for the session.)
+ * (This replaces the default Lua `print`)
  *
  * @luaName print
  * @luaKind function
  * @luaCategory console
- * @luaParams message:string Message to print (first argument is stringified).
+ * @luaParams messages:variable Lua variables to print
  * @luaReturns nil
- * @luaExample print("Hello, world!")
+ * @luaExample print("Hello, world!")       -- Output: Hello, world!
+ * print("Hello", 1, true, nil) -- Output: Hello    1    true    nil
  *
  * @param {LuaState} L - Fengari Lua state; message is read from stack index 1.
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_print(L) {
-  const message = lua.lua_tojsstring(L, 1);
-  consoleOutput.textContent += message + "\n";
-  return 0; // Return 0 results to Lua
+  const nargs = lua.lua_gettop(L); // How many arguments were passed
+  const parts = [];
+  
+  for (let i = 1; i <= nargs; i++) {
+    lua.lua_getglobal(L, "tostring"); // Call lua tostring() on the argument
+    lua.lua_pushvalue(L, i);
+    
+    if (lua.lua_pcall(L, 1, 1, 0) === 0) {
+      parts.push(lua.lua_tojsstring(L, -1));
+    } else {
+      // tostring() failed, get the error message
+      parts.push(`<error: ${lua.lua_tojsstring(L, -1)}>`);
+    }
+    lua.lua_pop(L, 1);
+  }
+  
+  consoleOutput.textContent += parts.join("\t") + "\n";
+  return 0;
 }
 
 /**
