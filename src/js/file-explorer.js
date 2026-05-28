@@ -168,16 +168,14 @@ function renameOpenFile() {
     return;
   }
 
-  const currentName = currentPath.split("/").pop();
-  const raw = prompt("Rename file:", currentName);
+  const raw = prompt("Rename file:", currentPath);
   if (raw === null) {
     return;
   }
 
-  const parentDir = currentPath.slice(0, currentPath.lastIndexOf("/"));
-  const newPath = normalizeFilePath(parentDir + "/" + raw.trim());
+  const newPath = normalizeFilePath(raw.trim());
   if (newPath === null) {
-    alert("Invalid file name.");
+    alert("Invalid file path.");
     return;
   }
 
