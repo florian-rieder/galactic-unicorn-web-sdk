@@ -84,3 +84,73 @@ These are the default keyboard keys and button names used by `is_pressed`,
 | `MENU` | `1` |
 | `ESC` | `2` |
 
+## Project files
+
+In the browser SDK, your project lives in a **virtual file system** stored locally in the browser.
+
+- Use the **file explorer** on the right to create, upload, rename, and delete files.
+- Paths always start with `/`, for example `/main.lua` or `/lib/mylib.lua`.
+- **Save** the file you are editing with Ctrl+S (Windows/Linux) or Cmd+S (macOS).
+- Press **Run** to execute whatever is currently open in the editor.
+
+## Loading other Lua files
+
+You can split a game or library across multiple `.lua` files and load them with **`require`**.
+
+### How to call `require`
+
+Pass the **full path** to the file in the project, including the leading `/` and the `.lua` extension:
+
+```lua
+local mylib = require("/lib/mylib.lua")
+```
+
+Do not rely on module-style names yet:
+
+```lua
+-- Not supported yet (TODO on SDK and firmware):
+-- local mylib = require("lib.mylib")
+```
+
+### What `require` does
+
+- Loads the file, runs it once, and caches the result (standard Lua `package.loaded` behavior).
+- If the file ends with `return something`, that value is what `require` gives you (tables are common for shared libraries).
+- If the file does not return a value, `require` still succeeds; you mainly get side effects (e.g. defining globals — prefer `return` for libraries).
+
+### Example: main + library
+
+`/lib/colors.lua`:
+
+```lua
+local M = {}
+
+function M.player()
+  return rgb(255, 100, 40)
+end
+
+return M
+```
+
+`/main.lua`:
+
+```lua
+local colors = require("/lib/colors.lua")
+
+function draw()
+  clear()
+  set_pixel(10, 4, colors.player())
+end
+```
+
+Create both files in the explorer, open `/main.lua` and press Run.
+
+### What is *not* available
+
+For sandboxing, only **`require`** can load other Lua files. These are **not** available in scripts:
+
+- `dofile`
+- `loadfile`
+- `load` / `loadstring`
+
+Use the editor + Run for your entry script, and `require("/path/to/file.lua")` for everything else.
