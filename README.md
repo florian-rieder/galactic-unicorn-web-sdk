@@ -9,11 +9,11 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
 
 ## What is included
-
 - Emulator for the project display/input model
 - Monaco-based (VS Code) in-browser Lua editor
 - Console output panel for script logging and runtime errors
-- Lua runtime in the browser via Fengari
+- Virtual file system and file explorer
+- Lua runtime in the browser via [Fengari](https://github.com/fengari-lua/fengari)
 - Example Lua scripts in `src/lua/`
 
 ## Project status
@@ -84,13 +84,9 @@ This writes (all under the gitignored `public/docs/` so Vite serves them):
 
 Without manual generation or a successful dev-time run, Monaco completions stay empty and the toolbar API docs link 404s until `public/docs/` exists. For production, this generation step is done in CI.
 
-## Key project files
+## References
 
-- `index.html` — Vite app shell (entry script: `src/js/main.js`)
-- `vite.config.js` — Vite, Monaco plugin, and dev watcher that regenerates Lua API docs
-- `src/js/main.js` — run/stop flow and frame loop
-- `src/js/lua.js` — Lua state setup and host API bindings
-- `src/js/monaco.js` — editor bootstrap (ESM `monaco-editor`)
-- `src/js/input.js` — keyboard mapping and button events
-- `src/js/display.js` — framebuffer and drawing helpers
-- `src/lua/` — example/demo Lua scripts
+- [Lua 5.3 Reference Manual](https://www.lua.org/manual/5.3/manual.html)
+- [Programming in Lua](https://www.lua.org/pil/contents.html)
+- [Lua Metamethods Cheatsheet](https://gist.github.com/oatmealine/655c9e64599d0f0dd47687c1186de99f)
+- [Fengari](https://github.com/fengari-lua/fengari)
