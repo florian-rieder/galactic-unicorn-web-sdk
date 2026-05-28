@@ -1,11 +1,18 @@
-import { fileExists, fileSizeAtPath, listFiles, readFile, writeFile } from "./file-system.js";
+import {
+  fileExists,
+  fileSizeAtPath,
+  listFiles,
+  readFile,
+  writeFile,
+} from "./file-system.js";
 import { getEditorText, setEditorText } from "./monaco";
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
 const TEXTISH_EXTENSIONS = ["txt", "lua"];
-const DEFAULT_SCRIPT_PATH = "/main.lua"
+const DEFAULT_SCRIPT_PATH = "/main.lua";
 
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
+let readOnly = false;
 
 export function initWorkspace() {
   window.addEventListener("keydown", (event) => {
@@ -22,7 +29,7 @@ export function initWorkspace() {
 
 // Save the currently open file in the editor
 export function saveCurrentFile() {
-  if (currentOpenPath === null) {
+  if (readOnly || currentOpenPath === null) {
     return;
   }
 
@@ -41,6 +48,8 @@ export function openFile(path) {
     return;
   }
 
+  currentOpenPath = path;
+
   const extension = path.split(".").slice(-1)[0];
 
   if (TEXTISH_EXTENSIONS.includes(extension)) {
@@ -48,23 +57,23 @@ export function openFile(path) {
     const decodedString = new TextDecoder().decode(rawFile);
     // Load into monaco
     setEditorText(decodedString);
-    currentOpenPath = path;
+    readOnly = false;
   } else {
     // Binary file: show file size
-    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`)
-    // If we load binary into the editor we need to NOT save it upon exit!
-    currentOpenPath = null;
+    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`);
+    // If we "load" binary as description into the editor we need to NOT save it upon exit!
+    readOnly = true;
   }
-
 }
 
 export function maybeLoadDefaultScript() {
   if (fileExists(DEFAULT_SCRIPT_PATH)) {
+    // Open the default file from the file system
     openFile(DEFAULT_SCRIPT_PATH);
   } else {
     // Set default script
     setEditorText(defaultSnakeLua);
-    saveCurrentFile();
+    saveCurrentFile(); // Create the default file in the file system
   }
 }
 
