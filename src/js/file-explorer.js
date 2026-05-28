@@ -20,6 +20,10 @@ const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
 const fileDeleteBtn = document.querySelector("#file-delete-btn");
 
+// Keep track of the open folder to avoid all folder collapsing when the file explorer
+// is reloaded
+const openFolders = new Set();
+
 /**
  * File System Node data structure, used to represent the file hierarchy as a tree
  */
@@ -150,8 +154,8 @@ function createNewFile() {
 
   saveCurrentFile();
   writeFile(path, new TextEncoder().encode(""));
-  reloadFileExplorer();
   openFile(path);
+  reloadFileExplorer();
 }
 
 function renameOpenFile() {
@@ -277,10 +281,24 @@ function renderNode(node) {
   }
 
   const details = document.createElement("details");
-  details.open = true;
+  details.addEventListener("toggle", () => {
+    if (details.open) {
+      openFolders.add(node.path);
+    } else {
+      openFolders.delete(node.path);
+    }
+  });
+
+  if (
+    openFolders.has(node.path) ||
+    isAncestorFolder(node.path, getCurrentOpenPath())
+  ) {
+    details.open = true;
+  }
 
   const summary = document.createElement("summary");
   summary.append(treeIcon("folder"), document.createTextNode(node.name));
+
   details.appendChild(summary);
 
   if (node.children.size > 0) {
@@ -297,19 +315,18 @@ function renderNode(node) {
 }
 
 function sortedChildren(node) {
-  return Array.from(node.children.values())
-    .sort((a, b) => {
-      // a is file and b is directory => a < b
-      if (a.isFile && !b.isFile) {
-        return 1;
-        // a is directory and b is file => a > b
-      } else if (!a.isFile && b.isFile) {
-        return -1;
-      }
+  return Array.from(node.children.values()).sort((a, b) => {
+    // a is file and b is directory => a < b
+    if (a.isFile && !b.isFile) {
+      return 1;
+      // a is directory and b is file => a > b
+    } else if (!a.isFile && b.isFile) {
+      return -1;
+    }
 
-      // Fallback on alphabetical sorting if the type of the two files is the same
-      return a.name.localeCompare(b.name);
-    });
+    // Fallback on alphabetical sorting if the type of the two files is the same
+    return a.name.localeCompare(b.name);
+  });
 }
 
 export function reloadFileExplorer() {
@@ -327,4 +344,13 @@ export function reloadFileExplorer() {
 function onFileClick(path) {
   saveCurrentFile();
   openFile(path);
+  reloadFileExplorer();
+}
+
+function isAncestorFolder(folderPath, filePath) {
+  return (
+    filePath != null &&
+    filePath.startsWith(folderPath) &&
+    filePath !== folderPath
+  );
 }

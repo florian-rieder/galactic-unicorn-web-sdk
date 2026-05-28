@@ -14,7 +14,7 @@ function isQuotaExceededError(err) {
  * @param {Error} err
  */
 function reportFsError(action, err) {
-  let message = ""
+  let message = "";
   if (isQuotaExceededError(err)) {
     message = `Browser storage is full (${action}). Delete files, then try again.`;
   } else {
@@ -33,7 +33,8 @@ function reportFsError(action, err) {
 export function writeFile(path, data) {
   // Convert raw data to a binary string; we transform an int between 0 and 255
   // into a character using fromCharCode()
-  const binaryString = Array.from(data, val => String.fromCharCode(val)).join("");
+  const binaryChars = Array.from(data, (val) => String.fromCharCode(val))
+  const binaryString = binaryChars.join("");
   // Encode binary string to base64 for storage
   const base64EncodedData = btoa(binaryString);
 
