@@ -44,7 +44,43 @@
         <div id="monaco-container" aria-label="Text editor"></div>
         <div class="resizer resizer-v"></div>
         <aside id="file-explorer-pane" aria-label="Project files">
-          <input id="file-upload-input" type="file" />
+          <div id="file-explorer-toolbar" aria-label="File actions">
+            <button
+              type="button"
+              id="file-new-btn"
+              class="explorer-btn"
+              title="New file"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              id="file-upload-btn"
+              class="explorer-btn"
+              title="Upload file"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              id="file-rename-btn"
+              class="explorer-btn"
+              title="Rename open file"
+              disabled
+            >
+              ✎
+            </button>
+            <button
+              type="button"
+              id="file-delete-btn"
+              class="explorer-btn"
+              title="Delete open file"
+              disabled
+            >
+              ×
+            </button>
+            <input id="file-upload-input" type="file" hidden />
+          </div>
           <div id="file-explorer"></div>
         </aside>
       </div>

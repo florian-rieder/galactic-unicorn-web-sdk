@@ -12,7 +12,7 @@ maybeLoadDefaultScript();
 
 initResizers();
 initFileExplorer();
-initWorkspace()
+initWorkspace();
 
 render(); // Render the initial state of the display
 
@@ -80,7 +80,7 @@ function mainLoop() {
   // Render the display buffer to the canvas.
   render();
 
-  // Time management: aim for a 30fps update rate.
+  // Time management: aim for a TARGET_FPS update rate.
   const timeToWait = TARGET_DELTA_TIME - deltaTime;
   if (timeToWait > 0) {
     timeoutId = setTimeout(() => {

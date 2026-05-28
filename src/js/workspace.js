@@ -1,4 +1,4 @@
-import { fileExists, fileSizeAtPath, readFile, writeFile } from "./file-system.js";
+import { fileExists, fileSizeAtPath, listFiles, readFile, writeFile } from "./file-system.js";
 import { getEditorText, setEditorText } from "./monaco";
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
@@ -65,5 +65,34 @@ export function maybeLoadDefaultScript() {
     // Set default script
     setEditorText(defaultSnakeLua);
     saveCurrentFile();
+  }
+}
+
+export function getCurrentOpenPath() {
+  return currentOpenPath;
+}
+
+export function onFileRemoved(path) {
+  // If the currently opened file was removed, open one of the remaining files.
+  if (currentOpenPath !== path) {
+    return;
+  }
+
+  const remaining = listFiles()
+    .filter((filePath) => filePath !== path)
+    .sort();
+  if (remaining.length > 0) {
+    // Open the first remaining file
+    openFile(remaining[0]);
+  } else {
+    setEditorText("");
+    currentOpenPath = DEFAULT_SCRIPT_PATH;
+  }
+}
+
+export function onFileRenamed(oldPath, newPath) {
+  // Update the currentOpenPath
+  if (currentOpenPath === oldPath) {
+    currentOpenPath = newPath;
   }
 }

@@ -90,7 +90,43 @@ export function fileSizeAtPath(path) {
  */
 export function fileExists(path) {
   return localStorage.getItem(path) !== null;
-} 
+}
+
+/**
+ * Remove a file from the virtual file system
+ * @param {String} path
+ */
+export function deleteFile(path) {
+  try {
+    localStorage.removeItem(path);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/**
+ * Move file data to a new path in the virtual file system
+ * @param {String} oldPath
+ * @param {String} newPath
+ * @returns {boolean} whether the rename succeeded
+ */
+export function renameFile(oldPath, newPath) {
+  if (oldPath === newPath) {
+    return true;
+  }
+  if (!fileExists(oldPath) || fileExists(newPath)) {
+    return false;
+  }
+
+  const data = readFile(oldPath);
+  if (data === null || data === undefined) {
+    return false;
+  }
+
+  writeFile(newPath, data);
+  deleteFile(oldPath);
+  return true;
+}
 
 /**
  * List files in the file system
