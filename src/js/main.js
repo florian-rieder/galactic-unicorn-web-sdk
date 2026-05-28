@@ -2,10 +2,12 @@ import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
 import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
-import { writeFile } from "./file-system.js";
 import { initFileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
 import { initWorkspace, maybeLoadDefaultScript } from "./workspace.js";
+
+
+// Initialize stuff
 
 await initMonaco();
 maybeLoadDefaultScript();
@@ -25,6 +27,9 @@ const stopButton = document.getElementById("stop-button");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 
+/**
+ * Start a Lua session with the current open buffer as entrypoint
+ */
 function startSession() {
   // If a loop is already running, stop it.
   if (frameId != null || timeoutId != null) {
@@ -46,6 +51,9 @@ function startSession() {
   frameId = requestAnimationFrame(mainLoop);
 }
 
+/**
+ * Stop and cleanup the Lua session
+ */
 function stopSession() {
   closeLua();
   stopMusic();
@@ -62,6 +70,9 @@ let now = null;
 let frameId = null;
 let timeoutId = null;
 
+/**
+ * Run the main loop of the Lua program (update/draw)
+ */
 function mainLoop() {
   now = performance.now();
   if (lastTime == null) {

@@ -3,10 +3,35 @@
  * We can use the path as localStorage key, and write base64 encoded data
  */
 
+const consoleOutput = document.getElementById("console-output");
+
+function isQuotaExceededError(err) {
+  return (
+    err instanceof DOMException &&
+    (err.name === "QuotaExceededError" || err.code === 22)
+  );
+}
+
+/**
+ * @param {string} action e.g. "save /bigfile.mp4"
+ * @param {unknown} err
+ */
+function reportFsError(action, err) {
+  let message = ""
+  if (isQuotaExceededError(err)) {
+    message = `Browser storage is full (${action}). Delete files, then try again.`;
+  } else {
+    message = `Could not ${action}: ${err instanceof Error ? err.message : String(err)}`;
+  }
+  consoleOutput.textContent += `[Filesystem] ${message}\n`;
+  console.error(err);
+}
+
 /**
  * Writes raw bytes to file storage at the given path
- * @param {String} path 
- * @param {Uint8Array} data 
+ * @param {String} path
+ * @param {Uint8Array} data
+ * @returns {boolean} whether the write succeeded
  */
 export function writeFile(path, data) {
   // Convert raw data to a binary string; we transform an int between 0 and 255
@@ -17,14 +42,16 @@ export function writeFile(path, data) {
 
   try {
     localStorage.setItem(path, base64EncodedData);
-  } catch (e) {
-    console.error(e);
+    return true;
+  } catch (err) {
+    reportFsError(`save ${path}`, err);
+    return false;
   }
 }
 
 /**
  * Read a file at the given path from the emulated file system
- * @param {String} path 
+ * @param {String} path
  * @returns {Uint8Array} raw bytes read from the file at path or null if it failed to read a file
  */
 export function readFile(path) {
@@ -39,7 +66,7 @@ export function readFile(path) {
   let decoded = atob(encoded);
 
   // Turn into Uint8Array
-  let bytes = new Uint8Array(decoded.length)
+  let bytes = new Uint8Array(decoded.length);
   for (let i = 0; i < decoded.length; i++) {
     // Obtaining the charCode of the character allows us to translate it back
     // into a byte (int value between 0 and 255)
@@ -69,7 +96,7 @@ export function readFileChunk(path, offset, size) {
 
 /**
  * Get the size of a file in the virtual file system
- * @param {String} path 
+ * @param {String} path
  * @returns {int} size of the file in bytes
  */
 export function fileSizeAtPath(path) {
@@ -85,8 +112,8 @@ export function fileSizeAtPath(path) {
 
 /**
  * Check if a file exists in the virtual file system
- * @param {String} path 
- * @returns {bool} whether the file exists 
+ * @param {String} path
+ * @returns {bool} whether the file exists
  */
 export function fileExists(path) {
   return localStorage.getItem(path) !== null;
@@ -99,8 +126,8 @@ export function fileExists(path) {
 export function deleteFile(path) {
   try {
     localStorage.removeItem(path);
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    reportFsError(`delete ${path}`, err);
   }
 }
 
@@ -123,8 +150,11 @@ export function renameFile(oldPath, newPath) {
     return false;
   }
 
-  writeFile(newPath, data);
   deleteFile(oldPath);
+
+  if (!writeFile(newPath, data)) {
+    return false;
+  }
   return true;
 }
 
@@ -133,14 +163,14 @@ export function renameFile(oldPath, newPath) {
  * @param {String} prefix defaults to "/"
  * @returns list of file paths that begin with the prefix
  */
-export function listFiles(prefix="/") {
+export function listFiles(prefix = "/") {
   // Prevent listing localStorage methods as file paths
   if (prefix === "") prefix = "/";
 
-  let filesList = []
+  let filesList = [];
   for (let key in localStorage) {
     if (key.startsWith(prefix)) {
-      filesList.push(key)
+      filesList.push(key);
     }
   }
 

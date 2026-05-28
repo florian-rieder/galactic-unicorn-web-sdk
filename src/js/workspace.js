@@ -65,7 +65,6 @@ export function openFile(path) {
     readOnly = true;
     // Binary file: show file size
     setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`, readOnly);
-
   }
 }
 
