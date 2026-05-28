@@ -278,3 +278,7 @@ body {
     color: var(--tree-icon-file-color);
     mask-image: url("../assets/images/file.svg");
 }
+
+#file-explorer button.current-open-file {
+    font-weight: 800;
+}

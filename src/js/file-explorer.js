@@ -276,6 +276,9 @@ function renderNode(node) {
     row.dataset.path = node.path;
     row.append(treeIcon("file"), document.createTextNode(node.name));
     row.addEventListener("click", () => onFileClick(node.path));
+    if (node.path == getCurrentOpenPath()) {
+      row.classList.add("current-open-file")
+    }
     li.appendChild(row);
     return li;
   }
