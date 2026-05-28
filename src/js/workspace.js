@@ -9,7 +9,7 @@ import { reloadFileExplorer } from "./file-explorer.js";
 import { getEditorText, setEditorText } from "./monaco";
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
-const TEXTISH_EXTENSIONS = ["txt", "lua"];
+const TEXTISH_EXTENSIONS = ["txt", "lua", "lson"];
 const DEFAULT_SCRIPT_PATH = "/main.lua";
 
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
@@ -55,16 +55,17 @@ export function openFile(path) {
   const extension = path.split(".").slice(-1)[0];
 
   if (TEXTISH_EXTENSIONS.includes(extension)) {
+    readOnly = false;
     // Plain text file: simply decode the bytes into text
     const decodedString = new TextDecoder().decode(rawFile);
     // Load into monaco
-    setEditorText(decodedString);
-    readOnly = false;
+    setEditorText(decodedString, readOnly);
   } else {
-    // Binary file: show file size
-    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`);
     // If we "load" binary as description into the editor we need to NOT save it upon exit!
     readOnly = true;
+    // Binary file: show file size
+    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`, readOnly);
+
   }
 }
 
@@ -74,7 +75,7 @@ export function maybeLoadDefaultScript() {
     openFile(DEFAULT_SCRIPT_PATH);
   } else {
     // Set default script
-    setEditorText(defaultSnakeLua);
+    setEditorText(defaultSnakeLua, false);
     saveCurrentFile(); // Create the default file in the file system
   }
 }
@@ -96,7 +97,7 @@ export function onFileRemoved(path) {
     // Open the first remaining file
     openFile(remaining[0]);
   } else {
-    setEditorText("");
+    setEditorText("", false);
     currentOpenPath = DEFAULT_SCRIPT_PATH;
   }
 }

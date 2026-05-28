@@ -439,8 +439,10 @@ export async function initMonaco(defaultTextContent = "") {
  * Set a given string as the open buffer in the monaco editor
  * @param {String} text 
  */
-export function setEditorText(text) {
+export function setEditorText(text, readOnly = false) {
   editor.setValue(text);
+  // see https://github.com/microsoft/monaco-editor/issues/54
+  editor.updateOptions({ readOnly: readOnly })
 }
 
 /**
