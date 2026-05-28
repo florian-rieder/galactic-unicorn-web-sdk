@@ -4,6 +4,8 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 
 [Try now](https://florian-rieder.github.io/galactic-unicorn-web-sdk/)
 
+[Lua API Documentation](https://florian-rieder.github.io/galactic-unicorn-web-sdk/docs/generated/api.html)
+
 ## Why this exists
 
 Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
