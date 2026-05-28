@@ -258,7 +258,7 @@ function renderNode(node) {
 
     const ul = document.createElement("ul");
     ul.className = "file-tree";
-    for (const child of node.children.values()) {
+    for (const child of sortedChildren(node)) {
       ul.appendChild(renderNode(child));
     }
     return ul;
@@ -285,7 +285,8 @@ function renderNode(node) {
 
   if (node.children.size > 0) {
     const ul = document.createElement("ul");
-    for (const child of node.children.values()) {
+
+    for (const child of sortedChildren(node)) {
       ul.appendChild(renderNode(child));
     }
     details.appendChild(ul);
@@ -293,6 +294,22 @@ function renderNode(node) {
 
   li.appendChild(details);
   return li;
+}
+
+function sortedChildren(node) {
+  return Array.from(node.children.values())
+    .sort((a, b) => {
+      // a is file and b is directory => a < b
+      if (a.isFile && !b.isFile) {
+        return 1;
+        // a is directory and b is file => a > b
+      } else if (!a.isFile && b.isFile) {
+        return -1;
+      }
+
+      // Fallback on alphabetical sorting if the type of the two files is the same
+      return a.name.localeCompare(b.name);
+    });
 }
 
 export function reloadFileExplorer() {

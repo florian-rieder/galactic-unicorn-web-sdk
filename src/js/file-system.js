@@ -6,15 +6,12 @@
 const consoleOutput = document.getElementById("console-output");
 
 function isQuotaExceededError(err) {
-  return (
-    err instanceof DOMException &&
-    (err.name === "QuotaExceededError" || err.code === 22)
-  );
+  return err instanceof DOMException && err.name === "QuotaExceededError";
 }
 
 /**
  * @param {string} action e.g. "save /bigfile.mp4"
- * @param {unknown} err
+ * @param {Error} err
  */
 function reportFsError(action, err) {
   let message = ""
