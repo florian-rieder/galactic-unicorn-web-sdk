@@ -5,6 +5,7 @@ import {
   readFile,
   writeFile,
 } from "./file-system.js";
+import { reloadFileExplorer } from "./file-explorer.js";
 import { getEditorText, setEditorText } from "./monaco";
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
@@ -38,6 +39,7 @@ export function saveCurrentFile() {
   const encoded = new TextEncoder().encode(text);
   // Write file to FS
   writeFile(currentOpenPath, encoded);
+  reloadFileExplorer();
 }
 
 // Load and open a certain file into the editor

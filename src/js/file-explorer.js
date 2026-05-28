@@ -51,7 +51,6 @@ class FSNode {
 
 export function initFileExplorer() {
   reloadFileExplorer();
-  updateFileActionButtons();
 
   fileNewBtn.addEventListener("click", createNewFile);
   fileRenameBtn.addEventListener("click", renameOpenFile);
@@ -91,12 +90,6 @@ function normalizeFilePath(input) {
 
   // Return the normalized path (with a leading slash)
   return "/" + parts.join("/");
-}
-
-function updateFileActionButtons() {
-  const hasOpenFile = getCurrentOpenPath() !== null;
-  fileRenameBtn.disabled = !hasOpenFile;
-  fileDeleteBtn.disabled = !hasOpenFile;
 }
 
 function uploadFiles() {
@@ -159,7 +152,6 @@ function createNewFile() {
   writeFile(path, new TextEncoder().encode(""));
   reloadFileExplorer();
   openFile(path);
-  updateFileActionButtons();
 }
 
 function renameOpenFile() {
@@ -196,7 +188,6 @@ function renameOpenFile() {
 
   onFileRenamed(currentPath, newPath);
   reloadFileExplorer();
-  updateFileActionButtons();
 }
 
 function deleteOpenFile() {
@@ -214,7 +205,6 @@ function deleteOpenFile() {
   // Notify the workspace that the file has been removed and reload the file explorer
   onFileRemoved(currentPath);
   reloadFileExplorer();
-  updateFileActionButtons();
 }
 
 function buildTree() {
@@ -305,7 +295,7 @@ function renderNode(node) {
   return li;
 }
 
-function reloadFileExplorer() {
+export function reloadFileExplorer() {
   fileExplorer.innerHTML = "";
   // Build a tree datastructure from the flat stored files paths
   const root = buildTree();
@@ -320,5 +310,4 @@ function reloadFileExplorer() {
 function onFileClick(path) {
   saveCurrentFile();
   openFile(path);
-  updateFileActionButtons();
 }
