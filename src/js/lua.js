@@ -113,7 +113,6 @@ const luaApiCallbacks = [
 const dangerousFunctions = [
   "dofile",
   "loadfile",
-  "require",
   "load",
   "loadstring",
   "collectgarbage",
@@ -197,14 +196,6 @@ export function initLua() {
   // Load specific standard libraries.
   lauxlib.luaL_requiref(L, to_luastring("_G"), lualib.luaopen_base, 1);
   lua.lua_pop(L, 1);
-
-  // Remove dangerous base functions
-  for (const functionName of dangerousFunctions) {
-    // Replace the function with nil.
-    lua.lua_pushnil(L);
-    lua.lua_setglobal(L, to_luastring(functionName));
-  }
-
   lauxlib.luaL_requiref(L, to_luastring("math"), lualib.luaopen_math, 1);
   lua.lua_pop(L, 1);
   lauxlib.luaL_requiref(L, to_luastring("string"), lualib.luaopen_string, 1);
@@ -213,6 +204,13 @@ export function initLua() {
   lua.lua_pop(L, 1);
   lauxlib.luaL_requiref(L, to_luastring("package"), lualib.luaopen_package, 1);
   lua.lua_pop(L, 1);
+
+  // Remove dangerous base functions
+  for (const functionName of dangerousFunctions) {
+    // Replace the function with nil.
+    lua.lua_pushnil(L);
+    lua.lua_setglobal(L, to_luastring(functionName));
+  }
 
   // -- Constants registration
 
@@ -309,7 +307,7 @@ export function runLua(code) {
 /**
  * Run a Lua function with a maximum execution time budget. Used to catch runaway loops in user
  * code.
- * 
+ *
  * @param {LuaState} L - The Lua state.
  * @param {Function} fn - The function to run.
  * @returns {any} - The result of the function.
@@ -377,11 +375,11 @@ export function closeLua() {
 function lua_print(L) {
   const nargs = lua.lua_gettop(L); // How many arguments were passed
   const parts = [];
-  
+
   for (let i = 1; i <= nargs; i++) {
     lua.lua_getglobal(L, "tostring"); // Call lua tostring() on the argument
     lua.lua_pushvalue(L, i);
-    
+
     if (lua.lua_pcall(L, 1, 1, 0) === 0) {
       parts.push(lua.lua_tojsstring(L, -1));
     } else {
@@ -390,7 +388,7 @@ function lua_print(L) {
     }
     lua.lua_pop(L, 1);
   }
-  
+
   consoleOutput.textContent += parts.join("\t") + "\n";
   return 0;
 }
@@ -1212,6 +1210,10 @@ function lua_readFile(L) {
   const path = lua.lua_tojsstring(L, 1);
 
   let file = readFile(path);
+  if (file === null) {
+    lua.lua_pushnil(L);
+    return 1;
+  }
 
   lua.lua_pushlstring(L, file, file.length);
 

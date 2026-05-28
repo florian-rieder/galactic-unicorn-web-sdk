@@ -33,7 +33,7 @@ function reportFsError(action, err) {
 export function writeFile(path, data) {
   // Convert raw data to a binary string; we transform an int between 0 and 255
   // into a character using fromCharCode()
-  const binaryChars = Array.from(data, (val) => String.fromCharCode(val))
+  const binaryChars = Array.from(data, (val) => String.fromCharCode(val));
   const binaryString = binaryChars.join("");
   // Encode binary string to base64 for storage
   const base64EncodedData = btoa(binaryString);
@@ -56,7 +56,7 @@ export function readFile(path) {
   let encoded = localStorage.getItem(path);
   if (encoded === null) {
     console.error("Failed to open file " + path);
-    return;
+    return null;
   }
 
   // Decode base64 encoded string into binary string

@@ -277,7 +277,7 @@ function renderNode(node) {
     row.append(treeIcon("file"), document.createTextNode(node.name));
     row.addEventListener("click", () => onFileClick(node.path));
     if (node.path == getCurrentOpenPath()) {
-      row.classList.add("current-open-file")
+      row.classList.add("current-open-file");
     }
     li.appendChild(row);
     return li;
@@ -319,10 +319,10 @@ function renderNode(node) {
 
 function sortedChildren(node) {
   return Array.from(node.children.values()).sort((a, b) => {
-    // a is file and b is directory => a < b
+    // a is file and b is directory => a > b
     if (a.isFile && !b.isFile) {
       return 1;
-      // a is directory and b is file => a > b
+      // a is directory and b is file => a < b
     } else if (!a.isFile && b.isFile) {
       return -1;
     }
