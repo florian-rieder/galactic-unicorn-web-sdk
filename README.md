@@ -4,7 +4,7 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 
 [Try now](https://florian-rieder.github.io/galactic-unicorn-web-sdk/)
 
-[Lua API Documentation](https://florian-rieder.github.io/galactic-unicorn-web-sdk/docs/generated/api.html)
+[Lua API Documentation](https://florian-rieder.github.io/galactic-unicorn-web-sdk/docs/api.html)
 
 ## Why this exists
 

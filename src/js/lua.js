@@ -908,15 +908,15 @@ function lua_line(L) {
  * Lua API: `is_pressed(key)` -> `boolean`
  *
  * The `key` string must match the host's key map, e.g.:
- * - `LEFT_UP` / `LEFT_LEFT` / `LEFT_DOWN` / `LEFT_RIGHT`
- * - `RIGHT_UP` / `RIGHT_LEFT` / `RIGHT_DOWN` / `RIGHT_RIGHT`
+ * - `L_UP` / `L_LEFT` / `L_DOWN` / `L_RIGHT`
+ * - `R_UP` / `R_LEFT` / `R_DOWN` / `R_RIGHT`
  *
  * @luaName is_pressed
  * @luaKind function
  * @luaCategory input
  * @luaParams key:string Logical button name (host key map)
  * @luaReturns boolean `true` if pressed, otherwise `false`
- * @luaExample if is_pressed("LEFT_UP") then ... end
+ * @luaExample if is_pressed("L_UP") then ... end
  *
  * @param {LuaState} L - Fengari Lua state; key is read from stack index 1.
  * @returns {number} Number of values returned to Lua (always 1).
@@ -1344,10 +1344,10 @@ function lua_callback_draw() {}
  * @luaName on_press
  * @luaKind callback
  * @luaCategory input
- * @luaParams button_name:string Host key map name (e.g. "LEFT_UP")
+ * @luaParams button_name:string Host key map name (e.g. "L_UP")
  * @luaReturns nil
  * @luaExample function on_press(button_name)
- *   if button_name == "LEFT_UP" then
+ *   if button_name == "L_UP" then
  *     set_pixel(2, 2, rgb(0, 255, 0))
  *   end
  * end
@@ -1365,10 +1365,10 @@ function lua_callback_onPress() {}
  * @luaName on_release
  * @luaKind callback
  * @luaCategory input
- * @luaParams button_name:string Host key map name (e.g. "LEFT_UP")
+ * @luaParams button_name:string Host key map name (e.g. "L_UP")
  * @luaReturns nil
  * @luaExample function on_release(button_name)
- *   if button_name == "LEFT_UP" then
+ *   if button_name == "L_UP" then
  *     clear()
  *   end
  * end
