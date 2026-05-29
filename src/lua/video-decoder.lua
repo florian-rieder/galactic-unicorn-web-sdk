@@ -62,11 +62,14 @@ local function draw_frame_4bit_grayscale(index, file)
       local val
       -- Each pixel is 4 bits so we need to check if it's the high nibble (even pixel index) or low nibble (odd pixel index)
       if pixel_index % 2 == 0 then
-        val = (byte >> 4) * 16      -- high nibble (first 4 bits, we shift it down to get a value from 0 to 15)
+        val = byte >> 4   -- high nibble (first 4 bits, we shift it down to get a value from 0 to 15)
       else
-        val = (byte & 0x0F) * 16    -- low nibble (AND 0x0F (00001111) masks out the high nibble, leaving only the low nibble)
+        val = byte & 0x0F -- low nibble (AND 0x0F (00001111) masks out the high nibble, leaving only the low nibble)
       end
 
+      -- Scale back to 0..255
+      -- To get the factor, we divide 255 by the maximum value represented by the amount of bits that represent the shade
+      val = val * 17 -- 255 / 15 (bin 1111) = 17
       set_pixel(x, y, rgb(val, val, val))
     end
   end
@@ -88,7 +91,14 @@ local function draw_frame_8bit_rgb332(index, file)
       local g = byte & 0x1C -- mask: bin 00011100 -> (bin 0001 = dec 1; bin 1100 = dec 8 + 4 = 12 = hex C) -> hex 0x1C
       local b = byte & 0x03 -- mask: bin 00000011 -> (bin 0000 = dec 0; bin 0011 = dec 2 + 1 = hex 3)
 
-      set_pixel(x, y, rgb(r, g << 3, b << 6))
+      -- Scale back to 0..255
+      -- Naive: set_pixel(x, y, rgb(r, g << 3, b << 6))
+
+      -- Using the scaling formula
+      r = (r >> 5) * 36 -- leaves 3 that can't be represented :( because 255 / 7 = 36.4 => 36 => represents range 0..252
+      g = (g >> 2) * 36 -- so range 0..252
+      b = b * 85 -- 255 / 3 = 85 (because bin 11 == dec 3)
+      set_pixel(x, y, rgb(r, g, b))
     end
   end
 end
@@ -114,9 +124,25 @@ local function draw_frame_16bit_rgb565(index, file)
       -- second byte                   GGGBBBBB
       local g2 = second_byte & 0xE0 -- mask: 11100000 = (bin 1110 = dec 8 + 4 + 2 = 14 = hex E; bin 0000 = hex 0) = 0xE0
       local g = g1 << 5 | g2 >> 3   -- reorder the bits so that g2 follows g1. g1: 00000111 -> 11100000; g2: 22200000 -> 00022200 -> g1 | g2 = 11122200
-      local b = second_byte & 0x1F  -- mask: 00011111 -> (bin 0001 = hex 1; bin 1111 = hex F) -> 0x1F
+      local b = (second_byte & 0x1F) << 3  -- mask: 00011111 -> (bin 0001 = hex 1; bin 1111 = hex F) -> 0x1F. Shift by 3 to the left to make the high bits 11111000
 
-      set_pixel(x, y, rgb(r, g, b << 3))
+      -- Scale back to (close to) 0.255
+      -- Naive (trivial since values are already in the high bits by definition):
+      -- set_pixel(x, y, rgb(r, g, b))
+
+      -- Using the scaling formula
+      -- r = (r >> 3) * 8 -- 255 / 31 (bin 11111) = 8.2 => 8 => represents range 0..248
+      -- g = (g >> 2) * 4 -- 255 / 63 (bin 111111) = 4.04 => 4 => represents range 0..252
+      -- b = (b >> 3) * 8 -- 255 / (bin 11111) = 8.2 => 8 => represents range 0..248
+      -- Wait, this is the exact same as what we had before ! But slower.
+      -- set_pixel(x, y, rgb(r, g, b))
+
+      -- Filling the low bits with the high bits (that way get get some sort of fake 0..255 range)
+      r = r | (r >> 5) -- abcde000 -> abcdeabc
+      g = g | (g >> 6) -- abcdef00 -> abcdefab
+      b = b | (b >> 5) -- abcde000 -> abcdeabc
+
+      set_pixel(x, y, rgb(r, g, b))
     end
   end
 end
@@ -162,8 +188,9 @@ local function read_header(file)
     8       ...     framedata
   ]] --
   local header = read_file_chunk(file, 0, HEADER_SIZE_BYTES)
-  local magic_number = string.sub(header, 1, 3)
+  local magic_number = string.sub(header, 1, 3) -- First 3 bytes
 
+  -- The first 3 bytes are ascii encoded so it just works !
   if magic_number ~= "GUV" then
     error("Invalid video file: incorrect magic number")
   end
@@ -184,10 +211,10 @@ local function read_header(file)
     error("Invalid encoding")
   end
 
-  -- Get other metadata
+  -- Derive other metadata
   local size = file_size(file)
   local bytes_per_frame = width * height * ENCODINGS[encoding].bits_per_pixel / 8
-  local payload = (size - HEADER_SIZE_BYTES)
+  local payload = size - HEADER_SIZE_BYTES
   local total_frames = math.floor(payload / bytes_per_frame)
 
   return {
@@ -213,15 +240,19 @@ local M = {
   file_path = nil,
   metadata = nil,
   accumulator = 0,
-  frame_index = 0,
+  frame_index = 1,
 }
 
-function M.play(video_path)
+function M.play(video_path, on_video_end_callback)
+  -- make callback an optional argument
+  on_video_end_callback = on_video_end_callback or nil
+
   M.metadata = read_header(video_path)
   M.file_path = video_path
   M.accumulator = 0
   M.frame_index = 1
   M.playing = true
+  M.on_video_end_callback = on_video_end_callback
 end
 
 function M.stop()
@@ -232,6 +263,11 @@ function M.stop()
   M.metadata = nil
   M.accumulator = 0
   M.frame_index = 1
+
+  -- Run the video end callback provided by the user
+  if M.on_video_end_callback ~= nil then
+    M.on_video_end_callback()
+  end
 end
 
 function M.pause()
@@ -249,18 +285,21 @@ function M.update(dt)
 
   -- If time interval between video frames has elapsed
   if M.accumulator >= M.metadata.frame_interval then
-    -- increment frame index
-    M.frame_index = M.frame_index + 1
     -- set back the accumulator to stay in sync
     M.accumulator = M.accumulator - M.metadata.frame_interval
+
+    -- increment frame index
+    M.frame_index = M.frame_index + 1
 
     -- if we reached the end of the video
     if M.frame_index > M.metadata.total_frames then
       -- either loop or stop
       if M.loop then
         M.frame_index = 1
+        print("looping")
       else
         M.stop()
+        print("stopping")
       end
     end
   end
@@ -274,17 +313,4 @@ function M.draw()
   end
 end
 
-
---return M
-
-function setup()
-  M.play("/video/rickroll.guv")
-end
-
-function update(dt)
-  M.update(dt)
-end
-
-function draw()
-  M.draw()
-end
+return M
