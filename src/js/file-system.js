@@ -1,9 +1,9 @@
+import { Terminal } from "./terminal.js";
+
 /**
  * Filesystem emulation using localStorage
  * We can use the path as localStorage key, and write base64 encoded data
  */
-
-const consoleOutput = document.getElementById("console-output");
 
 function isQuotaExceededError(err) {
   return err instanceof DOMException && err.name === "QuotaExceededError";
@@ -20,7 +20,7 @@ function reportFsError(action, err) {
   } else {
     message = `Could not ${action}: ${err instanceof Error ? err.message : String(err)}`;
   }
-  consoleOutput.textContent += `[Filesystem] ${message}\n`;
+  Terminal.printLine(`[Filesystem] ${message}`)
   console.error(err);
 }
 

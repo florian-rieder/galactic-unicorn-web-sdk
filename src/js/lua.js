@@ -26,6 +26,7 @@ import {
 import { fileSizeAtPath, readFile, readFileChunk } from "./file-system.js";
 import fengari from "./vendor/fengari.js";
 import { hslToRgb } from "./color.js";
+import { Terminal } from "./terminal.js";
 
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
@@ -123,8 +124,6 @@ const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every 1000 instru
 
 let currentLuaState = null;
 
-const consoleOutput = document.getElementById("console-output");
-
 function lua_virtualFsPackageSearcher(L) {
   const modulePath = lua.lua_tojsstring(L, 1);
 
@@ -183,7 +182,7 @@ export function initLua() {
     return;
   }
 
-  consoleOutput.textContent = ""; // Clear the console
+  Terminal.clear()
 
   // Create a new Lua state
   const L = lauxlib.luaL_newstate();
@@ -275,7 +274,7 @@ export function luaCallIfExists(name, ...args) {
   );
   if (callStatus != lua.LUA_OK) {
     const errorMessage = lua.lua_tojsstring(L, -1);
-    consoleOutput.textContent += `[Lua error in "${name}"] ${errorMessage}\n`;
+    Terminal.printLine(`[Lua error in "${name}"] ${errorMessage}`)
     lua.lua_pop(L, 1); // Pop the error message from the stack
     return "error";
   }
@@ -296,7 +295,7 @@ export function runLua(code) {
   );
   if (runStatus != lua.LUA_OK) {
     const errorMessage = lua.lua_tojsstring(currentLuaState, -1);
-    consoleOutput.textContent += `[Error] ${errorMessage}\n`;
+    Terminal.printLine(`[Error] ${errorMessage}`)
     lua.lua_pop(currentLuaState, 1); // Pop the error message from the stack
     return false; // Failed to run the code.
   }
@@ -389,7 +388,7 @@ function lua_print(L) {
     lua.lua_pop(L, 1);
   }
 
-  consoleOutput.textContent += parts.join("\t") + "\n";
+  Terminal.printLine(parts.join("\t"))
   return 0;
 }
 
