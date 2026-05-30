@@ -28,64 +28,70 @@ const editorOptions = {
 
 let editor;
 
-/**
- * Creates the Monaco editor and registers Lua SDK helpers. Call once at startup.
- *
- * @param {String} defaultTextContent text content to load as the default buffer upon load
- */
-export async function initMonaco(defaultTextContent = "") {
-  let sdkApi = null;
+export const MonacoEditor = Object.freeze({
+  /**
+   * Creates the Monaco editor and registers Lua SDK helpers. Call once at startup.
+   *
+   * @param {String} defaultTextContent text content to load as the default buffer upon load
+   */
+  async init(defaultTextContent = "") {
+    let sdkApi = null;
 
-  // Providers can be registered before the editor exists; Monaco applies them to
-  // all future Lua models. Color + completion are registered early so they work
-  // even if lua-api.json fails to load.
-  registerLuaColorProvider();
-  // getApi is a closure: sdkApi starts null, then points at JSON after fetch below.
-  // Completion merges in-file symbols immediately and SDK items once api is loaded.
-  registerLuaCompletionProvider(() => sdkApi);
+    // Providers can be registered before the editor exists; Monaco applies them to
+    // all future Lua models. Color + completion are registered early so they work
+    // even if lua-api.json fails to load.
+    registerLuaColorProvider();
+    // getApi is a closure: sdkApi starts null, then points at JSON after fetch below.
+    // Completion merges in-file symbols immediately and SDK items once api is loaded.
+    registerLuaCompletionProvider(() => sdkApi);
 
-  // Generated from lua.js by scripts/generate_lua_api.py, same data as the docs page.
-  const apiJsonUrl = `${import.meta.env.BASE_URL}docs/lua-api.json`;
-  try {
-    const res = await fetch(apiJsonUrl);
-    if (!res.ok) {
-      throw new Error(`Failed to load generated API data (${res.status})`);
+    // Generated from lua.js by scripts/generate_lua_api.py, same data as the docs page.
+    const apiJsonUrl = `${import.meta.env.BASE_URL}docs/lua-api.json`;
+    try {
+      const res = await fetch(apiJsonUrl);
+      if (!res.ok) {
+        throw new Error(`Failed to load generated API data (${res.status})`);
+      }
+      sdkApi = await res.json();
+      registerLuaHoverProvider(sdkApi);
+    } catch (err) {
+      console.warn("Monaco Lua API docs unavailable:", err);
     }
-    sdkApi = await res.json();
-    registerLuaHoverProvider(sdkApi);
-  } catch (err) {
-    console.warn("Monaco Lua API docs unavailable:", err);
-  }
 
-  const container = document.getElementById("monaco-container");
+    const container = document.getElementById("monaco-container");
 
-  // Create the editor
-  editorOptions.value = defaultTextContent;
-  editor = monaco.editor.create(container, editorOptions);
-  // Syntax error squiggles: Fengari compile-only.
-  installLuaDiagnostics(editor, monaco);
-  if (sdkApi) {
-    installSdkNameHighlights(editor, sdkApi);
-  }
+    // Create the editor
+    editorOptions.value = defaultTextContent;
+    editor = monaco.editor.create(container, editorOptions);
+    // Syntax error squiggles: Fengari compile-only.
+    installLuaDiagnostics(editor, monaco);
+    if (sdkApi) {
+      installSdkNameHighlights(editor, sdkApi);
+    }
 
-  // Enable the play button only after the editor has successfully loaded
-  document.getElementById("run-button").disabled = false;
-}
+    // Enable the play button only after the editor has successfully loaded
+    document.getElementById("run-button").disabled = false;
+  },
 
-/**
- * Set a given string as the open buffer in the monaco editor
- * @param {String} text
- */
-export function setEditorText(text, readOnly = false) {
-  editor.setValue(text);
-  // see https://github.com/microsoft/monaco-editor/issues/54
-  editor.updateOptions({ readOnly: readOnly });
-}
+  /**
+   * Set a given string as the open buffer in the monaco editor
+   * @param {String} text
+   */
+  setText(text, readOnly = false) {
+    if (editor === null) return;
 
-/**
- * Get the currently open buffer in the monaco editor
- * @returns {String} the open buffer in the monaco editor
- */
-export function getEditorText() {
-  return editor.getValue();
-}
+    editor.setValue(text);
+    // see https://github.com/microsoft/monaco-editor/issues/54
+    editor.updateOptions({ readOnly: readOnly });
+  },
+
+  /**
+   * Get the currently open buffer in the monaco editor
+   * @returns {String} the open buffer in the monaco editor
+   */
+  getText() {
+    if (editor === null) return "";
+
+    return editor.getValue();
+  },
+});

@@ -1,6 +1,6 @@
 import { FileSystem } from "./file-system.js";
 import { FileExplorer } from "./file-explorer.js";
-import { getEditorText, setEditorText } from "./monaco.js";
+import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
 import defaultSnakeLua from "../lua/snake.lua?raw";
@@ -20,7 +20,7 @@ export const Workspace = Object.freeze({
       return;
     }
 
-    const text = getEditorText();
+    const text = MonacoEditor.getText();
     // Convert text to Uint8Array
     const encoded = new TextEncoder().encode(text);
     // Write file to FS
@@ -51,12 +51,12 @@ export const Workspace = Object.freeze({
       // Plain text file: simply decode the bytes into text
       const decodedString = new TextDecoder().decode(rawFile);
       // Load into monaco
-      setEditorText(decodedString, readOnly);
+      MonacoEditor.setText(decodedString, readOnly);
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
       // Binary file: show file size
-      setEditorText(
+      MonacoEditor.setText(
         `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
         readOnly,
       );
@@ -75,7 +75,7 @@ export const Workspace = Object.freeze({
       this.openFile(DEFAULT_SCRIPT_PATH);
     } else {
       // Set default script
-      setEditorText(defaultSnakeLua, false);
+      MonacoEditor.setText(defaultSnakeLua, false);
       this.saveCurrentFile(); // Create the default file in the file system
     }
   },
@@ -106,7 +106,7 @@ export const Workspace = Object.freeze({
       // Open the first remaining file
       this.openFile(remaining[0]);
     } else {
-      setEditorText("", false);
+      MonacoEditor.setText("", false);
       currentOpenPath = DEFAULT_SCRIPT_PATH;
     }
   },

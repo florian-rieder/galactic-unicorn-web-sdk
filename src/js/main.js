@@ -12,17 +12,15 @@ import {
 } from "./lua.js";
 import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
-import { initMonaco, getEditorText } from "./monaco.js";
+import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
 
 // Initialize components and set up the initial state of the application.
 
-await initMonaco();
+await MonacoEditor.init();
 Workspace.maybeLoadDefaultScript();
-
 initResizers();
-
 FileExplorer.reload();
 Display.render(); // Render the initial state of the display
 
@@ -119,7 +117,7 @@ function startSession() {
   initLua();
 
   // Load the currently open script into Lua
-  const script = getEditorText();
+  const script = MonacoEditor.getText();
   const scriptFilePath = Workspace.getCurrentOpenPath();
 
   // Execute the script. If it fails, stop the session.
