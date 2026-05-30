@@ -142,9 +142,9 @@ function lua_virtualFsPackageSearcher(L) {
 
   const loadStatus = lauxlib.luaL_loadbuffer(
     L,
-    rawFile,
+    rawFile, // fengari already expects a Uint8Array for strings so we don't need to do anything !
     rawFile.length,
-    to_luastring(modulePath),
+    to_luastring(`@${modulePath}`),
   );
   if (loadStatus !== lua.LUA_OK) {
     const err = lua.lua_tojsstring(L, -1);
@@ -182,7 +182,7 @@ export function initLua() {
     return;
   }
 
-  Terminal.clear()
+  Terminal.clear();
 
   // Create a new Lua state
   const L = lauxlib.luaL_newstate();
@@ -274,7 +274,7 @@ export function luaCallIfExists(name, ...args) {
   );
   if (callStatus != lua.LUA_OK) {
     const errorMessage = lua.lua_tojsstring(L, -1);
-    Terminal.printLine(`[Lua error in "${name}"] ${errorMessage}`)
+    Terminal.printLine(`[Lua error in "${name}"] ${errorMessage}`);
     lua.lua_pop(L, 1); // Pop the error message from the stack
     return "error";
   }
@@ -283,19 +283,28 @@ export function luaCallIfExists(name, ...args) {
 }
 
 // Run some Lua code.
-export function runLua(code) {
+export function runLua(code, entryPath = "/main.lua") {
   // Close the current Lua state if it exists to start fresh.
   if (currentLuaState === null) {
     throw new Error("No Lua session to run code in. Call initLua() first.");
   }
 
   // Run the code
-  const runStatus = luaRunWithExecutionBudget(currentLuaState, () =>
-    lauxlib.luaL_dostring(currentLuaState, to_luastring(code)),
-  );
+  const runStatus = luaRunWithExecutionBudget(currentLuaState, () => {
+    // Load the code as a buffer so Lua can consider it as a file with a name.
+    // (For better error messages)
+    lauxlib.luaL_loadbuffer(
+      currentLuaState,
+      to_luastring(code),
+      code.length,
+      to_luastring(`@${entryPath}`),
+    );
+    // Run the code
+    return lua.lua_pcall(currentLuaState, 0, 0, 0);
+  });
   if (runStatus != lua.LUA_OK) {
     const errorMessage = lua.lua_tojsstring(currentLuaState, -1);
-    Terminal.printLine(`[Error] ${errorMessage}`)
+    Terminal.printLine(`[Error] ${errorMessage}`);
     lua.lua_pop(currentLuaState, 1); // Pop the error message from the stack
     return false; // Failed to run the code.
   }
@@ -388,7 +397,7 @@ function lua_print(L) {
     lua.lua_pop(L, 1);
   }
 
-  Terminal.printLine(parts.join("\t"))
+  Terminal.printLine(parts.join("\t"));
   return 0;
 }
 

@@ -4,8 +4,11 @@ import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
 import { stopMusic } from "./music.js";
 import { initFileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
-import { initWorkspace, maybeLoadDefaultScript } from "./workspace.js";
-
+import {
+  initWorkspace,
+  maybeLoadDefaultScript,
+  getCurrentOpenPath,
+} from "./workspace.js";
 
 // Initialize stuff
 
@@ -37,11 +40,12 @@ function startSession() {
   }
 
   const code = getEditorText();
+  const codeFilePath = getCurrentOpenPath();
   // Initialize the Lua session.
   initLua();
   // Load the code into Lua
-  if (runLua(code) === false) {
-    throw new Error("Failed to run the code.");
+  if (!runLua(code, codeFilePath)) {
+    throw new Error("Failed to run the script at " + codeFilePath);
   }
 
   // Call the setup function if it's defined in the lua script.
