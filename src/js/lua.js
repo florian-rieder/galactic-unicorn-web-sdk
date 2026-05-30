@@ -1,17 +1,4 @@
-import {
-  clear,
-  render,
-  getPixel,
-  setPixel,
-  setPixelBlend,
-  setPixelF,
-  rect,
-  rectBlend,
-  rectF,
-  fill,
-  fillBlend,
-  drawLine,
-} from "./display.js";
+import { Display } from "./display.js";
 import { Input } from "./input.js";
 import { playBuzzTone } from "./audio.js";
 import {
@@ -384,8 +371,8 @@ export function closeLua() {
   lua.lua_close(currentLuaState); // Close the Lua state
   currentLuaState = null; // Clear the current Lua state
 
-  clear(); // Clear the display buffer
-  render(); // Render the display
+  Display.clear(); // Clear the display buffer
+  Display.render(); // Render the display
 }
 
 /**
@@ -591,7 +578,7 @@ function pushRgbTable(L, r, g, b) {
 function lua_getPixel(L) {
   const x = lua.lua_tointeger(L, 1);
   const y = lua.lua_tointeger(L, 2);
-  let pixel = getPixel(x, y);
+  let pixel = Display.getPixel(x, y);
   if (pixel === undefined) {
     pixel = [0, 0, 0]; // Default to black if the pixel is out of bounds.
   }
@@ -625,7 +612,7 @@ function lua_setPixel(L) {
   const y = lua.lua_tointeger(L, 2);
   const [r, g, b] = readRgbTableArg(L, 3);
 
-  setPixel(x, y, r, g, b);
+  Display.setPixel(x, y, r, g, b);
   return 0;
 }
 
@@ -656,7 +643,7 @@ function lua_setPixelBlend(L) {
   const [r, g, b] = readRgbTableArg(L, 3);
   const alpha = lua.lua_tonumber(L, 4);
 
-  setPixelBlend(x, y, r, g, b, alpha);
+  Display.setPixelBlend(x, y, r, g, b, alpha);
   return 0;
 }
 
@@ -687,7 +674,7 @@ function lua_setPixelF(L) {
   const y = lua.lua_tonumber(L, 2);
   const [r, g, b] = readRgbTableArg(L, 3);
 
-  setPixelF(x, y, r, g, b);
+  Display.setPixelF(x, y, r, g, b);
   return 0;
 }
 
@@ -764,7 +751,7 @@ function lua_rectF(L) {
   const w = lua.lua_tonumber(L, 3);
   const h = lua.lua_tonumber(L, 4);
   const [r, g, b] = readRgbTableArg(L, 5);
-  rectF(x, y, w, h, r, g, b);
+  Display.rectF(x, y, w, h, r, g, b);
   return 0;
 }
 
@@ -798,7 +785,7 @@ function lua_rect(L) {
   const w = lua.lua_tonumber(L, 3);
   const h = lua.lua_tonumber(L, 4);
   const [r, g, b] = readRgbTableArg(L, 5);
-  rect(x, y, w, h, r, g, b);
+  Display.rect(x, y, w, h, r, g, b);
   return 0;
 }
 
@@ -831,7 +818,7 @@ function lua_rectBlend(L) {
   const h = lua.lua_tonumber(L, 4);
   const [r, g, b] = readRgbTableArg(L, 5);
   const alpha = lua.lua_tonumber(L, 6);
-  rectBlend(x, y, w, h, r, g, b, alpha);
+  Display.rectBlend(x, y, w, h, r, g, b, alpha);
   return 0;
 }
 
@@ -852,7 +839,7 @@ function lua_rectBlend(L) {
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_clear(L) {
-  clear();
+  Display.clear();
   return 0;
 }
 
@@ -876,7 +863,7 @@ function lua_clear(L) {
  */
 function lua_fill(L) {
   const [r, g, b] = readRgbTableArg(L, 1);
-  fill(r, g, b);
+  Display.fill(r, g, b);
   return 0;
 }
 
@@ -902,7 +889,7 @@ function lua_fill(L) {
 function lua_fillBlend(L) {
   const [r, g, b] = readRgbTableArg(L, 1);
   const alpha = lua.lua_tonumber(L, 2);
-  fillBlend(r, g, b, alpha);
+  Display.fillBlend(r, g, b, alpha);
   return 0;
 }
 
@@ -934,7 +921,7 @@ function lua_line(L) {
   const x1 = lua.lua_tointeger(L, 3);
   const y1 = lua.lua_tointeger(L, 4);
   const [r, g, b] = readRgbTableArg(L, 5);
-  drawLine(x0, y0, x1, y1, r, g, b);
+  Display.drawLine(x0, y0, x1, y1, r, g, b);
   return 0;
 }
 

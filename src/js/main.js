@@ -1,4 +1,4 @@
-import { render } from "./display.js";
+import { Display } from "./display.js";
 import { initResizers } from "./resizer.js";
 import {
   initLua,
@@ -29,7 +29,7 @@ initResizers();
 initFileExplorer();
 initWorkspace();
 
-render(); // Render the initial state of the display
+Display.render(); // Render the initial state of the display
 
 const TARGET_FPS = 60;
 const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
@@ -172,7 +172,7 @@ function mainLoop() {
   }
 
   // Render the display buffer to the canvas.
-  render();
+  Display.render();
 
   // Time management: aim for a TARGET_FPS update rate.
   const timeToWait = TARGET_DELTA_TIME - deltaTime;
