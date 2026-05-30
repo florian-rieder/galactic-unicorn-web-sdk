@@ -1,11 +1,5 @@
 import { FileSystem } from "./file-system.js";
-import {
-  getCurrentOpenPath,
-  onFileRemoved,
-  onFileRenamed,
-  openFile,
-  saveCurrentFile,
-} from "./workspace.js";
+import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
 
 const fileInput = document.querySelector("#file-upload-input");
@@ -150,7 +144,7 @@ function createNewFile() {
     return;
   }
 
-  saveCurrentFile();
+  Workspace.saveCurrentFile();
 
   if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
     Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
@@ -158,13 +152,13 @@ function createNewFile() {
   }
 
   // Open the new file
-  openFile(path);
+  Workspace.openFile(path);
   // Reload the file explorer to show the new file
   reloadFileExplorer();
 }
 
 function renameOpenFile() {
-  const currentPath = getCurrentOpenPath();
+  const currentPath = Workspace.getCurrentOpenPath();
   if (currentPath === null) {
     return;
   }
@@ -189,18 +183,18 @@ function renameOpenFile() {
     return;
   }
 
-  saveCurrentFile();
+  Workspace.saveCurrentFile();
   if (!FileSystem.renameFile(currentPath, newPath)) {
     Terminal.printLine("[Filesystem] Could not rename " + currentPath);
     return;
   }
 
-  onFileRenamed(currentPath, newPath);
+  Workspace.onFileRenamed(currentPath, newPath);
   reloadFileExplorer();
 }
 
 function deleteOpenFile() {
-  const currentPath = getCurrentOpenPath();
+  const currentPath = Workspace.getCurrentOpenPath();
   if (currentPath === null) {
     return;
   }
@@ -212,7 +206,7 @@ function deleteOpenFile() {
   // Actually delete the file from the filesystem
   FileSystem.deleteFile(currentPath);
   // Notify the workspace that the file has been removed and reload the file explorer
-  onFileRemoved(currentPath);
+  Workspace.onFileRemoved(currentPath);
   reloadFileExplorer();
 }
 
@@ -281,7 +275,7 @@ function renderNode(node) {
     row.dataset.path = node.path;
     row.append(treeIcon("file"), document.createTextNode(node.name));
     row.addEventListener("click", () => onFileClick(node.path));
-    if (node.path == getCurrentOpenPath()) {
+    if (node.path == Workspace.getCurrentOpenPath()) {
       row.classList.add("current-open-file");
     }
     li.appendChild(row);
@@ -299,7 +293,7 @@ function renderNode(node) {
 
   if (
     openFolders.has(node.path) ||
-    isAncestorFolder(node.path, getCurrentOpenPath())
+    isAncestorFolder(node.path, Workspace.getCurrentOpenPath())
   ) {
     details.open = true;
   }
@@ -350,8 +344,8 @@ export function reloadFileExplorer() {
 }
 
 function onFileClick(path) {
-  saveCurrentFile();
-  openFile(path);
+  Workspace.saveCurrentFile();
+  Workspace.openFile(path);
   reloadFileExplorer();
 }
 

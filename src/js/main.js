@@ -13,21 +13,16 @@ import {
 import { Music } from "./music.js";
 import { initFileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
-import {
-  initWorkspace,
-  maybeLoadDefaultScript,
-  getCurrentOpenPath,
-} from "./workspace.js";
+import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
 
 // Initialize components and set up the initial state of the application.
 
 await initMonaco();
-maybeLoadDefaultScript();
+Workspace.maybeLoadDefaultScript();
 
 initResizers();
 initFileExplorer();
-initWorkspace();
 
 Display.render(); // Render the initial state of the display
 
@@ -46,6 +41,21 @@ const runButton = document.getElementById("run-button");
 const stopButton = document.getElementById("stop-button");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
+
+/**
+ * Save the currently open file when CTRL+S or CMD+S is pressed.
+ * @param {KeyboardEvent} event - The keyboard event.
+ */
+window.addEventListener("keydown", (event) => {
+  // on CTRL+S or CMD+S
+  if (
+    (event.key === "s" && event.ctrlKey) ||
+    (event.key === "s" && event.metaKey)
+  ) {
+    event.preventDefault();
+    Workspace.saveCurrentFile();
+  }
+});
 
 /**
  * Clear the set of pressed keys when the window loses focus.
@@ -110,7 +120,7 @@ function startSession() {
 
   // Load the currently open script into Lua
   const script = getEditorText();
-  const scriptFilePath = getCurrentOpenPath();
+  const scriptFilePath = Workspace.getCurrentOpenPath();
 
   // Execute the script. If it fails, stop the session.
   if (!runLua(script, scriptFilePath)) {

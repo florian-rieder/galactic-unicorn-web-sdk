@@ -11,121 +11,115 @@ const DEFAULT_SCRIPT_PATH = "/main.lua";
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
 let readOnly = false;
 
-export function initWorkspace() {
-  window.addEventListener("keydown", (event) => {
-    // on CTRL+S or CMD+S
-    if (
-      (event.key === "s" && event.ctrlKey) ||
-      (event.key === "s" && event.metaKey)
-    ) {
-      event.preventDefault();
-      saveCurrentFile();
+export const Workspace = Object.freeze({
+  /**
+   * Save the currently open file in the editor
+   */
+  saveCurrentFile() {
+    if (readOnly || currentOpenPath === null) {
+      return;
     }
-  });
-}
 
-// Save the currently open file in the editor
-export function saveCurrentFile() {
-  if (readOnly || currentOpenPath === null) {
-    return;
-  }
+    const text = getEditorText();
+    // Convert text to Uint8Array
+    const encoded = new TextEncoder().encode(text);
+    // Write file to FS
+    if (!FileSystem.writeFile(currentOpenPath, encoded)) {
+      Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
+      return;
+    }
+    reloadFileExplorer();
+  },
 
-  const text = getEditorText();
-  // Convert text to Uint8Array
-  const encoded = new TextEncoder().encode(text);
-  // Write file to FS
-  if (!FileSystem.writeFile(currentOpenPath, encoded)) {
-    Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
-    return;
-  }
-  reloadFileExplorer();
-}
+  /**
+   * Load and open a certain file into the editor
+   * @param {string} path - The path of the file to open.
+   */
+  openFile(path) {
+    const rawFile = FileSystem.readFile(path);
+    if (rawFile === null) {
+      console.error("Couldn't open file " + path);
+      return;
+    }
 
-// Load and open a certain file into the editor
-export function openFile(path) {
-  const rawFile = FileSystem.readFile(path);
-  if (rawFile === null) {
-    console.error("Couldn't open file " + path);
-    return;
-  }
+    currentOpenPath = path;
 
-  currentOpenPath = path;
+    const extension = path.split(".").slice(-1)[0];
 
-  const extension = path.split(".").slice(-1)[0];
+    if (TEXTISH_EXTENSIONS.includes(extension)) {
+      readOnly = false;
+      // Plain text file: simply decode the bytes into text
+      const decodedString = new TextDecoder().decode(rawFile);
+      // Load into monaco
+      setEditorText(decodedString, readOnly);
+    } else {
+      // If we "load" binary as description into the editor we need to NOT save it upon exit!
+      readOnly = true;
+      // Binary file: show file size
+      setEditorText(
+        `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
+        readOnly,
+      );
+    }
+  },
 
-  if (TEXTISH_EXTENSIONS.includes(extension)) {
-    readOnly = false;
-    // Plain text file: simply decode the bytes into text
-    const decodedString = new TextDecoder().decode(rawFile);
-    // Load into monaco
-    setEditorText(decodedString, readOnly);
-  } else {
-    // If we "load" binary as description into the editor we need to NOT save it upon exit!
-    readOnly = true;
-    // Binary file: show file size
-    setEditorText(
-      `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
-      readOnly,
-    );
-  }
-}
+  /**
+   * Load the default script if it exists, otherwise create it.
+   *
+   * Design decision: there will always be a default script in the file system.
+   * If it doesn't exist, create it.
+   */
+  maybeLoadDefaultScript() {
+    if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
+      // Open the default file from the file system
+      this.openFile(DEFAULT_SCRIPT_PATH);
+    } else {
+      // Set default script
+      setEditorText(defaultSnakeLua, false);
+      this.saveCurrentFile(); // Create the default file in the file system
+    }
+  },
 
-/**
- * Load the default script if it exists, otherwise create it.
- *
- * Design decision: there will always be a default script in the file system.
- * If it doesn't exist, create it.
- */
-export function maybeLoadDefaultScript() {
-  if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
-    // Open the default file from the file system
-    openFile(DEFAULT_SCRIPT_PATH);
-  } else {
-    // Set default script
-    setEditorText(defaultSnakeLua, false);
-    saveCurrentFile(); // Create the default file in the file system
-  }
-}
+  /**
+   * Get the path of the currently open file.
+   * @returns {string} The path of the currently open file.
+   */
+  getCurrentOpenPath() {
+    return currentOpenPath;
+  },
 
-/**
- * Get the path of the currently open file.
- * @returns {string} The path of the currently open file.
- */
-export function getCurrentOpenPath() {
-  return currentOpenPath;
-}
+  /**
+   * Handle the event of a file being removed.
+   * @param {string} path - The path of the file that was removed.
+   */
+  onFileRemoved(path) {
+    // If the currently opened file was removed, open one of the remaining files.
+    if (currentOpenPath !== path) {
+      return;
+    }
 
-/**
- * Handle the event of a file being removed.
- * @param {string} path - The path of the file that was removed.
- */
-export function onFileRemoved(path) {
-  // If the currently opened file was removed, open one of the remaining files.
-  if (currentOpenPath !== path) {
-    return;
-  }
+    // Find the first remaining file and open it
+    const remaining = FileSystem.listFiles()
+      .filter((filePath) => filePath !== path)
+      .sort();
+    if (remaining.length > 0) {
+      // Open the first remaining file
+      this.openFile(remaining[0]);
+    } else {
+      setEditorText("", false);
+      currentOpenPath = DEFAULT_SCRIPT_PATH;
+    }
+  },
 
-  // Find the first remaining file and open it
-  const remaining = FileSystem.listFiles()
-    .filter((filePath) => filePath !== path)
-    .sort();
-  if (remaining.length > 0) {
-    // Open the first remaining file
-    openFile(remaining[0]);
-  } else {
-    setEditorText("", false);
-    currentOpenPath = DEFAULT_SCRIPT_PATH;
-  }
-}
-
-/**
- * Handle the event of a file being renamed.
- * @param {string} oldPath - The old path of the file.
- * @param {string} newPath - The new path of the file.
- */
-export function onFileRenamed(oldPath, newPath) {
-  // Update the currentOpenPath
-  if (currentOpenPath === oldPath) {
-    currentOpenPath = newPath;
-  }
-}
+  /**
+   * Handle the event of a file being renamed.
+   * @param {string} oldPath - The old path of the file.
+   * @param {string} newPath - The new path of the file.
+   */
+  onFileRenamed(oldPath, newPath) {
+    // Update the currentOpenPath
+    if (currentOpenPath === oldPath) {
+      currentOpenPath = newPath;
+    }
+  },
+});
