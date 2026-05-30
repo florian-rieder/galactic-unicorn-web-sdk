@@ -1,10 +1,4 @@
-import {
-  fileExists,
-  fileSizeAtPath,
-  listFiles,
-  readFile,
-  writeFile,
-} from "./file-system.js";
+import { FileSystem } from "./file-system.js";
 import { reloadFileExplorer } from "./file-explorer.js";
 import { getEditorText, setEditorText } from "./monaco.js";
 import { Terminal } from "./terminal.js";
@@ -40,7 +34,7 @@ export function saveCurrentFile() {
   // Convert text to Uint8Array
   const encoded = new TextEncoder().encode(text);
   // Write file to FS
-  if (!writeFile(currentOpenPath, encoded)) {
+  if (!FileSystem.writeFile(currentOpenPath, encoded)) {
     Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
     return;
   }
@@ -49,7 +43,7 @@ export function saveCurrentFile() {
 
 // Load and open a certain file into the editor
 export function openFile(path) {
-  const rawFile = readFile(path);
+  const rawFile = FileSystem.readFile(path);
   if (rawFile === null) {
     console.error("Couldn't open file " + path);
     return;
@@ -69,7 +63,10 @@ export function openFile(path) {
     // If we "load" binary as description into the editor we need to NOT save it upon exit!
     readOnly = true;
     // Binary file: show file size
-    setEditorText(`Binary (${fileSizeAtPath(path)} bytes)`, readOnly);
+    setEditorText(
+      `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
+      readOnly,
+    );
   }
 }
 
@@ -80,7 +77,7 @@ export function openFile(path) {
  * If it doesn't exist, create it.
  */
 export function maybeLoadDefaultScript() {
-  if (fileExists(DEFAULT_SCRIPT_PATH)) {
+  if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
     // Open the default file from the file system
     openFile(DEFAULT_SCRIPT_PATH);
   } else {
@@ -109,7 +106,7 @@ export function onFileRemoved(path) {
   }
 
   // Find the first remaining file and open it
-  const remaining = listFiles()
+  const remaining = FileSystem.listFiles()
     .filter((filePath) => filePath !== path)
     .sort();
   if (remaining.length > 0) {

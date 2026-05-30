@@ -1,10 +1,4 @@
-import {
-  deleteFile,
-  fileExists,
-  listFiles,
-  renameFile,
-  writeFile,
-} from "./file-system.js";
+import { FileSystem } from "./file-system.js";
 import {
   getCurrentOpenPath,
   onFileRemoved,
@@ -120,7 +114,7 @@ function uploadFiles() {
       // Create a Uint8Array view to be able to read the array buffer
       const view = new Uint8Array(arrayBuffer);
 
-      if (!writeFile("/" + file.name, view)) {
+      if (!FileSystem.writeFile("/" + file.name, view)) {
         Terminal.printLine(`[Filesystem] Failed to upload file ${file.name}`);
       }
 
@@ -151,14 +145,14 @@ function createNewFile() {
     return;
   }
 
-  if (fileExists(path)) {
+  if (FileSystem.fileExists(path)) {
     Terminal.printLine("[Filesystem] A file already exists at " + path);
     return;
   }
 
   saveCurrentFile();
 
-  if (!writeFile(path, new TextEncoder().encode(""))) {
+  if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
     Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
     return;
   }
@@ -190,13 +184,13 @@ function renameOpenFile() {
     return;
   }
 
-  if (fileExists(newPath)) {
+  if (FileSystem.fileExists(newPath)) {
     Terminal.printLine("[Filesystem] A file already exists at " + newPath);
     return;
   }
 
   saveCurrentFile();
-  if (!renameFile(currentPath, newPath)) {
+  if (!FileSystem.renameFile(currentPath, newPath)) {
     Terminal.printLine("[Filesystem] Could not rename " + currentPath);
     return;
   }
@@ -216,7 +210,7 @@ function deleteOpenFile() {
   }
 
   // Actually delete the file from the filesystem
-  deleteFile(currentPath);
+  FileSystem.deleteFile(currentPath);
   // Notify the workspace that the file has been removed and reload the file explorer
   onFileRemoved(currentPath);
   reloadFileExplorer();
@@ -224,7 +218,7 @@ function deleteOpenFile() {
 
 function buildTree() {
   // Build the file hierarchy from the flat file storage
-  const fileList = listFiles();
+  const fileList = FileSystem.listFiles();
 
   let root = new FSNode("root", "/");
 

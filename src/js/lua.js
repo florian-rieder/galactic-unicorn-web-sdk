@@ -11,7 +11,7 @@ import {
   setTicksPerBeat,
   isMusicPlaying,
 } from "./music.js";
-import { fileSizeAtPath, readFile, readFileChunk } from "./file-system.js";
+import { FileSystem } from "./file-system.js";
 import fengari from "./vendor/fengari.js";
 import { hslToRgb } from "./color.js";
 import { Terminal } from "./terminal.js";
@@ -122,7 +122,7 @@ function lua_virtualFsPackageSearcher(L) {
   // require("utils") -> current_script_directory/utils.lua
   // require("module.utils") -> current_script_directory/module/utils.lua
 
-  const rawFile = readFile(modulePath);
+  const rawFile = FileSystem.readFile(modulePath);
   if (!rawFile) {
     lua.lua_pushstring(
       L,
@@ -1235,7 +1235,7 @@ function lua_isMusicPlaying(L) {
 function lua_readFile(L) {
   const path = lua.lua_tojsstring(L, 1);
 
-  let file = readFile(path);
+  let file = FileSystem.readFile(path);
   if (file === null) {
     lua.lua_pushnil(L);
     return 1;
@@ -1268,7 +1268,7 @@ function lua_readFileChunk(L) {
   const offset = lua.lua_tointeger(L, 2);
   const size = lua.lua_tointeger(L, 3);
 
-  let chunk = readFileChunk(path, offset, size);
+  let chunk = FileSystem.readFileChunk(path, offset, size);
 
   // If the chunk couldn't be read, return nil.
   if (chunk === null) {
@@ -1300,7 +1300,7 @@ function lua_readFileChunk(L) {
 function lua_fileSize(L) {
   const path = lua.lua_tojsstring(L, 1);
 
-  let size = fileSizeAtPath(path);
+  let size = FileSystem.fileSizeAtPath(path);
 
   lua.lua_pushinteger(L, size);
 
