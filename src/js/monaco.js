@@ -78,7 +78,7 @@ export const MonacoEditor = Object.freeze({
    * @param {String} text
    */
   setText(text, readOnly = false) {
-    if (editor === null) return;
+    if (!editor) return;
 
     editor.setValue(text);
     // see https://github.com/microsoft/monaco-editor/issues/54
@@ -90,7 +90,7 @@ export const MonacoEditor = Object.freeze({
    * @returns {String} the open buffer in the monaco editor
    */
   getText() {
-    if (editor === null) return "";
+    if (!editor) return "";
 
     return editor.getValue();
   },
