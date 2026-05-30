@@ -10,7 +10,7 @@ import {
   getCurrentOpenPath,
 } from "./workspace.js";
 
-// Initialize stuff
+// Initialize components and set up the initial state of the application.
 
 await initMonaco();
 maybeLoadDefaultScript();
@@ -23,6 +23,12 @@ render(); // Render the initial state of the display
 
 const TARGET_FPS = 60;
 const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
+
+let lastTime = null;
+let deltaTime = null;
+let now = null;
+let frameId = null;
+let timeoutId = null;
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-button");
@@ -39,40 +45,43 @@ function startSession() {
     stopSession();
   }
 
-  const code = getEditorText();
-  const codeFilePath = getCurrentOpenPath();
   // Initialize the Lua session.
   initLua();
-  // Load the code into Lua
-  if (!runLua(code, codeFilePath)) {
-    throw new Error("Failed to run the script at " + codeFilePath);
+
+  // Load the currently open script into Lua
+  const script = getEditorText();
+  const scriptFilePath = getCurrentOpenPath();
+
+  // Execute the script. If it fails, stop the session.
+  if (!runLua(script, scriptFilePath)) {
+    stopSession();
+    return;
   }
 
   // Call the setup function if it's defined in the lua script.
-  luaCallIfExists("setup");
+  // Missing callbacks are allowed; runtime errors stop the execution of the loop.
+  const setupStatus = luaCallIfExists("setup");
+  if (setupStatus === "error") {
+    stopSession();
+    return;
+  }
 
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
 
 /**
- * Stop and cleanup the Lua session
+ * Stop and cleanup the Lua session and associated resources.
  */
 function stopSession() {
   closeLua();
   stopMusic();
-  lastTime = null;
   cancelAnimationFrame(frameId);
   clearTimeout(timeoutId);
+  lastTime = null;
   frameId = null;
   timeoutId = null;
 }
-
-let lastTime = null;
-let deltaTime = null;
-let now = null;
-let frameId = null;
-let timeoutId = null;
 
 /**
  * Run the main loop of the Lua program (update/draw)
@@ -89,9 +98,17 @@ function mainLoop() {
   // Run update then draw from the lua script.
   // Missing callbacks are allowed; runtime errors stop the loop.
   const updateStatus = luaCallIfExists("update", deltaTime / 1000.0); // Convert milliseconds to seconds
-  if (updateStatus === "error") return;
+  if (updateStatus === "error") {
+    stopSession();
+    return;
+  }
+
   const drawStatus = luaCallIfExists("draw");
-  if (drawStatus === "error") return;
+  if (drawStatus === "error") {
+    stopSession();
+    return;
+  }
+
   // Render the display buffer to the canvas.
   render();
 
