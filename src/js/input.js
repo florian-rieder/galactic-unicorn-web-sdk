@@ -27,29 +27,32 @@ export const Input = Object.freeze({
   /**
    * Drop all held keys (call when starting a run so missed keyup cannot stick input).
    */
-  clearPressedKeys: function () {
+  clearPressedKeys() {
     keysPressed.clear();
   },
+
   /**
    * Mark a key as pressed.
    * @param {string} key - The name of the button to mark as pressed.
    */
-  markPressed: function (key) {
+  markPressed(key) {
     keysPressed.add(key);
   },
+
   /**
    * Mark a key as released.
    * @param {string} key - The name of the button to mark as released.
    */
-  markReleased: function (key) {
+  markReleased(key) {
     keysPressed.delete(key);
   },
+
   /**
    * Check if a button is currently pressed.
    * @param {string} key - The name of the button to check.
    * @returns {boolean} True if the button is pressed, false otherwise.
    */
-  isPressed: function (key) {
+  isPressed(key) {
     return keysPressed.has(key);
   },
 });
