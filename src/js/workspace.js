@@ -1,5 +1,4 @@
 import { FileSystem } from "./file-system.js";
-import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
@@ -11,7 +10,19 @@ const DEFAULT_SCRIPT_PATH = "/main.lua";
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
 let readOnly = false;
 
+/** Called after a successful save so the file tree can refresh (wired from main.js). */
+let explorerReloadHandler = () => {};
+
 export const Workspace = Object.freeze({
+  /**
+   * Register a callback to refresh the file explorer after saves.
+   * Wired from main.js to avoid a circular import with file-explorer.js.
+   * @param {() => void} handler
+   */
+  setExplorerReloadHandler(handler) {
+    explorerReloadHandler = handler;
+  },
+
   /**
    * Save the currently open file in the editor
    */
@@ -28,7 +39,7 @@ export const Workspace = Object.freeze({
       Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
       return;
     }
-    FileExplorer.reload();
+    explorerReloadHandler();
   },
 
   /**

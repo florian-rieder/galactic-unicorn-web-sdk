@@ -19,6 +19,7 @@ import { Input, KEY_MAP } from "./input.js";
 // Initialize components and set up the initial state of the application.
 
 await MonacoEditor.init();
+Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 Workspace.maybeLoadDefaultScript();
 initResizers();
 FileExplorer.reload();
