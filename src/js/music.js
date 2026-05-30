@@ -23,76 +23,122 @@ let musicIndex = 0;
 let musicLoop = false;
 let musicPlaying = false;
 
-export function setTempo(new_bpm) {
-  if (new_bpm <= 0) {
-    throw new Error("Tempo must be greater than 0.");
-  }
-  bpm = Number(new_bpm);
-}
+/**
+ * Music sequencer/player
+ */
+export const Music = Object.freeze({
+  /**
+   * Set the tempo of the music
+   * @param {number} new_bpm - The new tempo in beats per minute
+   */
+  setTempo(new_bpm) {
+    if (new_bpm <= 0) {
+      throw new Error("Tempo must be greater than 0.");
+    }
+    bpm = Number(new_bpm);
+  },
 
-export function setTicksPerBeat(new_ticks_per_beat) {
-  if (new_ticks_per_beat <= 0) {
-    throw new Error("Ticks per beat must be greater than 0.");
-  }
-  ticksPerBeat = new_ticks_per_beat;
-}
+  /**
+   * Set the number of ticks per beat
+   * @param {number} new_ticks_per_beat - The new number of ticks per beat
+   */
+  setTicksPerBeat(new_ticks_per_beat) {
+    if (new_ticks_per_beat <= 0) {
+      throw new Error("Ticks per beat must be greater than 0.");
+    }
+    ticksPerBeat = new_ticks_per_beat;
+  },
 
-export function loadMusic(music_string) {
-  // Parse the music string and create a list of notes and durations
-  music = parseMusic(music_string);
-}
+  /**
+   * Load a music string into memory
+   * @param {string} music_string - The music string to load
+   */
+  load(music_string) {
+    // Parse the music string and create a list of notes and durations
+    music = parseMusic(music_string);
+  },
 
-export function playMusic(loop) {
-  // Prevent multiple music plays from overlapping
-  clearTimeout(noteTimeout);
-  noteTimeout = null;
+  /**
+   * Play the music
+   * @param {boolean} loop - Whether to loop the music
+   */
+  play(loop) {
+    // Prevent multiple music plays from overlapping
+    clearTimeout(noteTimeout);
+    noteTimeout = null;
 
-  musicLoop = !!loop;
-  musicIndex = 0;
+    musicLoop = !!loop;
+    musicIndex = 0;
 
-  if (!music || music.length === 0) {
-    throw new Error("No music to play. Call loadMusic() first.");
-  }
+    if (!music || music.length === 0) {
+      throw new Error(
+        "No music to play. Call `Music.load(music_string)` first.",
+      );
+    }
 
-  musicPlaying = true;
-  playNextNote();
-}
+    musicPlaying = true;
+    playNextNote();
+  },
 
-export function pauseMusic() {
-  clearTimeout(noteTimeout);
-  noteTimeout = null;
-  musicPlaying = false;
-}
+  /**
+   * Pause the music
+   */
+  pause() {
+    clearTimeout(noteTimeout);
+    noteTimeout = null;
+    musicPlaying = false;
+  },
 
-export function resumeMusic() {
-  // If the music is already playing, don't resume it
-  if (noteTimeout != null) {
-    return;
-  }
+  /**
+   * Resume the music
+   */
+  resume() {
+    // If the music is already playing, don't resume it
+    if (noteTimeout != null) {
+      return;
+    }
 
-  musicPlaying = true;
-  playNextNote();
-}
+    musicPlaying = true;
+    playNextNote();
+  },
 
-export function stopMusic() {
-  if (!music) {
-    return;
-  }
-  music = null;
-  musicIndex = 0;
-  clearTimeout(noteTimeout);
-  noteTimeout = null;
-  musicPlaying = false;
-}
+  /**
+   * Stop the music
+   */
+  stop() {
+    if (!music) {
+      return;
+    }
+    music = null;
+    musicIndex = 0;
+    clearTimeout(noteTimeout);
+    noteTimeout = null;
+    musicPlaying = false;
+  },
 
-export function isMusicPlaying() {
-  return musicPlaying;
-}
+  /**
+   * Check if the music is playing
+   * @returns {boolean} Whether the music is playing
+   */
+  isPlaying() {
+    return musicPlaying;
+  },
+});
 
+/**
+ * Convert ticks to milliseconds
+ * @param {number} ticks - The number of ticks
+ * @returns {number} The number of milliseconds
+ */
 function tickToMs(ticks) {
   return (ticks / ticksPerBeat) * (60 / bpm) * 1000;
 }
 
+/**
+ * Parse a music string into a sequence of notes and durations
+ * @param {string} music_string - The music string to parse
+ * @returns {Array<{frequency: number, duration: number}>} The list of notes and durations
+ */
 function parseMusic(music_string) {
   // Parse the music string and create a list of notes and durations
   const notes = music_string.split(" ");
@@ -109,7 +155,11 @@ function parseMusic(music_string) {
   });
 }
 
-// Convert the note (e.g. "A4") to a frequency (e.g. 440 Hz)
+/**
+ * Convert the note (e.g. "A4") to a frequency (e.g. 440 Hz)
+ * @param {string} note - The note to convert
+ * @returns {number} The frequency of the note
+ */
 function noteToFrequency(note) {
   if (note == "0") return 0;
 
@@ -129,6 +179,9 @@ function noteToFrequency(note) {
   return 440 * 2 ** ((n - 69) / 12);
 }
 
+/**
+ * Play the next note in the sequence
+ */
 function playNextNote() {
   if (!music || music.length === 0) {
     return;
@@ -140,7 +193,7 @@ function playNextNote() {
       musicIndex = 0;
     } else {
       // If we've reached the end of the music and looping is disabled, stop the music
-      stopMusic();
+      Music.stop();
       return;
     }
   }

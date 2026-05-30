@@ -1,20 +1,12 @@
+import fengari from "./vendor/fengari.js";
+
 import { Display } from "./display.js";
 import { Input } from "./input.js";
-import { playBuzzTone } from "./audio.js";
-import {
-  loadMusic,
-  playMusic,
-  pauseMusic,
-  resumeMusic,
-  stopMusic,
-  setTempo,
-  setTicksPerBeat,
-  isMusicPlaying,
-} from "./music.js";
+import { Music } from "./music.js";
 import { FileSystem } from "./file-system.js";
-import fengari from "./vendor/fengari.js";
-import { hslToRgb } from "./color.js";
 import { Terminal } from "./terminal.js";
+import { playBuzzTone } from "./audio.js";
+import { hslToRgb } from "./color.js";
 
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
@@ -1028,7 +1020,7 @@ function lua_buzz(L) {
 function lua_setTempo(L) {
   const bpm = lua.lua_tointeger(L, 1);
   try {
-    setTempo(bpm);
+    Music.setTempo(bpm);
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in set_tempo: " + e));
     lua.lua_error(L);
@@ -1055,7 +1047,7 @@ function lua_setTempo(L) {
 function lua_setTicksPerBeat(L) {
   const ticks_per_beat = lua.lua_tointeger(L, 1);
   try {
-    setTicksPerBeat(ticks_per_beat);
+    Music.setTicksPerBeat(ticks_per_beat);
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in set_ticks_per_beat: " + e));
     lua.lua_error(L);
@@ -1086,7 +1078,7 @@ function lua_setTicksPerBeat(L) {
 function lua_loadMusic(L) {
   const music_string = lua.lua_tojsstring(L, 1);
   try {
-    loadMusic(music_string);
+    Music.load(music_string);
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in load_music: " + e));
     lua.lua_error(L);
@@ -1113,7 +1105,7 @@ function lua_loadMusic(L) {
 function lua_playMusic(L) {
   const loop = lua.lua_toboolean(L, 1) || false;
   try {
-    playMusic(loop);
+    Music.play(loop);
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in play_music: " + e));
     lua.lua_error(L);
@@ -1138,7 +1130,7 @@ function lua_playMusic(L) {
  */
 function lua_pauseMusic(L) {
   try {
-    pauseMusic();
+    Music.pause();
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in pause_music: " + e));
     lua.lua_error(L);
@@ -1163,7 +1155,7 @@ function lua_pauseMusic(L) {
  */
 function lua_resumeMusic(L) {
   try {
-    resumeMusic();
+    Music.resume();
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in resume_music: " + e));
     lua.lua_error(L);
@@ -1188,7 +1180,7 @@ function lua_resumeMusic(L) {
  */
 function lua_stopMusic(L) {
   try {
-    stopMusic();
+    Music.stop();
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in stop_music: " + e));
     lua.lua_error(L);
@@ -1212,7 +1204,7 @@ function lua_stopMusic(L) {
  * @returns {number} Number of values returned to Lua (always 1).
  */
 function lua_isMusicPlaying(L) {
-  const isPlaying = isMusicPlaying();
+  const isPlaying = Music.isPlaying();
   lua.lua_pushboolean(L, isPlaying);
   return 1;
 }

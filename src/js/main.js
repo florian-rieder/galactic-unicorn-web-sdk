@@ -10,7 +10,7 @@ import {
   lua_callback_update,
   lua_callback_draw,
 } from "./lua.js";
-import { stopMusic } from "./music.js";
+import { Music } from "./music.js";
 import { initFileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
 import {
@@ -136,7 +136,7 @@ function startSession() {
  */
 function stopSession() {
   closeLua();
-  stopMusic();
+  Music.stop();
   cancelAnimationFrame(frameId);
   clearTimeout(timeoutId);
   lastTime = null;
