@@ -126,7 +126,7 @@ def parse_constant_registry(lua_js_content: str) -> list[dict[str, str]]:
 def parse_jsdoc_blocks(lua_js_content: str) -> dict[str, LuaFunctionDoc]:
     """Parse JSDoc blocks directly above `function lua_*` declarations."""
     pattern = re.compile(
-        r"/\*\*(?P<doc>(?:(?!\*/)[\s\S])*)\*/\s*function\s+(?P<name>lua_[A-Za-z0-9_]+)\s*\("
+        r"/\*\*(?P<doc>(?:(?!\*/)[\s\S])*)\*/\s*(?:export)?\s*function\s+(?P<name>lua_[A-Za-z0-9_]+)\s*\("
     )
     docs_by_js_name: dict[str, LuaFunctionDoc] = {}
     for match in pattern.finditer(lua_js_content):

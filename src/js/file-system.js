@@ -20,7 +20,7 @@ function reportFsError(action, err) {
   } else {
     message = `Could not ${action}: ${err instanceof Error ? err.message : String(err)}`;
   }
-  Terminal.printLine(`[Filesystem] ${message}`)
+  Terminal.printLine(`[Filesystem] ${message}`);
   console.error(err);
 }
 
@@ -49,6 +49,14 @@ export function writeFile(path, data) {
 
 /**
  * Read a file at the given path from the emulated file system
+ * Design decision: we return a Uint8Array (raw bytes) no matter what the file is.
+ * Caller can then decode the bytes into whatever they want to.
+ *
+ * For example, to decode into a string:
+ * ```js
+ * const decodedString = new TextDecoder().decode(raw_bytes);
+ * ```
+ *
  * @param {String} path
  * @returns {Uint8Array} raw bytes read from the file at path or null if it failed to read a file
  */
@@ -63,7 +71,7 @@ export function readFile(path) {
   // Each character in the string has a charCodeAt() value between 0 and 255
   let decoded = atob(encoded);
 
-  // Turn into Uint8Array
+  // Turn into Uint8Array (raw bytes)
   let bytes = new Uint8Array(decoded.length);
   for (let i = 0; i < decoded.length; i++) {
     // Obtaining the charCode of the character allows us to translate it back
@@ -71,9 +79,7 @@ export function readFile(path) {
     bytes[i] = decoded.charCodeAt(i);
   }
 
-  // We can then return this unified data representation to the user
-  // It can be turned back into a UTF-8 string using:
-  // decodedString = new TextDecoder().decode(uint8array);
+  // Return the raw bytes to the caller
   return bytes;
 }
 
@@ -148,11 +154,24 @@ export function renameFile(oldPath, newPath) {
     return false;
   }
 
+  // We delete the old file first so we don't risk a quota exceeded error just to rename it.
   deleteFile(oldPath);
 
   if (!writeFile(newPath, data)) {
+    // This should never happen since we just freed the exact size of the file.
+    // Hopefully it doesn't.
+    // If it does, we'll try to best-effort restore the file.
+    if (!writeFile(oldPath, data)) {
+      // Welp... Oops. We're out of luck. This should never ever happen.
+      const errorMessage =
+        `[Filesystem] Failed to restore file ${oldPath} after rename failure.\n` +
+        `The data has been lost. Sorry about that!`;
+      Terminal.printLine(errorMessage);
+      console.error(errorMessage);
+    }
     return false;
   }
+
   return true;
 }
 

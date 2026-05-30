@@ -12,6 +12,7 @@ import {
   openFile,
   saveCurrentFile,
 } from "./workspace.js";
+import { Terminal } from "./terminal.js";
 
 const fileInput = document.querySelector("#file-upload-input");
 const fileExplorer = document.querySelector("#file-explorer");
@@ -119,9 +120,12 @@ function uploadFiles() {
       // Create a Uint8Array view to be able to read the array buffer
       const view = new Uint8Array(arrayBuffer);
 
-      writeFile("/" + file.name, view);
+      if (!writeFile("/" + file.name, view)) {
+        Terminal.printLine(`[Filesystem] Failed to upload file ${file.name}`);
+      }
 
       pending -= 1;
+
       // If all files are processed, reload the file explorer
       // (only once per upload, not once per file)
       if (pending === 0) {
@@ -143,18 +147,25 @@ function createNewFile() {
 
   const path = normalizeFilePath(raw);
   if (path === null) {
-    alert("Invalid file name.");
+    Terminal.printLine("[Filesystem] Invalid file name.");
     return;
   }
 
   if (fileExists(path)) {
-    alert("A file already exists at " + path);
+    Terminal.printLine("[Filesystem] A file already exists at " + path);
     return;
   }
 
   saveCurrentFile();
-  writeFile(path, new TextEncoder().encode(""));
+
+  if (!writeFile(path, new TextEncoder().encode(""))) {
+    Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
+    return;
+  }
+
+  // Open the new file
   openFile(path);
+  // Reload the file explorer to show the new file
   reloadFileExplorer();
 }
 
@@ -171,7 +182,7 @@ function renameOpenFile() {
 
   const newPath = normalizeFilePath(raw.trim());
   if (newPath === null) {
-    alert("Invalid file path.");
+    Terminal.printLine("[Filesystem] Invalid file path.");
     return;
   }
 
@@ -180,13 +191,13 @@ function renameOpenFile() {
   }
 
   if (fileExists(newPath)) {
-    alert("A file already exists at " + newPath);
+    Terminal.printLine("[Filesystem] A file already exists at " + newPath);
     return;
   }
 
   saveCurrentFile();
   if (!renameFile(currentPath, newPath)) {
-    alert("Could not rename " + currentPath);
+    Terminal.printLine("[Filesystem] Could not rename " + currentPath);
     return;
   }
 

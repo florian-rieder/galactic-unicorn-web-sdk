@@ -6,7 +6,9 @@ import {
   writeFile,
 } from "./file-system.js";
 import { reloadFileExplorer } from "./file-explorer.js";
-import { getEditorText, setEditorText } from "./monaco";
+import { getEditorText, setEditorText } from "./monaco.js";
+import { Terminal } from "./terminal.js";
+
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
 const TEXTISH_EXTENSIONS = ["txt", "lua", "lson"];
@@ -38,7 +40,10 @@ export function saveCurrentFile() {
   // Convert text to Uint8Array
   const encoded = new TextEncoder().encode(text);
   // Write file to FS
-  writeFile(currentOpenPath, encoded);
+  if (!writeFile(currentOpenPath, encoded)) {
+    Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
+    return;
+  }
   reloadFileExplorer();
 }
 
@@ -68,6 +73,12 @@ export function openFile(path) {
   }
 }
 
+/**
+ * Load the default script if it exists, otherwise create it.
+ *
+ * Design decision: there will always be a default script in the file system.
+ * If it doesn't exist, create it.
+ */
 export function maybeLoadDefaultScript() {
   if (fileExists(DEFAULT_SCRIPT_PATH)) {
     // Open the default file from the file system
@@ -79,16 +90,25 @@ export function maybeLoadDefaultScript() {
   }
 }
 
+/**
+ * Get the path of the currently open file.
+ * @returns {string} The path of the currently open file.
+ */
 export function getCurrentOpenPath() {
   return currentOpenPath;
 }
 
+/**
+ * Handle the event of a file being removed.
+ * @param {string} path - The path of the file that was removed.
+ */
 export function onFileRemoved(path) {
   // If the currently opened file was removed, open one of the remaining files.
   if (currentOpenPath !== path) {
     return;
   }
 
+  // Find the first remaining file and open it
   const remaining = listFiles()
     .filter((filePath) => filePath !== path)
     .sort();
@@ -101,6 +121,11 @@ export function onFileRemoved(path) {
   }
 }
 
+/**
+ * Handle the event of a file being renamed.
+ * @param {string} oldPath - The old path of the file.
+ * @param {string} newPath - The new path of the file.
+ */
 export function onFileRenamed(oldPath, newPath) {
   // Update the currentOpenPath
   if (currentOpenPath === oldPath) {

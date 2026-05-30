@@ -1,6 +1,15 @@
 import { render } from "./display.js";
 import { initResizers } from "./resizer.js";
-import { initLua, runLua, closeLua, luaCallIfExists } from "./lua.js";
+import {
+  initLua,
+  runLua,
+  closeLua,
+  lua_callback_onPress,
+  lua_callback_onRelease,
+  lua_callback_setup,
+  lua_callback_update,
+  lua_callback_draw,
+} from "./lua.js";
 import { stopMusic } from "./music.js";
 import { initFileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
@@ -9,6 +18,13 @@ import {
   maybeLoadDefaultScript,
   getCurrentOpenPath,
 } from "./workspace.js";
+import {
+  clearPressedKeys,
+  isPressed,
+  keyMap,
+  markPressed,
+  markReleased,
+} from "./input.js";
 
 // Initialize components and set up the initial state of the application.
 
@@ -29,12 +45,52 @@ let deltaTime = null;
 let now = null;
 let frameId = null;
 let timeoutId = null;
+let isRunning = false;
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-button");
 const stopButton = document.getElementById("stop-button");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
+
+/**
+ * Handle the event of a key being pressed.
+ * @param {KeyboardEvent} event - The keyboard event.
+ */
+window.addEventListener("keydown", (event) => {
+  // If a script is running
+  if (!isRunning) return;
+
+  const key = keyMap[event.key];
+  // If the key corresponds to a button on the device
+  if (!key) return;
+
+  // If the key is not already pressed
+  if (isPressed(key)) return;
+
+  markPressed(key);
+
+  // Signal lua the button has been pressed.
+  lua_callback_onPress(key);
+});
+
+/**
+ * Handle the event of a key being released.
+ * @param {KeyboardEvent} event - The keyboard event.
+ */
+window.addEventListener("keyup", (event) => {
+  // If a script is running
+  if (!isRunning) return;
+
+  const key = keyMap[event.key];
+  // If the key corresponds to a button on the device
+  if (!key) return;
+
+  markReleased(key);
+
+  // Signal lua the button has been released.
+  lua_callback_onRelease(key);
+});
 
 /**
  * Start a Lua session with the current open buffer as entrypoint
@@ -44,6 +100,9 @@ function startSession() {
   if (frameId != null || timeoutId != null) {
     stopSession();
   }
+
+  // Clear any held keys from the previous session.
+  clearPressedKeys();
 
   // Initialize the Lua session.
   initLua();
@@ -60,12 +119,13 @@ function startSession() {
 
   // Call the setup function if it's defined in the lua script.
   // Missing callbacks are allowed; runtime errors stop the execution of the loop.
-  const setupStatus = luaCallIfExists("setup");
+  const setupStatus = lua_callback_setup();
   if (setupStatus === "error") {
     stopSession();
     return;
   }
 
+  isRunning = true;
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
@@ -81,6 +141,7 @@ function stopSession() {
   lastTime = null;
   frameId = null;
   timeoutId = null;
+  isRunning = false;
 }
 
 /**
@@ -97,13 +158,13 @@ function mainLoop() {
 
   // Run update then draw from the lua script.
   // Missing callbacks are allowed; runtime errors stop the loop.
-  const updateStatus = luaCallIfExists("update", deltaTime / 1000.0); // Convert milliseconds to seconds
+  const updateStatus = lua_callback_update(deltaTime / 1000.0); // Convert milliseconds to seconds
   if (updateStatus === "error") {
     stopSession();
     return;
   }
 
-  const drawStatus = luaCallIfExists("draw");
+  const drawStatus = lua_callback_draw();
   if (drawStatus === "error") {
     stopSession();
     return;

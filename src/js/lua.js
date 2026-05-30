@@ -80,7 +80,7 @@ const luaApiConstants = [
   {
     name: "SCREEN_W",
     type: "number",
-    value: 20, // Dirty hardcoding but display resolution isn't likely to change.
+    value: 20, // Dirty hardcoding needed for API docs generation but display resolution isn't likely to change.
     description: "Screen width in pixels",
   },
   {
@@ -92,11 +92,7 @@ const luaApiConstants = [
 ];
 
 /**
- * List of Lua lifecycle callbacks. For documentation purposes only.
- *
- * Note: these callbacks are implemented by the user in Lua and are invoked by the host
- * via `luaCallIfExists("callback_name", ...)`. They are not registered as Lua globals
- * from JavaScript.
+ * List of Lua lifecycle callbacks implemented by the user in Lua and called by the host.
  *
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
@@ -1287,6 +1283,13 @@ function lua_readFileChunk(L) {
 
   let chunk = readFileChunk(path, offset, size);
 
+  // If the chunk couldn't be read, return nil.
+  if (chunk === null) {
+    lua.lua_pushnil(L);
+    return 1;
+  }
+
+  // Push the chunk to the stack.
   lua.lua_pushlstring(L, chunk, chunk.length);
 
   return 1;
@@ -1317,8 +1320,9 @@ function lua_fileSize(L) {
   return 1;
 }
 
-// Callbacks, for documentation purposes only. We define dummy js functions just so that
-// the documentation generator can find them.
+/**
+ * Lua callback definitions
+ */
 
 /**
  * Called once after your script is loaded and before the first frame starts.
@@ -1336,7 +1340,9 @@ function lua_fileSize(L) {
  *   clear()
  * end
  */
-function lua_callback_setup() {}
+export function lua_callback_setup() {
+  return luaCallIfExists("setup");
+}
 
 /**
  * Called every frame before `draw()`.
@@ -1355,7 +1361,9 @@ function lua_callback_setup() {}
  *   -- movement logic
  * end
  */
-function lua_callback_update() {}
+export function lua_callback_update(delta_time) {
+  return luaCallIfExists("update", delta_time);
+}
 
 /**
  * Called every frame after `update()`.
@@ -1374,7 +1382,9 @@ function lua_callback_update() {}
  *   set_pixel(1, 1, 255, 0, 0)
  * end
  */
-function lua_callback_draw() {}
+export function lua_callback_draw() {
+  return luaCallIfExists("draw");
+}
 
 /**
  * Called when a mapped button transitions from up to down (key press edge).
@@ -1395,7 +1405,9 @@ function lua_callback_draw() {}
  *   end
  * end
  */
-function lua_callback_onPress() {}
+export function lua_callback_onPress(button_name) {
+  return luaCallIfExists("on_press", button_name);
+}
 
 /**
  * Called when a mapped button transitions from down to up (key release edge).
@@ -1416,4 +1428,6 @@ function lua_callback_onPress() {}
  *   end
  * end
  */
-function lua_callback_onRelease() {}
+export function lua_callback_onRelease(button_name) {
+  return luaCallIfExists("on_release", button_name);
+}
