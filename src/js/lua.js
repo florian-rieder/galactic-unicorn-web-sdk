@@ -5,7 +5,7 @@ import { Input } from "./input.js";
 import { Music } from "./music.js";
 import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
-import { playBuzzTone } from "./audio.js";
+import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
 
 const { lua, lauxlib, lualib, to_luastring } = fengari;
@@ -992,7 +992,7 @@ function lua_buzz(L) {
 
   // Play the given frequency for the given duration.
   try {
-    playBuzzTone(frequency, duration);
+    Buzzer.buzz(frequency, duration);
   } catch (e) {
     lua.lua_pushstring(L, to_luastring("in buzz: " + e));
     lua.lua_error(L);

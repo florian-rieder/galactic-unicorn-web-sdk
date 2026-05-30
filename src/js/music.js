@@ -1,4 +1,4 @@
-import { playBuzzTone } from "./audio.js";
+import { Buzzer } from "./buzzer.js";
 
 const NOTE_MAP = {
   C: 0,
@@ -202,7 +202,7 @@ function playNextNote() {
 
   // If the note is not a rest (frequency 0), play the note for the given duration
   if (note.frequency != 0) {
-    playBuzzTone(note.frequency, note.duration);
+    Buzzer.buzz(note.frequency, note.duration);
   }
 
   // Move the needle to the next note
