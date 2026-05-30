@@ -124,6 +124,13 @@ const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every 1000 instru
 
 let currentLuaState = null;
 
+/**
+ * Lua package searcher function for the virtual filesystem.
+ * @see https://www.lua.org/manual/5.3/manual.html#6.3
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
 function lua_virtualFsPackageSearcher(L) {
   const modulePath = lua.lua_tojsstring(L, 1);
 
@@ -162,6 +169,13 @@ function lua_virtualFsPackageSearcher(L) {
   return 1;
 }
 
+/**
+ * Register the virtual filesystem package searcher function by overwriting the default
+ * package.searchers table with only our own searcher function (defaults won't work).
+ *
+ * @see https://www.lua.org/manual/5.3/manual.html#6.3
+ * @param {LuaState} L - Fengari Lua state.
+ */
 function registerVirtualFsPackageSearchers(L) {
   lua.lua_getglobal(L, "package");
   // Create a new table for the searchers
@@ -176,6 +190,12 @@ function registerVirtualFsPackageSearchers(L) {
   lua.lua_pop(L, 1);
 }
 
+/**
+ * Initialize the Lua session. Create a new Lua state, open the standard Lua libraries,
+ * and register SDK functions and constants.
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ */
 export function initLua() {
   if (currentLuaState !== null) {
     console.warn("Lua session already initialized. Call closeLua() first.");
@@ -230,17 +250,22 @@ export function initLua() {
     lua.lua_setglobal(L, to_luastring(luaName));
   }
 
+  // Register the virtual filesystem package searcher function.
   registerVirtualFsPackageSearchers(L);
 
+  // Set the start time of the Lua session.
+  // This is used to calculate the elapsed time since the script started.
   L.luaStartTimeMs = performance.now();
   currentLuaState = L;
 }
 
-// Call a Lua global function if it exists.
-// Returns:
-// - "ok" if a function existed and ran successfully
-// - "missing" if the global is not a function
-// - "error" if the function exists but raised an error
+/**
+ * Call a Lua global function if it exists.
+ *
+ * @param {string} name - The name of the function to call.
+ * @param {...any} args - The arguments to pass to the function.
+ * @returns {string} - "ok" if a function existed and ran successfully, "missing" if the global is not a function, "error" if the function exists but raised an error.
+ */
 export function luaCallIfExists(name, ...args) {
   if (currentLuaState == null) {
     return "missing_state";
@@ -282,7 +307,13 @@ export function luaCallIfExists(name, ...args) {
   return "ok";
 }
 
-// Run some Lua code.
+/**
+ * Run some Lua code.
+ *
+ * @param {string} code - The code to run.
+ * @param {string} entryPath - The path to the entrypoint file.
+ * @returns {boolean} - True if the code ran successfully, false otherwise.
+ */
 export function runLua(code, entryPath = "/main.lua") {
   // Close the current Lua state if it exists to start fresh.
   if (currentLuaState === null) {
@@ -345,7 +376,10 @@ function luaRunWithExecutionBudget(L, fn) {
   }
 }
 
-// Close the Lua session.
+/**
+ * Close the Lua session.
+ * Clean up the Lua state and reset the display buffer.
+ */
 export function closeLua() {
   // Nothing to close if there is no Lua state.
   if (currentLuaState === null) return;
