@@ -22,6 +22,7 @@ import {
   stopMusic,
   setTempo,
   setTicksPerBeat,
+  isMusicPlaying,
 } from "./music.js";
 import { fileSizeAtPath, readFile, readFileChunk } from "./file-system.js";
 import fengari from "./vendor/fengari.js";
@@ -1228,8 +1229,8 @@ function lua_stopMusic(L) {
  * @returns {number} Number of values returned to Lua (always 1).
  */
 function lua_isMusicPlaying(L) {
-  const isMusicPlaying = isMusicPlaying();
-  lua.lua_pushboolean(L, isMusicPlaying);
+  const isPlaying = isMusicPlaying();
+  lua.lua_pushboolean(L, isPlaying);
   return 1;
 }
 
