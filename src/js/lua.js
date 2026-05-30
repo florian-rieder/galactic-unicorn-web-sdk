@@ -12,7 +12,7 @@ import {
   fillBlend,
   drawLine,
 } from "./display.js";
-import { isPressed } from "./input.js";
+import { Input } from "./input.js";
 import { playBuzzTone } from "./audio.js";
 import {
   loadMusic,
@@ -962,7 +962,7 @@ function lua_line(L) {
  */
 function lua_isPressed(L) {
   const key = lua.lua_tojsstring(L, 1);
-  const isKeyPressed = isPressed(key);
+  const isKeyPressed = Input.isPressed(key);
   lua.lua_pushboolean(L, isKeyPressed);
   return 1;
 }

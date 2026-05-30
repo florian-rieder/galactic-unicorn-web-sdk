@@ -18,13 +18,7 @@ import {
   maybeLoadDefaultScript,
   getCurrentOpenPath,
 } from "./workspace.js";
-import {
-  clearPressedKeys,
-  isPressed,
-  keyMap,
-  markPressed,
-  markReleased,
-} from "./input.js";
+import { Input, KEY_MAP } from "./input.js";
 
 // Initialize components and set up the initial state of the application.
 
@@ -54,6 +48,13 @@ runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 
 /**
+ * Clear the set of pressed keys when the window loses focus.
+ */
+window.addEventListener("blur", () => {
+  Input.clearPressedKeys();
+});
+
+/**
  * Handle the event of a key being pressed.
  * @param {KeyboardEvent} event - The keyboard event.
  */
@@ -61,14 +62,14 @@ window.addEventListener("keydown", (event) => {
   // If a script is running
   if (!isRunning) return;
 
-  const key = keyMap[event.key];
+  const key = KEY_MAP[event.key];
   // If the key corresponds to a button on the device
   if (!key) return;
 
   // If the key is not already pressed
-  if (isPressed(key)) return;
+  if (Input.isPressed(key)) return;
 
-  markPressed(key);
+  Input.markPressed(key);
 
   // Signal lua the button has been pressed.
   lua_callback_onPress(key);
@@ -82,11 +83,11 @@ window.addEventListener("keyup", (event) => {
   // If a script is running
   if (!isRunning) return;
 
-  const key = keyMap[event.key];
+  const key = KEY_MAP[event.key];
   // If the key corresponds to a button on the device
   if (!key) return;
 
-  markReleased(key);
+  Input.markReleased(key);
 
   // Signal lua the button has been released.
   lua_callback_onRelease(key);
@@ -102,7 +103,7 @@ function startSession() {
   }
 
   // Clear any held keys from the previous session.
-  clearPressedKeys();
+  Input.clearPressedKeys();
 
   // Initialize the Lua session.
   initLua();
