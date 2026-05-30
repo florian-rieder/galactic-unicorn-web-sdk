@@ -11,7 +11,7 @@ import {
   lua_callback_draw,
 } from "./lua.js";
 import { Music } from "./music.js";
-import { initFileExplorer } from "./file-explorer.js";
+import { FileExplorer } from "./file-explorer.js";
 import { initMonaco, getEditorText } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
@@ -22,8 +22,8 @@ await initMonaco();
 Workspace.maybeLoadDefaultScript();
 
 initResizers();
-initFileExplorer();
 
+FileExplorer.reload();
 Display.render(); // Render the initial state of the display
 
 const TARGET_FPS = 60;

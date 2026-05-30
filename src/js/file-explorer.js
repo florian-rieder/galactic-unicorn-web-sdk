@@ -9,14 +9,183 @@ const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
 const fileDeleteBtn = document.querySelector("#file-delete-btn");
 
+fileInput.addEventListener("change", () => FileExplorer.uploadFiles());
+fileNewBtn.addEventListener("click", () => FileExplorer.createNewFile());
+fileRenameBtn.addEventListener("click", () => FileExplorer.renameOpenFile());
+fileDeleteBtn.addEventListener("click", () => FileExplorer.deleteOpenFile());
+fileUploadBtn.addEventListener("click", () => fileInput.click());
+
 // Keep track of the open folder to avoid all folder collapsing when the file explorer
 // is reloaded
 const openFolders = new Set();
 
 /**
+ * File explorer component, used to display the file system as a tree
+ */
+export const FileExplorer = Object.freeze({
+  /**
+   * Reload the file explorer
+   */
+  reload() {
+    fileExplorer.innerHTML = "";
+    // Build a tree datastructure from the flat stored files paths
+    const root = buildTree();
+
+    // Render the tree as DOM elements recursively
+    const tree = renderNode(root);
+    if (tree) {
+      fileExplorer.appendChild(tree);
+    }
+  },
+
+  /**
+   * Upload files to the file system
+   */
+  uploadFiles() {
+    const files = [...fileInput.files];
+    // Clear the input so the user can upload the same file again
+    fileInput.value = "";
+
+    // If no files are selected, do nothing
+    if (files.length === 0) {
+      return;
+    }
+
+    // Keep track of the number of files that are still being processed
+    let pending = files.length;
+    for (const file of files) {
+      const reader = new FileReader();
+
+      // When the reader reads the file, it encodes it as a Uint8Array (basically a bytearray)
+      // idk why you need to do it this way but this is how you read the file contents
+      reader.onload = (event) => {
+        // Get the file as a raw byte array buffer
+        const arrayBuffer = event.target.result;
+        // Create a Uint8Array view to be able to read the array buffer
+        const view = new Uint8Array(arrayBuffer);
+
+        if (!FileSystem.writeFile("/" + file.name, view)) {
+          Terminal.printLine(`[Filesystem] Failed to upload file ${file.name}`);
+        }
+
+        pending -= 1;
+
+        // If all files are processed, reload the file explorer
+        // (only once per upload, not once per file)
+        if (pending === 0) {
+          this.reload();
+        }
+      };
+
+      // Convert the file contents to a byte array suitable for storage
+      // (will trigger the onload event when the file is read)
+      reader.readAsArrayBuffer(file);
+    }
+  },
+
+  /**
+   * Create a new file
+   */
+  createNewFile() {
+    const raw = prompt("New file name:", "script.lua");
+    if (raw === null) {
+      return;
+    }
+
+    const path = normalizeFilePath(raw);
+    if (path === null) {
+      Terminal.printLine("[Filesystem] Invalid file name.");
+      return;
+    }
+
+    if (FileSystem.fileExists(path)) {
+      Terminal.printLine("[Filesystem] A file already exists at " + path);
+      return;
+    }
+
+    Workspace.saveCurrentFile();
+
+    if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
+      Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
+      return;
+    }
+
+    // Open the new file
+    Workspace.openFile(path);
+    // Reload the file explorer to show the new file
+    this.reload();
+  },
+
+  /**
+   * Rename the currently open file
+   */
+  renameOpenFile() {
+    const currentPath = Workspace.getCurrentOpenPath();
+    if (currentPath === null) {
+      return;
+    }
+
+    const raw = prompt("Rename file:", currentPath);
+    if (raw === null) {
+      return;
+    }
+
+    const newPath = normalizeFilePath(raw.trim());
+    if (newPath === null) {
+      Terminal.printLine("[Filesystem] Invalid file path.");
+      return;
+    }
+
+    if (newPath === currentPath) {
+      return;
+    }
+
+    if (FileSystem.fileExists(newPath)) {
+      Terminal.printLine("[Filesystem] A file already exists at " + newPath);
+      return;
+    }
+
+    Workspace.saveCurrentFile();
+    if (!FileSystem.renameFile(currentPath, newPath)) {
+      Terminal.printLine("[Filesystem] Could not rename " + currentPath);
+      return;
+    }
+
+    Workspace.onFileRenamed(currentPath, newPath);
+    this.reload();
+  },
+
+  /**
+   * Delete the currently open file
+   */
+  deleteOpenFile() {
+    const currentPath = Workspace.getCurrentOpenPath();
+    if (currentPath === null) {
+      return;
+    }
+
+    if (!confirm("Delete " + currentPath + "?")) {
+      return;
+    }
+
+    // Actually delete the file from the filesystem
+    FileSystem.deleteFile(currentPath);
+    // Notify the workspace that the file has been removed and reload the file explorer
+    Workspace.onFileRemoved(currentPath);
+    this.reload();
+  },
+});
+
+/**
  * File System Node data structure, used to represent the file hierarchy as a tree
  */
 class FSNode {
+  /**
+   * Create a new file system node
+   * @param {string} name
+   * @param {string} path
+   * @param {boolean} isFile
+   */
   constructor(name, path, isFile = false) {
     this.name = name;
     this.path = path;
@@ -42,174 +211,10 @@ class FSNode {
   }
 }
 
-export function initFileExplorer() {
-  reloadFileExplorer();
-
-  fileNewBtn.addEventListener("click", createNewFile);
-  fileRenameBtn.addEventListener("click", renameOpenFile);
-  fileDeleteBtn.addEventListener("click", deleteOpenFile);
-  fileUploadBtn.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", uploadFiles);
-}
-
 /**
- * Normalize user input into a virtual path like /foo.lua
- * @param {string} input
- * @returns {string|null}
+ * Build the file tree from the flat file storage
+ * @returns {FSNode}
  */
-function normalizeFilePath(input) {
-  // Like any proper input handling, we start by trimming the input
-  let name = input.trim();
-  if (!name) {
-    return null;
-  }
-
-  // Add a leading slash if it's not there
-  if (!name.startsWith("/")) {
-    name = "/" + name;
-  }
-
-  // Remove double slashes
-  const parts = name.split("/").filter((part) => part.length > 0);
-
-  // Reject empty paths or paths that contain "." or ".." (prevent path traversal, in
-  // spirit at least since we use a virtual filesystem)
-  if (
-    parts.length === 0 ||
-    parts.some((part) => part === "." || part === "..")
-  ) {
-    return null;
-  }
-
-  // Return the normalized path (with a leading slash)
-  return "/" + parts.join("/");
-}
-
-function uploadFiles() {
-  const files = [...fileInput.files];
-  // Clear the input so the user can upload the same file again
-  fileInput.value = "";
-
-  // If no files are selected, do nothing
-  if (files.length === 0) {
-    return;
-  }
-
-  // Keep track of the number of files that are still being processed
-  let pending = files.length;
-  for (const file of files) {
-    const reader = new FileReader();
-
-    // When the reader reads the file, it encodes it as a Uint8Array (basically a bytearray)
-    // idk why you need to do it this way but this is how you read the file contents
-    reader.onload = (event) => {
-      // Get the file as a raw byte array buffer
-      const arrayBuffer = event.target.result;
-      // Create a Uint8Array view to be able to read the array buffer
-      const view = new Uint8Array(arrayBuffer);
-
-      if (!FileSystem.writeFile("/" + file.name, view)) {
-        Terminal.printLine(`[Filesystem] Failed to upload file ${file.name}`);
-      }
-
-      pending -= 1;
-
-      // If all files are processed, reload the file explorer
-      // (only once per upload, not once per file)
-      if (pending === 0) {
-        reloadFileExplorer();
-      }
-    };
-
-    // Convert the file contents to a byte array suitable for storage
-    // (will trigger the onload event when the file is read)
-    reader.readAsArrayBuffer(file);
-  }
-}
-
-function createNewFile() {
-  const raw = prompt("New file name:", "script.lua");
-  if (raw === null) {
-    return;
-  }
-
-  const path = normalizeFilePath(raw);
-  if (path === null) {
-    Terminal.printLine("[Filesystem] Invalid file name.");
-    return;
-  }
-
-  if (FileSystem.fileExists(path)) {
-    Terminal.printLine("[Filesystem] A file already exists at " + path);
-    return;
-  }
-
-  Workspace.saveCurrentFile();
-
-  if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
-    Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
-    return;
-  }
-
-  // Open the new file
-  Workspace.openFile(path);
-  // Reload the file explorer to show the new file
-  reloadFileExplorer();
-}
-
-function renameOpenFile() {
-  const currentPath = Workspace.getCurrentOpenPath();
-  if (currentPath === null) {
-    return;
-  }
-
-  const raw = prompt("Rename file:", currentPath);
-  if (raw === null) {
-    return;
-  }
-
-  const newPath = normalizeFilePath(raw.trim());
-  if (newPath === null) {
-    Terminal.printLine("[Filesystem] Invalid file path.");
-    return;
-  }
-
-  if (newPath === currentPath) {
-    return;
-  }
-
-  if (FileSystem.fileExists(newPath)) {
-    Terminal.printLine("[Filesystem] A file already exists at " + newPath);
-    return;
-  }
-
-  Workspace.saveCurrentFile();
-  if (!FileSystem.renameFile(currentPath, newPath)) {
-    Terminal.printLine("[Filesystem] Could not rename " + currentPath);
-    return;
-  }
-
-  Workspace.onFileRenamed(currentPath, newPath);
-  reloadFileExplorer();
-}
-
-function deleteOpenFile() {
-  const currentPath = Workspace.getCurrentOpenPath();
-  if (currentPath === null) {
-    return;
-  }
-
-  if (!confirm("Delete " + currentPath + "?")) {
-    return;
-  }
-
-  // Actually delete the file from the filesystem
-  FileSystem.deleteFile(currentPath);
-  // Notify the workspace that the file has been removed and reload the file explorer
-  Workspace.onFileRemoved(currentPath);
-  reloadFileExplorer();
-}
-
 function buildTree() {
   // Build the file hierarchy from the flat file storage
   const fileList = FileSystem.listFiles();
@@ -247,12 +252,22 @@ function buildTree() {
   return root;
 }
 
+/**
+ * Create a tree icon element for a given kind of node
+ * @param {string} kind
+ * @returns {HTMLElement}
+ */
 function treeIcon(kind) {
   const icon = document.createElement("span");
   icon.className = `tree-icon tree-icon--${kind}`;
   return icon;
 }
 
+/**
+ * Render a node of the file tree
+ * @param {FSNode} node
+ * @returns {HTMLElement}
+ */
 function renderNode(node) {
   if (node.name === "root") {
     if (node.children.size === 0) {
@@ -316,6 +331,11 @@ function renderNode(node) {
   return li;
 }
 
+/**
+ * Sort the children of a node by type and name alphabetically
+ * @param {FSNode} node
+ * @returns {FSNode[]}
+ */
 function sortedChildren(node) {
   return Array.from(node.children.values()).sort((a, b) => {
     // a is file and b is directory => a > b
@@ -331,28 +351,59 @@ function sortedChildren(node) {
   });
 }
 
-export function reloadFileExplorer() {
-  fileExplorer.innerHTML = "";
-  // Build a tree datastructure from the flat stored files paths
-  const root = buildTree();
-
-  // Render the tree as DOM elements recursively
-  const tree = renderNode(root);
-  if (tree) {
-    fileExplorer.appendChild(tree);
-  }
-}
-
+/**
+ * Handle the event of a file in the tree being clicked
+ * @param {string} path
+ */
 function onFileClick(path) {
   Workspace.saveCurrentFile();
   Workspace.openFile(path);
-  reloadFileExplorer();
+  FileExplorer.reload();
 }
 
+/**
+ * Check if a folder is an ancestor of a file
+ * @param {string} folderPath
+ * @param {string} filePath
+ * @returns {boolean}
+ */
 function isAncestorFolder(folderPath, filePath) {
   return (
     filePath != null &&
     filePath.startsWith(folderPath) &&
     filePath !== folderPath
   );
+}
+
+/**
+ * Normalize user input into a virtual path like /foo.lua
+ * @param {string} input
+ * @returns {string|null}
+ */
+function normalizeFilePath(input) {
+  // Like any proper input handling, we start by trimming the input
+  let name = input.trim();
+  if (!name) {
+    return null;
+  }
+
+  // Add a leading slash if it's not there
+  if (!name.startsWith("/")) {
+    name = "/" + name;
+  }
+
+  // Remove double slashes
+  const parts = name.split("/").filter((part) => part.length > 0);
+
+  // Reject empty paths or paths that contain "." or ".." (prevent path traversal, in
+  // spirit at least since we use a virtual filesystem)
+  if (
+    parts.length === 0 ||
+    parts.some((part) => part === "." || part === "..")
+  ) {
+    return null;
+  }
+
+  // Return the normalized path (with a leading slash)
+  return "/" + parts.join("/");
 }

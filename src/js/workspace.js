@@ -1,5 +1,5 @@
 import { FileSystem } from "./file-system.js";
-import { reloadFileExplorer } from "./file-explorer.js";
+import { FileExplorer } from "./file-explorer.js";
 import { getEditorText, setEditorText } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
@@ -28,7 +28,7 @@ export const Workspace = Object.freeze({
       Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
       return;
     }
-    reloadFileExplorer();
+    FileExplorer.reload();
   },
 
   /**
