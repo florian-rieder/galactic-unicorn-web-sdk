@@ -54,32 +54,31 @@ export const FileExplorer = Object.freeze({
     // Keep track of the number of files that are still being processed
     let pending = files.length;
     for (const file of files) {
-      const reader = new FileReader();
+      file
+        .arrayBuffer()
+        .then((arrayBuffer) => {
+          // Create a Uint8Array view to be able to read the array buffer
+          const view = new Uint8Array(arrayBuffer);
 
-      // When the reader reads the file, it encodes it as a Uint8Array (basically a bytearray)
-      // idk why you need to do it this way but this is how you read the file contents
-      reader.onload = (event) => {
-        // Get the file as a raw byte array buffer
-        const arrayBuffer = event.target.result;
-        // Create a Uint8Array view to be able to read the array buffer
-        const view = new Uint8Array(arrayBuffer);
+          if (!FileSystem.writeFile("/" + file.name, view)) {
+            Terminal.printLine(
+              `[Filesystem] Failed to upload file ${file.name}`,
+            );
+          }
 
-        if (!FileSystem.writeFile("/" + file.name, view)) {
-          Terminal.printLine(`[Filesystem] Failed to upload file ${file.name}`);
-        }
+          pending -= 1;
 
-        pending -= 1;
-
-        // If all files are processed, reload the file explorer
-        // (only once per upload, not once per file)
-        if (pending === 0) {
-          this.reload();
-        }
-      };
-
-      // Convert the file contents to a byte array suitable for storage
-      // (will trigger the onload event when the file is read)
-      reader.readAsArrayBuffer(file);
+          // If all files are processed, reload the file explorer
+          // (only once per upload, not once per file)
+          if (pending === 0) {
+            this.reload();
+          }
+        })
+        .catch((error) => {
+          Terminal.printLine(
+            `[Filesystem] Failed to upload file ${file.name}: ${error}`,
+          );
+        });
     }
   },
 
