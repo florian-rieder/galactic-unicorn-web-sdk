@@ -1,5 +1,6 @@
 import { zipSync } from "fflate";
 import { saveAs } from "file-saver";
+import Swal from "sweetalert2";
 
 import { FileSystem } from "./file-system.js";
 import { Workspace } from "./workspace.js";
@@ -93,13 +94,26 @@ export const FileExplorer = Object.freeze({
   /**
    * Create a new file
    */
-  createNewFile() {
-    const raw = prompt("New file name:", "script.lua");
-    if (raw === null) {
+  async createNewFile() {
+    const result = await Swal.fire({
+      input: "text",
+      inputValue: "script.lua",
+      title: "New file name",
+      showCancelButton: true,
+    });
+
+    if (result.isDismissed) {
       return;
     }
 
-    const path = normalizeFilePath(raw);
+    const value = result.value.trim();
+
+    if (!value) {
+      Terminal.printLine("[Filesystem] Invalid file name.");
+      return;
+    }
+
+    const path = normalizeFilePath(value);
     if (path === null) {
       Terminal.printLine("[Filesystem] Invalid file name.");
       return;
@@ -126,18 +140,31 @@ export const FileExplorer = Object.freeze({
   /**
    * Rename the currently open file
    */
-  renameOpenFile() {
+  async renameOpenFile() {
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;
     }
 
-    const raw = prompt("Rename file:", currentPath);
-    if (raw === null) {
+    const result = await Swal.fire({
+      input: "text",
+      inputValue: currentPath,
+      title: "Rename file",
+      showCancelButton: true,
+    });
+
+    if (result.isDismissed) {
       return;
     }
 
-    const newPath = normalizeFilePath(raw.trim());
+    const value = result.value.trim();
+
+    if (!value) {
+      Terminal.printLine("[Filesystem] Invalid file name.");
+      return;
+    }
+
+    const newPath = normalizeFilePath(value);
     if (newPath === null) {
       Terminal.printLine("[Filesystem] Invalid file path.");
       return;
@@ -165,21 +192,29 @@ export const FileExplorer = Object.freeze({
   /**
    * Delete the currently open file
    */
-  deleteOpenFile() {
+  async deleteOpenFile() {
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;
     }
 
-    if (!confirm("Delete " + currentPath + "?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: "Delete " + currentPath + "?",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      icon: "warning",
+      customClass: {
+        popup: "swal2-popup--danger",
+      },
+    });
 
-    // Actually delete the file from the filesystem
-    FileSystem.deleteFile(currentPath);
-    // Notify the workspace that the file has been removed and reload the file explorer
-    Workspace.onFileRemoved(currentPath);
-    this.reload();
+    if (result.isConfirmed) {
+      // Actually delete the file from the filesystem
+      FileSystem.deleteFile(currentPath);
+      // Notify the workspace that the file has been removed and reload the file explorer
+      Workspace.onFileRemoved(currentPath);
+      this.reload();
+    }
   },
 
   exportZip() {

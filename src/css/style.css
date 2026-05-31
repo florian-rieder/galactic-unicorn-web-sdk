@@ -5,22 +5,39 @@ html {
 :root {
     --primary-bg: #1e1e1e;
     --primary-border: #2c2c2c;
+    --text-color: #d4d4d4;
     --tree-icon-folder-color: #e69c2d;
     --tree-icon-file-color: #529dfa;
 }
 
+.swal2-popup {
+    --swal2-background: var(--primary-bg);
+    --swal2-color: var(--text-color);
+    --swal2-confirm-button-background-color: #205c28;
+    --swal2-border-radius: 6px;
+}
+
+.swal2-title {
+    font-size: 1.3em;
+}
+
+.swal2-popup.swal2-popup--danger {
+    --swal2-confirm-button-background-color: #8b2635;
+}
+
 body {
+    color: var(--text-color);
+    background-color: var(--primary-bg);
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100vh;
     overflow: hidden;
-    background-color: var(--primary-bg);
     display: flex;
     flex-direction: column;
-    color: white;
     font-family: sans-serif;
 }
+
 #console {
     flex: 1;
     min-height: 0;

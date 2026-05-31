@@ -26,7 +26,8 @@
     "fengari": "^0.1.5",
     "fflate": "^0.8.3",
     "file-saver": "^2.0.5",
-    "monaco-editor": "^0.55.1"
+    "monaco-editor": "^0.55.1",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "esbuild": "^0.28.0",
