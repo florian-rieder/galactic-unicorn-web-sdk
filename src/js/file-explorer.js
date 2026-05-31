@@ -1,6 +1,16 @@
+import { zipSync } from "fflate";
+import { saveAs } from "file-saver";
+
 import { FileSystem } from "./file-system.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
+
+// File name when the user downloads the project as a zip file
+const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
+
+// Keep track of the open folder to avoid all folder collapsing when the file explorer
+// is reloaded
+const openFolders = new Set();
 
 const fileInput = document.querySelector("#file-upload-input");
 const fileExplorer = document.querySelector("#file-explorer");
@@ -8,16 +18,14 @@ const fileNewBtn = document.querySelector("#file-new-btn");
 const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
 const fileDeleteBtn = document.querySelector("#file-delete-btn");
+const exportBtn = document.querySelector("#export-btn");
 
 fileInput.addEventListener("change", () => FileExplorer.uploadFiles());
 fileNewBtn.addEventListener("click", () => FileExplorer.createNewFile());
 fileRenameBtn.addEventListener("click", () => FileExplorer.renameOpenFile());
 fileDeleteBtn.addEventListener("click", () => FileExplorer.deleteOpenFile());
 fileUploadBtn.addEventListener("click", () => fileInput.click());
-
-// Keep track of the open folder to avoid all folder collapsing when the file explorer
-// is reloaded
-const openFolders = new Set();
+exportBtn.addEventListener("click", () => FileExplorer.exportZip());
 
 /**
  * File explorer component, used to display the file system as a tree
@@ -172,6 +180,44 @@ export const FileExplorer = Object.freeze({
     // Notify the workspace that the file has been removed and reload the file explorer
     Workspace.onFileRemoved(currentPath);
     this.reload();
+  },
+
+  exportZip() {
+    // Save the current file before exporting
+    Workspace.saveCurrentFile();
+
+    const files = FileSystem.listFiles();
+    // Get files data and create the shape that fflate expects data to be in
+    // order to make a zip.
+    const objectFileTree = {};
+    for (const filePath of files) {
+      // fflate expects raw Uint8Array as file data, which is perfect since it's
+      // exactly what our FileSystem outputs ! Bingo !
+      const rawFileData = FileSystem.readFile(filePath);
+      if (rawFileData === null) {
+        Terminal.printLine(`[Filesystem] Failed to read file ${filePath}`);
+        continue;
+      }
+      // fflate accepts that we just give it full paths as filename so it's easy !
+      objectFileTree[filePath] = rawFileData;
+    }
+
+    // Zip the tree using fflate
+    const zipped = zipSync(objectFileTree, {
+      // These options are the defaults for all files, but file-specific
+      // options take precedence.
+      level: 1,
+      // Set last modified time to now
+      mtime: new Date(),
+    });
+
+    // fflate produces a Uint8Array representing the zipped file
+    // We need to convert it to a blob in order to make it downloadable using
+    // file-saver
+    const blob = new Blob([zipped]);
+
+    // Save the zip file to user's computer using file-saver
+    saveAs(blob, PROJECT_EXPORT_ZIP_FILE_NAME);
   },
 });
 

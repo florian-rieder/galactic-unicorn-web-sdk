@@ -10,12 +10,12 @@
 
   <body>
     <div id="toolbar">
-      <button id="run-button" class="toolbar-btn" title="Run" disabled>
+      <button id="run-btn" class="toolbar-btn" title="Run" disabled>
         <img src="./assets/images/play-button.svg" alt="Run" />
         <span class="tooltip">Run</span>
       </button>
-      <button id="stop-button" class="toolbar-btn" title="Stop">
-        <img src="./assets/images/stop-button.svg" alt="Stop" />
+      <button id="stop-btn" class="toolbar-btn" title="Stop">
+        <img src="./assets/images/stop-btn.svg" alt="Stop" />
         <span class="tooltip">Stop</span>
       </button>
       <a
@@ -76,6 +76,14 @@
               title="Delete open file"
             >
               ×
+            </button>
+            <button
+              type="button"
+              id="export-btn"
+              class="explorer-btn"
+              title="Export project to ZIP"
+            >
+              ⤴
             </button>
             <input id="file-upload-input" type="file" hidden />
           </div>
