@@ -5,8 +5,7 @@
  * Each helper registers a Monaco "provider" (callback Monaco calls when the user
  * types, hovers, etc.). See the module files for what each provider does.
  */
-import * as monaco from "monaco-editor";
-import "monaco-editor/min/vs/editor/editor.main.css";
+import * as monaco from "./monaco/custom-monaco.js";
 import { registerLuaColorProvider } from "./monaco/lua-color-provider.js";
 import { installLuaDiagnostics } from "./monaco/lua-diagnostics.js";
 import { installSdkNameHighlights } from "./monaco/lua-sdk-highlights.js";
@@ -16,7 +15,7 @@ import {
 } from "./monaco/lua-sdk-providers.js";
 
 const editorOptions = {
-  language: "lua", // Language (supports html, css, python, etc.)
+  language: "lua",
   theme: "vs-dark", // Theme (vs, vs-dark, hc-black)
   tabSize: 2, // Lua style: 2-space indentation
   insertSpaces: true, // Use spaces when Tab is pressed

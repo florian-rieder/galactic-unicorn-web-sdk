@@ -4,7 +4,7 @@
  * Uses Monaco "decorations" (CSS classes on text ranges), not the syntax tokenizer.
  * Only the visible viewport is scanned so large files stay responsive.
  */
-import * as monaco from "monaco-editor";
+import * as monaco from "./custom-monaco.js";
 
 const UPDATE_TIMEOUT_DURATION_MS = 100;
 const HIGHLIGHT_STYLE_ID = "sdk-api-highlight-style";

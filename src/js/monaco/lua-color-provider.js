@@ -7,7 +7,7 @@
  *
  * Color values passed to Monaco must be 0..1 floats, not 0..255.
  */
-import * as monaco from "monaco-editor";
+import * as monaco from "./custom-monaco.js";
 import { clampByte, hslToRgb, rgbToHsl } from "../color.js";
 
 const RGB_CALL_PATTERN =

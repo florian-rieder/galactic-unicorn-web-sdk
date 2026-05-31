@@ -102,10 +102,11 @@ export default defineConfig({
   base: "/galactic-unicorn-web-sdk/",
   plugins: [
     monacoEditorPlugin({
+      // Only ship the base editor worker (discard HTML/CSS/JS/TS workers)
+      languageWorkers: ["editorWorkerService"],
       // Plugin default joins `outDir` + `base` + publicPath, but `base` is only a
-      // URL prefix on GitHub Pages — workers must live at dist/monacoeditorwork/.
-      customDistPath: (root, outDir) =>
-        join(root, outDir, "monacoeditorwork"),
+      // URL prefix on GitHub Pages so workers must live at dist/monacoeditorwork/.
+      customDistPath: (root, outDir) => join(root, outDir, "monacoeditorwork"),
     }),
     regenLuaApiPlugin(),
   ],

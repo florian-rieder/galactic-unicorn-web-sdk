@@ -7,7 +7,7 @@
  * SDK item templates are cached after first load; only `range` is re-applied per
  * request because Monaco mutates completion objects in place.
  */
-import * as monaco from "monaco-editor";
+import * as monaco from "./custom-monaco.js";
 import {
   collectDocumentSymbols,
   documentSymbolsToCompletionItems,
