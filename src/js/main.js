@@ -36,8 +36,8 @@ let timeoutId = null;
 let isRunning = false;
 
 // Toolbar control buttons
-const runButton = document.getElementById("run-button");
-const stopButton = document.getElementById("stop-button");
+const runButton = document.getElementById("run-btn");
+const stopButton = document.getElementById("stop-btn");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 

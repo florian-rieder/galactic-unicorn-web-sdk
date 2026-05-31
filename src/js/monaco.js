@@ -69,7 +69,7 @@ export const MonacoEditor = Object.freeze({
     }
 
     // Enable the play button only after the editor has successfully loaded
-    document.getElementById("run-button").disabled = false;
+    document.getElementById("run-btn").disabled = false;
   },
 
   /**
