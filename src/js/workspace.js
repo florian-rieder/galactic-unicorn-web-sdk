@@ -104,22 +104,13 @@ export const Workspace = Object.freeze({
    * @param {string} path - The path of the file that was removed.
    */
   onFileRemoved(path) {
-    // If the currently opened file was removed, open one of the remaining files.
+    // If the currently opened file was removed
     if (currentOpenPath !== path) {
       return;
     }
 
-    // Find the first remaining file and open it
-    const remaining = FileSystem.listFiles()
-      .filter((filePath) => filePath !== path)
-      .sort();
-    if (remaining.length > 0) {
-      // Open the first remaining file
-      this.openFile(remaining[0]);
-    } else {
-      MonacoEditor.setText("", false);
-      currentOpenPath = DEFAULT_SCRIPT_PATH;
-    }
+    // Open main if it exists, otherwise create the default script.
+    this.maybeLoadDefaultScript()
   },
 
   /**

@@ -20,6 +20,7 @@ import { Input, KEY_MAP } from "./input.js";
 
 await MonacoEditor.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
+// Open main if it exists, otherwise create the default script.
 Workspace.maybeLoadDefaultScript();
 initResizers();
 FileExplorer.reload();
