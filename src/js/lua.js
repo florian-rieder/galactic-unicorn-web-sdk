@@ -14,7 +14,7 @@ const { lua, lauxlib, lualib, to_luastring } = fengari;
  * List of Lua API functions.
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
-const luaApiFunctions = [
+const LUA_API_FUNCTIONS = [
   { luaName: "print", luaFunction: lua_print },
   { luaName: "clamp", luaFunction: lua_clamp },
   { luaName: "rgb", luaFunction: lua_rgb },
@@ -55,7 +55,7 @@ const luaApiFunctions = [
  * List of Lua API constants.
  * @type {Array<{name: string, type: string, value: number, description: string}>}
  */
-const luaApiConstants = [
+const LUA_API_CONSTANTS = [
   {
     name: "SCREEN_W",
     type: "number",
@@ -75,7 +75,7 @@ const luaApiConstants = [
  *
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
-const luaApiCallbacks = [
+const LUA_API_CALLBACKS = [
   { luaName: "setup", luaFunction: lua_callback_setup },
   { luaName: "update", luaFunction: lua_callback_update },
   { luaName: "draw", luaFunction: lua_callback_draw },
@@ -87,7 +87,7 @@ const luaApiCallbacks = [
  * List of dangerous Lua functions. For script sandboxing purposes
  * @type {Array<string>}
  */
-const dangerousFunctions = [
+const DANGEROUS_FUNCTIONS = [
   "dofile",
   "loadfile",
   "load",
@@ -95,8 +95,8 @@ const dangerousFunctions = [
   "collectgarbage",
 ];
 
-const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after this many ms.
-const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every 1000 instructions.
+const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
+const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 
 let currentLuaState = null;
 
@@ -201,7 +201,7 @@ export function initLua() {
   lua.lua_pop(L, 1);
 
   // Remove dangerous base functions
-  for (const functionName of dangerousFunctions) {
+  for (const functionName of DANGEROUS_FUNCTIONS) {
     // Replace the function with nil.
     lua.lua_pushnil(L);
     lua.lua_setglobal(L, to_luastring(functionName));
@@ -209,7 +209,7 @@ export function initLua() {
 
   // -- Constants registration
 
-  for (const { name, value } of luaApiConstants) {
+  for (const { name, value } of LUA_API_CONSTANTS) {
     // Push the value of the constant to the stack
     lua.lua_pushnumber(L, value);
     // Tell Lua that the value that was just pushed is the global variable `name`.
@@ -219,7 +219,7 @@ export function initLua() {
 
   // -- Functions registration
 
-  for (const { luaName, luaFunction } of luaApiFunctions) {
+  for (const { luaName, luaFunction } of LUA_API_FUNCTIONS) {
     // Push the function to the Lua stack.
     lua.lua_pushcfunction(L, luaFunction);
     // Lua consumes the function from the stack and assigns it to the global variable `luaName`.
@@ -1358,7 +1358,7 @@ export function lua_callback_update(delta_time) {
  * @luaReturns nil
  * @luaExample function draw()
  *   clear()
- *   set_pixel(1, 1, 255, 0, 0)
+ *   set_pixel(1, 1, rgb(255, 0, 0))
  * end
  */
 export function lua_callback_draw() {

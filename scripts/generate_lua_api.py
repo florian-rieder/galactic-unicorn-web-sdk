@@ -53,14 +53,14 @@ class LuaFunctionDoc:
 
 
 def parse_function_registry(lua_js_content: str) -> list[dict[str, str]]:
-    """Parse `luaApiFunctions` entries in declaration order."""
+    """Parse `LUA_API_FUNCTIONS` entries in declaration order."""
     match = re.search(
-        r"const\s+luaApiFunctions\s*=\s*\[(?P<body>.*?)\];",
+        r"const\s+LUA_API_FUNCTIONS\s*=\s*\[(?P<body>.*?)\];",
         lua_js_content,
         re.DOTALL,
     )
     if not match:
-        raise ValueError("Could not locate `luaApiFunctions` registry.")
+        raise ValueError("Could not locate `LUA_API_FUNCTIONS` registry.")
     body = match.group("body")
     body = re.sub(r"^\s*//.*$", "", body, flags=re.MULTILINE)
 
@@ -72,9 +72,9 @@ def parse_function_registry(lua_js_content: str) -> list[dict[str, str]]:
 
 
 def parse_callback_registry(lua_js_content: str) -> list[dict[str, str]]:
-    """Parse `luaApiCallbacks` entries in declaration order."""
+    """Parse `LUA_API_CALLBACKS` entries in declaration order."""
     match = re.search(
-        r"const\s+luaApiCallbacks\s*=\s*\[(?P<body>.*?)\];",
+        r"const\s+LUA_API_CALLBACKS\s*=\s*\[(?P<body>.*?)\];",
         lua_js_content,
         re.DOTALL,
     )
@@ -92,14 +92,14 @@ def parse_callback_registry(lua_js_content: str) -> list[dict[str, str]]:
 
 
 def parse_constant_registry(lua_js_content: str) -> list[dict[str, str]]:
-    """Parse `luaApiConstants` entries in declaration order."""
+    """Parse `LUA_API_CONSTANTS` entries in declaration order."""
     match = re.search(
-        r"const\s+luaApiConstants\s*=\s*\[(?P<body>.*?)\];",
+        r"const\s+LUA_API_CONSTANTS\s*=\s*\[(?P<body>.*?)\];",
         lua_js_content,
         re.DOTALL,
     )
     if not match:
-        raise ValueError("Could not locate `luaApiConstants` registry.")
+        raise ValueError("Could not locate `LUA_API_CONSTANTS` registry.")
     body = match.group("body")
     body = re.sub(r"^\s*//.*$", "", body, flags=re.MULTILINE)
 
