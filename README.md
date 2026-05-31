@@ -1,4 +1,4 @@
-# Galactic Unicorn Coinflip Web SDK
+# Galactic Unicorn Web SDK
 
 Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser editor, and serial-style console output so you can iterate without reflashing hardware on every change.
 
@@ -11,11 +11,12 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
 
 ## What is included
+- Lua runtime in the browser via [Fengari](https://github.com/fengari-lua/fengari)
 - Emulator for the project display/input model
 - Monaco-based (VS Code) in-browser Lua editor
 - Console output panel for script logging and runtime errors
 - Virtual file system and file explorer
-- Lua runtime in the browser via [Fengari](https://github.com/fengari-lua/fengari)
+- Export project as a zip file
 - Example Lua scripts in `src/lua/`
 
 ## Project status
@@ -55,7 +56,7 @@ npm run preview
 ```
 
 Static output goes to `dist/` for deployment. GitHub Pages serves this repo at  
-`https://florian-rieder.github.io/galactic-unicorn-web-sdk/` — the Vite `base` option matches that path.
+`https://florian-rieder.github.io/galactic-unicorn-web-sdk/`, the Vite `base` option matches that path.
 
 To test the production bundle locally, use `npm run preview` (serves `dist/` at the correct base).
 
@@ -92,3 +93,5 @@ Without manual generation or a successful dev-time run, Monaco completions stay 
 - [Programming in Lua](https://www.lua.org/pil/contents.html)
 - [Lua Metamethods Cheatsheet](https://gist.github.com/oatmealine/655c9e64599d0f0dd47687c1186de99f)
 - [Fengari](https://github.com/fengari-lua/fengari)
+- [UXN Sprites](https://compudanzas.net/uxn_tutorial_day_2.html#drawing%20sprites)
+- [Microbit Sprites](https://microbit-micropython.readthedocs.io/en/latest/image.html)

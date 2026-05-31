@@ -116,7 +116,7 @@ Do not rely on module-style names yet:
 
 - Loads the file, runs it once, and caches the result (standard Lua `package.loaded` behavior).
 - If the file ends with `return something`, that value is what `require` gives you (tables are common for shared libraries).
-- If the file does not return a value, `require` still succeeds; you mainly get side effects (e.g. defining globals — prefer `return` for libraries).
+- If the file does not return a value, `require` still succeeds; you mainly get side effects (e.g. defining globals; prefer `return` for libraries).
 
 ### Example: main + library
 
