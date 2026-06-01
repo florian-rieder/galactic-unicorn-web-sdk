@@ -1,3 +1,10 @@
+function minSize(el, prop) {
+  const computed = getComputedStyle(el);
+  const value = prop === "height" ? computed.minHeight : computed.minWidth;
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function initResizer(resizer, direction) {
   resizer.addEventListener("mousedown", (e) => {
     e.preventDefault();
@@ -9,17 +16,30 @@ function initResizer(resizer, direction) {
     const startSizeA = prev.getBoundingClientRect()[prop];
     const startSizeB = next.getBoundingClientRect()[prop];
 
-    prev.style.flex = `0 0 ${startSizeA}px`;
-    next.style.flex = `0 0 ${startSizeB}px`;
+    const fixedSide = resizer.dataset.fixed === "prev" ? "prev" : "next";
+    const fixed = fixedSide === "prev" ? prev : next;
+    const flexible = fixedSide === "prev" ? next : prev;
+    const fixedStart = fixedSide === "prev" ? startSizeA : startSizeB;
+
+    fixed.style.flex = `0 0 ${fixedStart}px`;
+    flexible.style.flex = "1 1 0";
     document.body.style.cursor =
       direction === "h" ? "row-resize" : "col-resize";
     document.body.style.userSelect = "none";
 
+    const fixedMin = minSize(fixed, prop);
+    const flexMin = minSize(flexible, prop);
+    const total = startSizeA + startSizeB;
+
     function onMove(e) {
       const delta =
         direction === "h" ? e.clientY - startPos : e.clientX - startPos;
-      prev.style.flex = `0 0 ${Math.max(40, startSizeA + delta)}px`;
-      next.style.flex = `0 0 ${Math.max(40, startSizeB - delta)}px`;
+      const signed = fixedSide === "prev" ? delta : -delta;
+      const size = Math.max(
+        fixedMin,
+        Math.min(fixedStart + signed, total - flexMin),
+      );
+      fixed.style.flex = `0 0 ${size}px`;
     }
 
     function onUp() {

@@ -34,62 +34,60 @@
         <div id="display-wrapper" aria-label="LED Matrix emulator">
           <canvas id="display"></canvas>
         </div>
-        <div class="resizer resizer-h"></div>
+        <div class="resizer resizer-h" data-fixed="next"></div>
         <div id="console" aria-label="Serial output">
           <pre id="console-output"></pre>
         </div>
       </div>
-      <div class="resizer resizer-v"></div>
-      <div id="editor-pane">
-        <div id="monaco-container" aria-label="Text editor"></div>
-        <div class="resizer resizer-v"></div>
-        <aside id="file-explorer-pane" aria-label="Project files">
-          <div id="file-explorer-toolbar" aria-label="File actions">
-            <button
-              type="button"
-              id="file-new-btn"
-              class="explorer-btn"
-              title="New file"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              id="file-upload-btn"
-              class="explorer-btn"
-              title="Upload file"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              id="file-rename-btn"
-              class="explorer-btn"
-              title="Rename open file"
-            >
-              ✎
-            </button>
-            <button
-              type="button"
-              id="file-delete-btn"
-              class="explorer-btn"
-              title="Delete open file"
-            >
-              ×
-            </button>
-            <button
-              type="button"
-              id="export-btn"
-              class="explorer-btn"
-              title="Export project to ZIP"
-            >
-              ⤴
-            </button>
-            <input id="file-upload-input" type="file" hidden />
-          </div>
-          <div id="file-explorer"></div>
-        </aside>
-      </div>
+      <div class="resizer resizer-v" data-fixed="prev"></div>
+      <div id="monaco-container" aria-label="Text editor"></div>
+      <div class="resizer resizer-v" data-fixed="next"></div>
+      <aside id="file-explorer-pane" aria-label="Project files">
+        <div id="file-explorer-toolbar" aria-label="File actions">
+          <button
+            type="button"
+            id="file-new-btn"
+            class="explorer-btn"
+            title="New file"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            id="file-upload-btn"
+            class="explorer-btn"
+            title="Upload file"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            id="file-rename-btn"
+            class="explorer-btn"
+            title="Rename open file"
+          >
+            ✎
+          </button>
+          <button
+            type="button"
+            id="file-delete-btn"
+            class="explorer-btn"
+            title="Delete open file"
+          >
+            ×
+          </button>
+          <button
+            type="button"
+            id="export-btn"
+            class="explorer-btn"
+            title="Export project to ZIP"
+          >
+            ⤴
+          </button>
+          <input id="file-upload-input" type="file" hidden />
+        </div>
+        <div id="file-explorer"></div>
+      </aside>
     </div>
 
     <script type="module" src="/src/js/main.js"></script>
