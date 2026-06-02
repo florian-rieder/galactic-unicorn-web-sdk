@@ -175,6 +175,25 @@ export const FileSystem = Object.freeze({
 
     return filesList;
   },
+
+  /**
+   * Read all files from the file system
+   * 
+   * @returns {Record<string, Uint8Array>} files
+   */
+  getAllFiles() {
+    const files = FileSystem.listFiles();
+    const allFiles = {};
+    for (const filePath of files) {
+      const rawFileData = FileSystem.readFile(filePath);
+      if (rawFileData === null) {
+        Terminal.printLine(`[Filesystem] Failed to read file ${filePath}`);
+        continue;
+      }
+      allFiles[filePath] = rawFileData;
+    }
+    return allFiles;
+  },
 });
 
 function isQuotaExceededError(err) {

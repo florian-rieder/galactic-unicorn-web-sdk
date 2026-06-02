@@ -1,4 +1,4 @@
-import { zipSync } from "fflate";
+import { zipSync, unzipSync } from "fflate";
 import { saveAs } from "file-saver";
 import Swal from "sweetalert2";
 
@@ -60,8 +60,19 @@ export const FileExplorer = Object.freeze({
       return;
     }
 
+    Workspace.saveCurrentFile();
+
     // Keep track of the number of files that are still being processed
     let pending = files.length;
+    const onFileDone = () => {
+      // If all files are processed, reload the file explorer
+      // (only once per upload, not once per file)
+      pending -= 1;
+      if (pending === 0) {
+        this.reload();
+      }
+    };
+
     for (const file of files) {
       file
         .arrayBuffer()
@@ -69,24 +80,22 @@ export const FileExplorer = Object.freeze({
           // Create a Uint8Array view to be able to read the array buffer
           const view = new Uint8Array(arrayBuffer);
 
-          if (!FileSystem.writeFile("/" + file.name, view)) {
+          if (file.name.toLowerCase().endsWith(".zip")) {
+            importZipBytes(view, file.name);
+          }
+          else if (!FileSystem.writeFile("/" + file.name, view)) {
             Terminal.printLine(
               `[Filesystem] Failed to upload file ${file.name}`,
             );
           }
 
-          pending -= 1;
-
-          // If all files are processed, reload the file explorer
-          // (only once per upload, not once per file)
-          if (pending === 0) {
-            this.reload();
-          }
+          onFileDone();
         })
         .catch((error) => {
           Terminal.printLine(
             `[Filesystem] Failed to upload file ${file.name}: ${error}`,
           );
+          onFileDone();
         });
     }
   },
@@ -221,24 +230,12 @@ export const FileExplorer = Object.freeze({
     // Save the current file before exporting
     Workspace.saveCurrentFile();
 
-    const files = FileSystem.listFiles();
-    // Get files data and create the shape that fflate expects data to be in
-    // order to make a zip.
-    const objectFileTree = {};
-    for (const filePath of files) {
-      // fflate expects raw Uint8Array as file data, which is perfect since it's
-      // exactly what our FileSystem outputs ! Bingo !
-      const rawFileData = FileSystem.readFile(filePath);
-      if (rawFileData === null) {
-        Terminal.printLine(`[Filesystem] Failed to read file ${filePath}`);
-        continue;
-      }
-      // fflate accepts that we just give it full paths as filename so it's easy !
-      objectFileTree[filePath] = rawFileData;
-    }
+    // fflate expects raw Uint8Array as file data, which is perfect since it's
+    // exactly what our FileSystem outputs ! Bingo !
+    const allFiles = FileSystem.getAllFiles();
 
     // Zip the tree using fflate
-    const zipped = zipSync(objectFileTree, {
+    const zipped = zipSync(allFiles, {
       // These options are the defaults for all files, but file-specific
       // options take precedence.
       level: 1,
@@ -453,6 +450,53 @@ function isAncestorFolder(folderPath, filePath) {
     filePath.startsWith(folderPath) &&
     filePath !== folderPath
   );
+}
+
+/**
+ * @param {Uint8Array} bytes
+ * @param {string} zipFileName
+ */
+function importZipBytes(bytes, zipFileName) {
+  let entries;
+  try {
+    entries = unzipSync(bytes);
+  } catch (error) {
+    Terminal.printLine(
+      `[Filesystem] Failed to read ZIP ${zipFileName}: ${error instanceof Error ? error.message : error}`,
+    );
+    return;
+  }
+
+  const filesToWrite = {};
+  for (const [entryName, data] of Object.entries(entries)) {
+    const name = entryName.replace(/\\/g, "/").trim();
+    if (!name || name.endsWith("/")) {
+      return null;
+    }
+    const path =  normalizeFilePath(name);
+    if (path === null) {
+      continue;
+    }
+    filesToWrite[path] = data;
+  }
+
+  if (Object.keys(filesToWrite).length === 0) {
+    Terminal.printLine(
+      `[Filesystem] ${zipFileName} contains no importable files.`,
+    );
+    return;
+  }
+
+  const failed = [];
+  for (const [path, data] of Object.entries(files)) {
+    if (!FileSystem.writeFile(path, data)) {
+      failed.push(path);
+    }
+  }
+
+  if (failed.length > 0) {
+    Terminal.printLine(`[Filesystem] Failed to import: ${failed.join(", ")}`);
+  }
 }
 
 /**
