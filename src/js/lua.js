@@ -1,4 +1,5 @@
 import fengari from "./vendor/fengari.js";
+const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 import { Display } from "./display.js";
 import { Input } from "./input.js";
@@ -7,8 +8,8 @@ import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
 import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
+import { openSandboxedLuaVM } from "./lua-environment.js"
 
-const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 /**
  * List of Lua API functions.
@@ -72,6 +73,7 @@ const LUA_API_CONSTANTS = [
 
 /**
  * List of Lua lifecycle callbacks implemented by the user in Lua and called by the host.
+ * Unused. Used to generate API docs.
  *
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
@@ -83,88 +85,12 @@ const LUA_API_CALLBACKS = [
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
 ];
 
-/**
- * List of dangerous Lua functions. For script sandboxing purposes
- * @type {Array<string>}
- */
-const DANGEROUS_FUNCTIONS = [
-  "dofile",
-  "loadfile",
-  "load",
-  "loadstring",
-  "collectgarbage",
-];
 
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 
 let currentLuaState = null;
 
-/**
- * Lua package searcher function for the virtual filesystem.
- * @see https://www.lua.org/manual/5.3/manual.html#6.3
- *
- * @param {LuaState} L - Fengari Lua state.
- * @returns {number} Number of values returned to Lua (always 1).
- */
-function lua_virtualFsPackageSearcher(L) {
-  const modulePath = lua.lua_tojsstring(L, 1);
-
-  // TODO: Transform moduleName into host path (?)
-  // require("utils") -> current_script_directory/utils.lua
-  // require("module.utils") -> current_script_directory/module/utils.lua
-
-  const rawFile = FileSystem.readFile(modulePath);
-  if (!rawFile) {
-    lua.lua_pushstring(
-      L,
-      to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`),
-    );
-    return 1;
-  }
-
-  const loadStatus = lauxlib.luaL_loadbuffer(
-    L,
-    rawFile, // fengari already expects a Uint8Array for strings so we don't need to do anything !
-    rawFile.length,
-    to_luastring(`@${modulePath}`),
-  );
-  if (loadStatus !== lua.LUA_OK) {
-    const err = lua.lua_tojsstring(L, -1);
-    lua.lua_pop(L, 1);
-    lua.lua_pushstring(
-      L,
-      to_luastring(
-        `\n\terror loading '${modulePath}' from virtual filesystem:\n\t${err}`,
-      ),
-    );
-    return 1;
-  }
-
-  // We return the loaded chunk (luaL_loadbuffer pushes it to the stack) so 1 is the number of return values.
-  return 1;
-}
-
-/**
- * Register the virtual filesystem package searcher function by overwriting the default
- * package.searchers table with only our own searcher function (defaults won't work).
- *
- * @see https://www.lua.org/manual/5.3/manual.html#6.3
- * @param {LuaState} L - Fengari Lua state.
- */
-function registerVirtualFsPackageSearchers(L) {
-  lua.lua_getglobal(L, "package");
-  // Create a new table for the searchers
-  lua.lua_createtable(L, 1, 0);
-  // Push the searcher function to the stack.
-  lua.lua_pushcfunction(L, lua_virtualFsPackageSearcher);
-  // Set the searcher function at index 1 in the searchers table.
-  lua.lua_rawseti(L, -2, 1);
-  // Set the searchers table as the value of the "searchers" field in the package table.
-  lua.lua_setfield(L, -2, "searchers");
-  // Pop the package table from the stack.
-  lua.lua_pop(L, 1);
-}
 
 /**
  * Initialize the Lua session. Create a new Lua state, open the standard Lua libraries,
@@ -180,34 +106,9 @@ export function initLua() {
 
   Terminal.clear();
 
-  // Create a new Lua state
-  const L = lauxlib.luaL_newstate();
+  const L = openSandboxedLuaVM();
 
-  // Open the standard Lua libraries. (This loads ALL libraries, including ones we don't
-  // want to give the user, like os, io, etc.)
-  // See https://www.lua.org/manual/5.3/manual.html#6
-  //lualib.luaL_openlibs(L);
-
-  // Load specific standard libraries.
-  lauxlib.luaL_requiref(L, to_luastring("_G"), lualib.luaopen_base, 1);
-  lua.lua_pop(L, 1);
-  lauxlib.luaL_requiref(L, to_luastring("math"), lualib.luaopen_math, 1);
-  lua.lua_pop(L, 1);
-  lauxlib.luaL_requiref(L, to_luastring("string"), lualib.luaopen_string, 1);
-  lua.lua_pop(L, 1);
-  lauxlib.luaL_requiref(L, to_luastring("table"), lualib.luaopen_table, 1);
-  lua.lua_pop(L, 1);
-  lauxlib.luaL_requiref(L, to_luastring("package"), lualib.luaopen_package, 1);
-  lua.lua_pop(L, 1);
-
-  // Remove dangerous base functions
-  for (const functionName of DANGEROUS_FUNCTIONS) {
-    // Replace the function with nil.
-    lua.lua_pushnil(L);
-    lua.lua_setglobal(L, to_luastring(functionName));
-  }
-
-  // -- Constants registration
+  // Constants registration
 
   for (const { name, value } of LUA_API_CONSTANTS) {
     // Push the value of the constant to the stack
@@ -217,7 +118,7 @@ export function initLua() {
     lua.lua_setglobal(L, to_luastring(name));
   }
 
-  // -- Functions registration
+  // Functions registration
 
   for (const { luaName, luaFunction } of LUA_API_FUNCTIONS) {
     // Push the function to the Lua stack.
@@ -225,9 +126,6 @@ export function initLua() {
     // Lua consumes the function from the stack and assigns it to the global variable `luaName`.
     lua.lua_setglobal(L, to_luastring(luaName));
   }
-
-  // Register the virtual filesystem package searcher function.
-  registerVirtualFsPackageSearchers(L);
 
   // Set the start time of the Lua session.
   // This is used to calculate the elapsed time since the script started.
@@ -290,7 +188,7 @@ export function luaCallIfExists(name, ...args) {
  * @param {string} entryPath - The path to the entrypoint file.
  * @returns {boolean} - True if the code ran successfully, false otherwise.
  */
-export function runLua(code, entryPath = "/main.lua") {
+export function runLua(code, entryPath) {
   // Close the current Lua state if it exists to start fresh.
   if (currentLuaState === null) {
     throw new Error("No Lua session to run code in. Call initLua() first.");
