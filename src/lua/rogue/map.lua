@@ -1,15 +1,8 @@
-require("/rogue/prim.lua")
-local Vector2 = require "/rogue/vector2.lua"
+local Prim = require("/lib/prim.lua")
+local Vector2 = require("/lib/vector2.lua")
 
-MAP_WIDTH = 30
-MAP_HEIGHT = 30
-
-local NEIGHBOR_POS = {
-  Vector2.LEFT,
-  Vector2.UP,
-  Vector2.RIGHT,
-  Vector2.DOWN,
-}
+MAP_WIDTH = 25
+MAP_HEIGHT = 25
 
 local N_SPACE_PARTITIONS = 3
 local MINIMUM_ROOM_SIZE = 4
@@ -18,6 +11,13 @@ local BLOCK_SIZE = Vector2.new(
   math.floor(MAP_WIDTH / N_SPACE_PARTITIONS),
   math.floor(MAP_HEIGHT / N_SPACE_PARTITIONS)
 )
+
+local NEIGHBOR_POS = {
+  Vector2.LEFT,
+  Vector2.UP,
+  Vector2.RIGHT,
+  Vector2.DOWN,
+}
 
 TileType = {
   VOID = 0,

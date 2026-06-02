@@ -1,4 +1,4 @@
-local Vector2 = require "/rogue/vector2.lua"
+local Vector2 = require("/lib/vector2.lua")
 
 local Viewport = {
   pos = Vector2.ZERO,

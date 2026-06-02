@@ -1,9 +1,10 @@
 -- Main
-map = require "/rogue/map.lua" -- Make map a global
-local healthbar = require "/rogue/healthbar.lua"
-local viewport = require "/rogue/viewport.lua"
-local Vector2 = require "/rogue/vector2.lua"
-local Enemy = require "/rogue/enemy.lua"
+local Vector2 = require("/lib/vector2.lua")
+
+map = require("/rogue/map.lua") -- Make map a global
+local healthbar = require("/rogue/healthbar.lua")
+local viewport = require("/rogue/viewport.lua")
+local Enemy = require("/rogue/enemy.lua")
 
 local PLAYER_COLOR = rgb(255, 255, 2)
 local WALL_COLOR = rgb(191, 191, 191)
@@ -14,41 +15,35 @@ local VOID_COLOR = rgb(0, 0, 0)
 local SPECIAL_COLOR = rgb(221, 0, 255)
 local ENEMY_COLOR = rgb(178, 28, 28)
 
+local MAX_FLOOR_LEVEL = 8 -- How many floor levels to climb to win
+local HEAL_PERCENTAGE = 0.01 -- Heal by this proportion of max health each turn
+local HEALTH_MAX = 100
+
+
+local GameState = {
+  PLAYING = 0,
+  WON = 1,
+  LOST = 2
+}
+
 player_pos = Vector2.ZERO -- Make player position a global
 -- TODO: Make player an object ?
 
-local HEAL_PERCENTAGE = 0.01 -- Heal by this proportion of max health each turn
-local HEALTH_MAX = 100
+
 player_health = HEALTH_MAX
+
+local game_state = GameState.PLAYING
+
 
 local enemies
 
+local floor_level = 1
+
 function setup()
-  map.generate()
+  game_state = GameState.PLAYING
+  player_health = HEALTH_MAX
 
-  -- Select starting room
-  local start_room = map.get_random_room()
-  local start_x = start_room.x + math.random(start_room.width - 1)
-  local start_y = start_room.y + math.random(start_room.height - 1)
-
-  enemies = {}
-  for id, room in pairs(map.rooms) do
-    if room.x ~= start_room.x or room.y ~= start_room.y then 
-      local x = room.x + math.random(room.width - 2)
-      local y = room.y + math.random(room.height - 2)
-      local pos = Vector2.new(x, y)
-
-      local enemy = Enemy.new(pos)
-      table.insert(enemies, enemy)
-    end
-  end
-
-  player_pos.x = start_x
-  player_pos.y = start_y
-  map.discover(start_x, start_y)
-
-  viewport.pos.x = start_x - math.floor(SCREEN_W / 2)
-  viewport.pos.y = start_y - math.floor(SCREEN_H / 2)
+  generate_floor()
 
   healthbar.set_max(HEALTH_MAX)
   healthbar.set_value(player_health)
@@ -56,6 +51,11 @@ function setup()
 end
 
 function render()
+  if game_state == GameState.LOST then
+    fill(rgb(86, 24, 32))
+    return
+  end
+
   fill(VOID_COLOR)
 
   -- Draw map
@@ -81,6 +81,7 @@ function render()
     end
   end
 
+  -- Draw enemies
   for _, enemy in ipairs(enemies) do
     local tile = map.get_tile(enemy.pos.x, enemy.pos.y)
     local screen_pos = viewport.to_screen(enemy.pos)
@@ -90,13 +91,21 @@ function render()
     end
   end
 
+  -- Draw player
   screen_player_pos = viewport.to_screen(player_pos)
   set_pixel(screen_player_pos.x, screen_player_pos.y, PLAYER_COLOR)
 
+  -- Draw health bar
   healthbar.draw()
 end
 
 function on_press(btn)
+  if game_state == GameState.LOST or game_state == GameState.WON then
+    -- Reset the game if any key is pressed while the game is over
+    setup()
+  end
+
+
   local direction
   if btn == "L_LEFT" then direction = Vector2.LEFT
   elseif btn == "L_RIGHT" then direction = Vector2.RIGHT
@@ -123,7 +132,11 @@ function on_press(btn)
     e:act()
   end
 
-  if player_health < 0 then player_health = 0
+  if player_health <= 0 then 
+    player_health = 0
+    loose()
+    render()
+    return
   elseif player_health > HEALTH_MAX then player_health = HEALTH_MAX
   end
 
@@ -158,6 +171,34 @@ function move(direction)
   end
 end
 
+function generate_floor()
+  map.generate()
+
+  -- Select starting room
+  local start_room = map.get_random_room()
+  local start_x = start_room.x + math.random(start_room.width - 1)
+  local start_y = start_room.y + math.random(start_room.height - 1)
+
+  enemies = {}
+  for id, room in pairs(map.rooms) do
+    if room.x ~= start_room.x or room.y ~= start_room.y then 
+      local x = room.x + math.random(room.width - 2)
+      local y = room.y + math.random(room.height - 2)
+      local pos = Vector2.new(x, y)
+
+      local enemy = Enemy.new(pos)
+      table.insert(enemies, enemy)
+    end
+  end
+
+  player_pos.x = start_x
+  player_pos.y = start_y
+  map.discover(start_x, start_y)
+
+  viewport.pos.x = start_x - math.floor(SCREEN_W / 2)
+  viewport.pos.y = start_y - math.floor(SCREEN_H / 2)
+end
+
 function take_stairs()
   local tile = map.get_tile(player_pos.x, player_pos.y)
 
@@ -165,7 +206,23 @@ function take_stairs()
 
   -- For now just reset the game
   -- TODO: Go to next level, make enemies stronger
-  setup()
+  floor_level = floor_level + 1
+
+  if floor_level >= MAX_FLOOR_LEVEL then
+    win()
+    return
+  end
+
+  -- TODO proper next level
+  generate_floor()
+end
+
+function win()
+  game_state = GameState.WIN
+end
+
+function loose()
+  game_state = GameState.LOST
 end
 
 function can_move(destination_pos)

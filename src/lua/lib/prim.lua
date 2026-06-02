@@ -1,11 +1,9 @@
-local Set = require "/rogue/set.lua"
--- a vertice = room_id
--- an edge = {a=room_id, b=room_id, weight=0..1}
+local Set = require("/lib/set.lua")
 
 -- Prim's algorithm: find the minimum spanning tree of a graph;
 -- i.e. the minimal graph that ensures all nodes are reachable by at least 1 edge
--- See https://en.wikipedia.org/wiki/Prim's_algorithm
-function Prim(vertices, edges)
+-- See https://en.wikipedia.org/wiki/Prim%27s_algorithm
+local function Prim(vertices, edges)
   local cheapest_cost = {}
   local cheapest_edge = {}
   local explored = Set.new()
@@ -20,7 +18,7 @@ function Prim(vertices, edges)
   local start_vertex = vertices[1] -- start at any element of vertices
   cheapest_cost[start_vertex] = 0 -- Forces starting with this vertex
 
-  while not unexplored:is_empty()  do
+  while not unexplored:is_empty() do
     -- Grow the tree by one edge:
     --   Of the edges that connect the tree to vertices not yet in the tree,
     --   find the minimum-weight edge, and transfer it to the tree.
@@ -64,3 +62,5 @@ function Prim(vertices, edges)
 
   return result_edges
 end
+
+return Prim

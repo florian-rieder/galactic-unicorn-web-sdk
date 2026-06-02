@@ -1,5 +1,5 @@
-local Vector2 = require "/rogue/vector2.lua"
-local a_star = require "/rogue/astar.lua"
+local Vector2 = require("/lib/vector2.lua")
+local a_star = require("/rogue/astar.lua")
 
 local DEFAULT_HEALTH = 20
 local DEFAULT_DAMAGE = 15
