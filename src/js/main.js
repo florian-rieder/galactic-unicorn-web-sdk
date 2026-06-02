@@ -1,15 +1,6 @@
 import { Display } from "./display.js";
 import { initResizers } from "./resizer.js";
-import {
-  initLua,
-  runLua,
-  closeLua,
-  lua_callback_onPress,
-  lua_callback_onRelease,
-  lua_callback_setup,
-  lua_callback_update,
-  lua_callback_draw,
-} from "./lua.js";
+import { Lua } from "./lua-runtime.js";
 import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
@@ -82,7 +73,7 @@ window.addEventListener("keydown", (event) => {
   Input.markPressed(key);
 
   // Signal lua the button has been pressed.
-  lua_callback_onPress(key);
+  Lua.callIfExists("on_press", key);
 });
 
 /**
@@ -100,7 +91,7 @@ window.addEventListener("keyup", (event) => {
   Input.markReleased(key);
 
   // Signal lua the button has been released.
-  lua_callback_onRelease(key);
+  Lua.callIfExists("on_release", key);
 });
 
 /**
@@ -116,21 +107,21 @@ function startSession() {
   Input.clearPressedKeys();
 
   // Initialize the Lua session.
-  initLua();
+  Lua.init();
 
   // Load the currently open script into Lua
   const script = MonacoEditor.getText();
   const scriptFilePath = Workspace.getCurrentOpenPath();
 
   // Execute the script. If it fails, stop the session.
-  if (!runLua(script, scriptFilePath)) {
+  if (!Lua.run(script, scriptFilePath)) {
     stopSession();
     return;
   }
 
   // Call the setup function if it's defined in the lua script.
   // Missing callbacks are allowed; runtime errors stop the execution of the loop.
-  const setupStatus = lua_callback_setup();
+  const setupStatus = Lua.callIfExists("setup");
   if (setupStatus === "error") {
     stopSession();
     return;
@@ -145,7 +136,7 @@ function startSession() {
  * Stop and cleanup the Lua session and associated resources.
  */
 function stopSession() {
-  closeLua();
+  Lua.close();
   Music.stop();
   cancelAnimationFrame(frameId);
   clearTimeout(timeoutId);
@@ -169,13 +160,13 @@ function mainLoop() {
 
   // Run update then draw from the lua script.
   // Missing callbacks are allowed; runtime errors stop the loop.
-  const updateStatus = lua_callback_update(deltaTime / 1000.0); // Convert milliseconds to seconds
+  const updateStatus = Lua.callIfExists("update", deltaTime / 1000.0); // Convert milliseconds to seconds
   if (updateStatus === "error") {
     stopSession();
     return;
   }
 
-  const drawStatus = lua_callback_draw();
+  const drawStatus = Lua.callIfExists("draw");
   if (drawStatus === "error") {
     stopSession();
     return;
