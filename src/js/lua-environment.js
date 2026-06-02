@@ -7,6 +7,8 @@ const { lua, lauxlib, lualib, to_luastring } = fengari;
 
 import { FileSystem } from "./file-system.js"
 
+import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
+
 /**
  * List of Lua standard libraries to open with their associated opener function name
  * @type {Record<string, string>}
@@ -33,6 +35,46 @@ const DANGEROUS_FUNCTIONS = [
   "collectgarbage",
 ];
 
+
+function loadStandardLibraries(L) {
+  // Open the standard Lua libraries. (This loads ALL libraries, including ones we don't
+  // want to give the user, like os, io, etc.)
+  // See https://www.lua.org/manual/5.3/manual.html#6
+  //lualib.luaL_openlibs(L);
+
+  // Better: load specific standard libraries.
+  for (const [libName, libOpener] of Object.entries(LUA_SAFE_STANDARD_LIBRARIES)) {
+    lauxlib.luaL_requiref(L, to_luastring(libName), lualib[libOpener], 1);
+    lua.lua_pop(L, 1);
+  }
+}
+
+function removeDangerousFunctions(L) {
+  for (const functionName of DANGEROUS_FUNCTIONS) {
+    // Replace the function with nil.
+    lua.lua_pushnil(L);
+    lua.lua_setglobal(L, to_luastring(functionName));
+  }
+}
+
+function registerApiConstants(L) {
+    for (const { name, value } of LUA_API_CONSTANTS) {
+      // Push the value of the constant to the stack
+      lua.lua_pushnumber(L, value);
+      // Tell Lua that the value that was just pushed is the global variable `name`.
+      // Lua consumes the value from the stack and assigns it to the global variable `name`.
+      lua.lua_setglobal(L, to_luastring(name));
+    }
+}
+
+function registerApiFunctions(L) {
+  for (const { luaName, luaFunction } of LUA_API_FUNCTIONS) {
+    // Push the function to the Lua stack.
+    lua.lua_pushcfunction(L, luaFunction);
+    // Lua consumes the function from the stack and assigns it to the global variable `luaName`.
+    lua.lua_setglobal(L, to_luastring(luaName));
+  }
+}
 
 /**
  * Lua package searcher function for the virtual filesystem.
@@ -105,30 +147,27 @@ function registerVirtualFsPackageSearchers(L) {
  * 
  * @returns {LuaState} L - Fengari Lua state
  */
-export function openSandboxedLuaVM() {
+export function openLuaVM() {
   // Create a new Lua state
   const L = lauxlib.luaL_newstate();
 
-  // Open the standard Lua libraries. (This loads ALL libraries, including ones we don't
-  // want to give the user, like os, io, etc.)
-  // See https://www.lua.org/manual/5.3/manual.html#6
-  //lualib.luaL_openlibs(L);
-
-  // Better: load specific standard libraries.
-  for (const [libName, libOpener] of Object.entries(LUA_SAFE_STANDARD_LIBRARIES)) {
-    lauxlib.luaL_requiref(L, to_luastring(libName), lualib[libOpener], 1);
-    lua.lua_pop(L, 1);
-  }
+  loadStandardLibraries(L);
 
   // Remove dangerous base functions
-  for (const functionName of DANGEROUS_FUNCTIONS) {
-    // Replace the function with nil.
-    lua.lua_pushnil(L);
-    lua.lua_setglobal(L, to_luastring(functionName));
-  }
+  removeDangerousFunctions(L);
 
   // Register the virtual filesystem package searcher function.
-  registerVirtualFsPackageSearchers(L)
+  registerVirtualFsPackageSearchers(L);
+
+  // Constants registration
+  registerApiConstants(L);
+
+  // Functions registration
+  registerApiFunctions(L);
+
+  // Set the start time of the Lua session.
+  // This is used to calculate the elapsed time since the script started.
+  L.luaStartTimeMs = performance.now();
 
   return L
 }

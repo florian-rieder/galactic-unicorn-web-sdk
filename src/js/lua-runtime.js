@@ -3,56 +3,27 @@ const { lua, lauxlib, to_luastring } = fengari;
 
 import { Display } from "./display.js";
 import { Terminal } from "./terminal.js";
-import { openSandboxedLuaVM } from "./lua-environment.js";
-import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
-
+import { openLuaVM } from "./lua-environment.js";
 
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 
 let g_luaState = null;
 
-
 export const Lua = Object.freeze({
   /**
    * Initialize the Lua session. Create a new Lua state, open the standard Lua libraries,
    * and register SDK functions and constants.
-   *
-   * @param {LuaState} L - Fengari Lua state.
    */
   init() {
     if (g_luaState !== null) {
-      console.warn("Lua session already initialized. Call closeLua() first.");
+      console.warn("Lua session already initialized. Call Lua.close() first.");
       return;
     }
 
     Terminal.clear();
 
-    const L = openSandboxedLuaVM();
-
-    // Constants registration
-
-    for (const { name, value } of LUA_API_CONSTANTS) {
-      // Push the value of the constant to the stack
-      lua.lua_pushnumber(L, value);
-      // Tell Lua that the value that was just pushed is the global variable `name`.
-      // Lua consumes the value from the stack and assigns it to the global variable `name`.
-      lua.lua_setglobal(L, to_luastring(name));
-    }
-
-    // Functions registration
-
-    for (const { luaName, luaFunction } of LUA_API_FUNCTIONS) {
-      // Push the function to the Lua stack.
-      lua.lua_pushcfunction(L, luaFunction);
-      // Lua consumes the function from the stack and assigns it to the global variable `luaName`.
-      lua.lua_setglobal(L, to_luastring(luaName));
-    }
-
-    // Set the start time of the Lua session.
-    // This is used to calculate the elapsed time since the script started.
-    L.luaStartTimeMs = performance.now();
-    g_luaState = L;
+    g_luaState = openLuaVM();
   },
 
   /**
@@ -95,7 +66,7 @@ export const Lua = Object.freeze({
     );
     if (callStatus != lua.LUA_OK) {
       const errorMessage = lua.lua_tojsstring(L, -1);
-      Terminal.printLine(`[Lua error in "${name}"] ${errorMessage}`);
+      Terminal.printLine(`[Lua error in "${functionName}"] ${errorMessage}`);
       lua.lua_pop(L, 1); // Pop the error message from the stack
       return "error";
     }
@@ -152,7 +123,7 @@ export const Lua = Object.freeze({
 
     Display.clear(); // Clear the display buffer
     Display.render(); // Render the display
-  }
+  },
 });
 
 /**
