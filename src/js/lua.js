@@ -1,3 +1,11 @@
+/**
+ * Lua SDK API definitions.
+ *
+ * Fengari C bindings exposed to user scripts, plus the registries
+ * (`LUA_API_FUNCTIONS`, `LUA_API_CONSTANTS`, `LUA_API_CALLBACKS`) and JSDoc
+ * used by `scripts/generate_lua_api.py`. This file describes what the API is.
+ */
+
 import fengari from "./vendor/fengari.js";
 const { lua, lauxlib, to_luastring } = fengari;
 
@@ -8,7 +16,6 @@ import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
 import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
-
 
 /**
  * List of Lua API functions.
@@ -84,11 +91,9 @@ const LUA_API_CALLBACKS = [
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
 ];
 
-
 /**
  * Lua function definitions
  */
-
 
 /**
  * Write a line to the SDK console panel.
@@ -1018,11 +1023,9 @@ function lua_fileSize(L) {
   return 1;
 }
 
-
 /**
  * Lua callback definitions
  */
-
 
 /**
  * Called once after your script is loaded and before the first frame starts.

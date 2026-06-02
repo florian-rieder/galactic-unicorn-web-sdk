@@ -1,11 +1,15 @@
 /**
- * Set up the base sandboxed Lua environment
+ * Lua VM environment setup.
+ *
+ * Creates and configures a sandboxed Fengari state: safe stdlib subset,
+ * dangerous globals stripped, virtual-filesystem `require` searchers, and SDK
+ * functions/constants registered from `lua.js`.
  */
 
 import fengari from "./vendor/fengari.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
-import { FileSystem } from "./file-system.js"
+import { FileSystem } from "./file-system.js";
 
 import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
 
@@ -14,13 +18,13 @@ import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
  * @type {Record<string, string>}
  */
 const LUA_SAFE_STANDARD_LIBRARIES = {
-  "_G": "luaopen_base",
-  "math": "luaopen_math",
-  "string": "luaopen_string",
-  "table": "luaopen_table",
-  "package": "luaopen_package",
-  "coroutine": "luaopen_coroutine",
-  "utf8": "luaopen_utf8",
+  _G: "luaopen_base",
+  math: "luaopen_math",
+  string: "luaopen_string",
+  table: "luaopen_table",
+  package: "luaopen_package",
+  coroutine: "luaopen_coroutine",
+  utf8: "luaopen_utf8",
 };
 
 /**
@@ -35,7 +39,6 @@ const DANGEROUS_FUNCTIONS = [
   "collectgarbage",
 ];
 
-
 function loadStandardLibraries(L) {
   // Open the standard Lua libraries. (This loads ALL libraries, including ones we don't
   // want to give the user, like os, io, etc.)
@@ -43,7 +46,9 @@ function loadStandardLibraries(L) {
   //lualib.luaL_openlibs(L);
 
   // Better: load specific standard libraries.
-  for (const [libName, libOpener] of Object.entries(LUA_SAFE_STANDARD_LIBRARIES)) {
+  for (const [libName, libOpener] of Object.entries(
+    LUA_SAFE_STANDARD_LIBRARIES,
+  )) {
     lauxlib.luaL_requiref(L, to_luastring(libName), lualib[libOpener], 1);
     lua.lua_pop(L, 1);
   }
@@ -58,13 +63,13 @@ function removeDangerousFunctions(L) {
 }
 
 function registerApiConstants(L) {
-    for (const { name, value } of LUA_API_CONSTANTS) {
-      // Push the value of the constant to the stack
-      lua.lua_pushnumber(L, value);
-      // Tell Lua that the value that was just pushed is the global variable `name`.
-      // Lua consumes the value from the stack and assigns it to the global variable `name`.
-      lua.lua_setglobal(L, to_luastring(name));
-    }
+  for (const { name, value } of LUA_API_CONSTANTS) {
+    // Push the value of the constant to the stack
+    lua.lua_pushnumber(L, value);
+    // Tell Lua that the value that was just pushed is the global variable `name`.
+    // Lua consumes the value from the stack and assigns it to the global variable `name`.
+    lua.lua_setglobal(L, to_luastring(name));
+  }
 }
 
 function registerApiFunctions(L) {
@@ -144,7 +149,7 @@ function registerVirtualFsPackageSearchers(L) {
 
 /**
  * Open a new Lua state with safe standard libraries and overwritten package.searchers
- * 
+ *
  * @returns {LuaState} L - Fengari Lua state
  */
 export function openLuaVM() {
@@ -169,5 +174,5 @@ export function openLuaVM() {
   // This is used to calculate the elapsed time since the script started.
   L.luaStartTimeMs = performance.now();
 
-  return L
+  return L;
 }

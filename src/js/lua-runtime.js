@@ -1,3 +1,10 @@
+/**
+ * Lua host runtime / session management.
+ *
+ * Holds the active VM state and exposes the `Lua` namespace used by `main.js`
+ * to init, run scripts, invoke lifecycle callbacks, and tear down sessions.
+ */
+
 import fengari from "./vendor/fengari.js";
 const { lua, lauxlib, to_luastring } = fengari;
 
