@@ -89,7 +89,7 @@ const LUA_API_CALLBACKS = [
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 
-let currentLuaState = null;
+let g_luaState = null;
 
 
 /**
@@ -99,7 +99,7 @@ let currentLuaState = null;
  * @param {LuaState} L - Fengari Lua state.
  */
 export function initLua() {
-  if (currentLuaState !== null) {
+  if (g_luaState !== null) {
     console.warn("Lua session already initialized. Call closeLua() first.");
     return;
   }
@@ -130,7 +130,7 @@ export function initLua() {
   // Set the start time of the Lua session.
   // This is used to calculate the elapsed time since the script started.
   L.luaStartTimeMs = performance.now();
-  currentLuaState = L;
+  g_luaState = L;
 }
 
 /**
@@ -141,11 +141,11 @@ export function initLua() {
  * @returns {string} - "ok" if a function existed and ran successfully, "missing" if the global is not a function, "error" if the function exists but raised an error.
  */
 export function luaCallIfExists(name, ...args) {
-  if (currentLuaState == null) {
+  if (g_luaState == null) {
     return "missing_state";
   }
 
-  const L = currentLuaState;
+  const L = g_luaState;
 
   lua.lua_getglobal(L, to_luastring(name));
 
@@ -190,27 +190,27 @@ export function luaCallIfExists(name, ...args) {
  */
 export function runLua(code, entryPath) {
   // Close the current Lua state if it exists to start fresh.
-  if (currentLuaState === null) {
+  if (g_luaState === null) {
     throw new Error("No Lua session to run code in. Call initLua() first.");
   }
 
   // Run the code
-  const runStatus = luaRunWithExecutionBudget(currentLuaState, () => {
+  const runStatus = luaRunWithExecutionBudget(g_luaState, () => {
     // Load the code as a buffer so Lua can consider it as a file with a name.
     // (For better error messages)
     lauxlib.luaL_loadbuffer(
-      currentLuaState,
+      g_luaState,
       to_luastring(code),
       code.length,
       to_luastring(`@${entryPath}`),
     );
     // Run the code
-    return lua.lua_pcall(currentLuaState, 0, 0, 0);
+    return lua.lua_pcall(g_luaState, 0, 0, 0);
   });
   if (runStatus != lua.LUA_OK) {
-    const errorMessage = lua.lua_tojsstring(currentLuaState, -1);
+    const errorMessage = lua.lua_tojsstring(g_luaState, -1);
     Terminal.printLine(`[Error] ${errorMessage}`);
-    lua.lua_pop(currentLuaState, 1); // Pop the error message from the stack
+    lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
     return false; // Failed to run the code.
   }
 
@@ -256,10 +256,10 @@ function luaRunWithExecutionBudget(L, fn) {
  */
 export function closeLua() {
   // Nothing to close if there is no Lua state.
-  if (currentLuaState === null) return;
+  if (g_luaState === null) return;
 
-  lua.lua_close(currentLuaState); // Close the Lua state
-  currentLuaState = null; // Clear the current Lua state
+  lua.lua_close(g_luaState); // Close the Lua state
+  g_luaState = null; // Clear the current Lua state
 
   Display.clear(); // Clear the display buffer
   Display.render(); // Render the display
