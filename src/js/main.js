@@ -6,6 +6,7 @@ import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
+import { flashEsp } from "./flasher.js";
 
 // Initialize components and set up the initial state of the application.
 
@@ -30,8 +31,22 @@ let isRunning = false;
 // Toolbar control buttons
 const runButton = document.getElementById("run-btn");
 const stopButton = document.getElementById("stop-btn");
+const flashButton = document.getElementById("flash-btn");
 runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
+flashButton.addEventListener("click", startFlash);
+
+/**
+ * Flash project files to the connected ESP device.
+ */
+async function startFlash() {
+  flashButton.disabled = true;
+  try {
+    await flashEsp();
+  } finally {
+    flashButton.disabled = false;
+  }
+}
 
 /**
  * Save the currently open file when CTRL+S or CMD+S is pressed.

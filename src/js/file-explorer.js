@@ -488,7 +488,7 @@ function importZipBytes(bytes, zipFileName) {
   }
 
   const failed = [];
-  for (const [path, data] of Object.entries(files)) {
+  for (const [path, data] of Object.entries(filesToWrite)) {
     if (!FileSystem.writeFile(path, data)) {
       failed.push(path);
     }

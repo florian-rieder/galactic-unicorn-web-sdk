@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "build:fengari": "esbuild node_modules/fengari/src/fengari.js --bundle --format=esm --platform=browser --define:process.env.FENGARICONF=undefined --define:process.env.NODE_DEBUG=undefined --define:process.platform='\"browser\"' --external:os --external:fs --external:path --external:child_process --external:readline-sync --external:tmp --outfile=src/js/vendor/fengari.js",
-    "predev": "npm run build:fengari",
-    "prebuild": "npm run build:fengari",
+    "build:littlefs": "mkdir -p src/js/vendor/littlefs && curl -fsSL -o src/js/vendor/littlefs/lfs.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs.js && curl -fsSL -o src/js/vendor/littlefs/lfs_js.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs_js.js",
+    "build:vendor": "npm run build:fengari && npm run build:littlefs",
+    "predev": "npm run build:vendor",
+    "prebuild": "npm run build:vendor",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -23,6 +25,7 @@
   },
   "homepage": "https://github.com/florian-rieder/galactic-unicorn-web-sdk#readme",
   "dependencies": {
+    "esptool-js": "^0.6.0",
     "fengari": "^0.1.5",
     "fflate": "^0.8.3",
     "file-saver": "^2.0.5",
