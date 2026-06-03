@@ -57,11 +57,15 @@ const TERMINAL_CONFIG = {
  */
 export const EspFlasher = Object.freeze({
   /**
-   * Flash the connected device with an image of the current project's file system
+   * Flash the connected device with an image of the current project's file system.
+   *
+   * @param {Object} [callbacks]
+   * @param {Function} [callbacks.onPortSelected] Invoked after the user picks a serial port (awaited).
+   * @param {Function} [callbacks.onConnecting] Invoked just before connecting to the chip.
+   * @param {Function} [callbacks.onProgress] Invoked during writeFlash with (fileIndex, written, total).
+   * @returns {Promise<number|null>} Elapsed ms on success, or null if the port dialog was cancelled.
    */
-  async flash(onProgress) {
-    let flashCycleStartTime = performance.now();
-
+  async flash({ onPortSelected, onConnecting, onProgress } = {}) {
     let port = null;
     try {
       // Request port access (user will be prompted to select a device)
@@ -69,6 +73,10 @@ export const EspFlasher = Object.freeze({
     } catch (error) {
       // User cancelled the port selection dialog, do nothing.
       return null;
+    }
+
+    if (onPortSelected) {
+      await onPortSelected();
     }
 
     Terminal.clear();
@@ -106,10 +114,16 @@ export const EspFlasher = Object.freeze({
     // Create ESPLoader instance
     const esploader = new ESPLoader(loaderOptions);
 
+    let flashCycleStartTime;
+
     try {
+      if (onConnecting) onConnecting();
+
       // Connect and detect chip (this will reset the device)
       const chipName = await esploader.main();
       console.debug(`Connected to: ${chipName}`);
+
+      flashCycleStartTime = performance.now();
 
       // Configure flash options
       const flashOptions = {

@@ -6,8 +6,7 @@ import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
-import { EspFlasher } from "./flasher.js";
-import { Terminal } from "./terminal.js";
+import { flashWithUi } from "./flash-ui.js";
 
 // Initialize components and set up the initial state of the application.
 
@@ -42,23 +41,8 @@ flashButton.addEventListener("click", startFlash);
  */
 async function startFlash() {
   flashButton.disabled = true;
-
   try {
-    const duration = await EspFlasher.flash((_fileIndex, written, total) => {
-      const percent = (written / total) * 100;
-      console.log(`Progress: ${percent.toFixed(1)}%`);
-    });
-
-    if (duration === null) {
-      Terminal.printLine("Flash cancelled");
-    } else {
-      Terminal.printLine(
-        `Flash completed in ${(duration / 1000.0).toPrecision(2)}s`,
-      );
-    }
-  } catch (error) {
-    Terminal.printLine(error.message);
-    console.error(error);
+    await flashWithUi();
   } finally {
     flashButton.disabled = false;
   }
