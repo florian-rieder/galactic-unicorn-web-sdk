@@ -359,6 +359,59 @@ function isAncestorFolder(folderPath, filePath) {
 }
 
 /**
+ * Strip one leading path segment when every entry lives under the same folder
+ * (e.g. Finder "Compress project/" -> project/main.lua -> /main.lua).
+ *
+ * @param {string[]} paths Normalized virtual paths.
+ * @returns {string[]} Paths with the shared root removed, or unchanged.
+ */
+function stripSingleZipRootPrefix(paths) {
+  if (paths.length === 0) {
+    return paths;
+  }
+
+  const partsList = paths.map((path) =>
+    path.split(FileSystem.PATH_SEPARATOR).filter((part) => part.length > 0),
+  );
+
+  const root = partsList[0][0];
+  if (!root) {
+    return paths;
+  }
+
+  const canStrip = partsList.every(
+    (parts) => parts.length >= 2 && parts[0] === root,
+  );
+  if (!canStrip) {
+    return paths;
+  }
+
+  return partsList.map(
+    (parts) =>
+      FileSystem.PATH_SEPARATOR +
+      parts.slice(1).join(FileSystem.PATH_SEPARATOR),
+  );
+}
+
+/**
+ * @param {Record<string, Uint8Array>} filesToWrite
+ * @returns {Record<string, Uint8Array>}
+ */
+function applyStrippedZipRoot(filesToWrite) {
+  const paths = Object.keys(filesToWrite);
+  const strippedPaths = stripSingleZipRootPrefix(paths);
+  if (paths.every((path, index) => path === strippedPaths[index])) {
+    return filesToWrite;
+  }
+
+  const remapped = {};
+  for (let i = 0; i < paths.length; i++) {
+    remapped[strippedPaths[i]] = filesToWrite[paths[i]];
+  }
+  return remapped;
+}
+
+/**
  * @param {Uint8Array} bytes
  * @param {string} zipFileName
  */
@@ -373,25 +426,32 @@ function importZipBytes(bytes, zipFileName) {
     return;
   }
 
-  const filesToWrite = {};
+  const filesToImport = {};
   for (const [entryName, data] of Object.entries(entries)) {
     const name = entryName.replace(/\\/g, FileSystem.PATH_SEPARATOR).trim();
     if (!name || name.endsWith(FileSystem.PATH_SEPARATOR)) {
-      return null;
+      continue;
+    }
+    // Ignore macOS zip junk
+    if (name.includes("__MACOSX") || name.includes(".DS_Store")) {
+      continue;
     }
     const path = FileSystem.normalizePath(name);
     if (path === null) {
       continue;
     }
-    filesToWrite[path] = data;
+
+    filesToImport[path] = data;
   }
 
-  if (Object.keys(filesToWrite).length === 0) {
+  if (Object.keys(filesToImport).length === 0) {
     Terminal.printLine(
       `[Filesystem] ${zipFileName} contains no importable files.`,
     );
     return;
   }
+
+  const filesToWrite = applyStrippedZipRoot(filesToImport);
 
   const failed = [];
   for (const [path, data] of Object.entries(filesToWrite)) {
