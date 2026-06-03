@@ -40,6 +40,7 @@ flashButton.addEventListener("click", startFlash);
  * Flash project files to the connected ESP device.
  */
 async function startFlash() {
+  Workspace.saveCurrentFile();
   flashButton.disabled = true;
   try {
     await flashWithUi();
