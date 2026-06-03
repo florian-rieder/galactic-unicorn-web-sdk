@@ -6,7 +6,7 @@ import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input, KEY_MAP } from "./input.js";
-import { flashEsp } from "./flasher.js";
+import { EspFlasher } from "./flasher.js";
 
 // Initialize components and set up the initial state of the application.
 
@@ -36,13 +36,21 @@ runButton.addEventListener("click", startSession);
 stopButton.addEventListener("click", stopSession);
 flashButton.addEventListener("click", startFlash);
 
+EspFlasher.setErrorHandler((msg, err) => console.error(msg, err));
+EspFlasher.setFlashStartHandler(() => console.log("Flash start"));
+EspFlasher.setFlashEndHandler(() => console.log("Flash end"));
+EspFlasher.setProgressHandler((fileIndex, written, total) => {
+  const percent = (written / total) * 100;
+  console.log(`Progress: ${percent.toFixed(1)}%`);
+});
+
 /**
  * Flash project files to the connected ESP device.
  */
 async function startFlash() {
   flashButton.disabled = true;
   try {
-    await flashEsp();
+    await EspFlasher.flash();
   } finally {
     flashButton.disabled = false;
   }

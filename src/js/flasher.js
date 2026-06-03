@@ -1,42 +1,61 @@
+/**
+ * Flash the LittleFS partition of a device connected via USB through esptool-js
+ *
+ * @see https://github.com/espressif/esptool-js/blob/main/README.md
+ */
+
 import { ESPLoader, Transport } from "esptool-js";
 
 import { createLittleFsImage } from "./littlefs-image.js";
 
 import { FileSystem } from "./file-system.js";
+import { Terminal } from "./terminal.js";
 
-const SERIAL_BAUDRATE = 115200;
-const LITTLEFS_PARTITION_OFFSET = 0x10000 + 0x100000; // from partitions.csv
-const LITTLEFS_PARTITION_SIZE = 0x2f0000; // from partitions.csv
+const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn (Name TBD)"
+
+// esptool-js debug knobs
+const DEBUG_TRANSPORT_TRACING = false;
+const DEBUG_LOGGING_LOADER = false;
+
+// from partitions.csv (previous chunk offset + size = this partition's offset)
+const LITTLEFS_PARTITION_OFFSET = 0x10000 + 0x100000;
+// from partitions.csv (this partition's size)
+const LITTLEFS_PARTITION_SIZE = 0x2f0000; 
 const MAX_FILENAME_LENGTH = 255;
 const BLOCK_SIZE = 4096;
 const BLOCK_COUNT = LITTLEFS_PARTITION_SIZE / BLOCK_SIZE;
+const SERIAL_BAUDRATE = 115200;
 // Proper hard-reset pulse: RTS true (EN low) -> wait -> RTS false (EN high, boots app).
 // The built-in "hard_reset" only sets RTS false and never pulses EN, so it never resets.
 const HARD_RESET_SEQUENCE = "R1|W100|R0";
 
-export async function flashEsp() {
-  // use esptool-js to flash the microcontroller
-  // Request port access (user will be prompted to select a device)
-  const port = await navigator.serial.requestPort();
+// Callbacks
+let onProgress = null;
+let onError = null;
+let onFlashStart = null;
+let onFlashEnd = null;
 
-  // Create transport instance
-  const transport = new Transport(port, true);
+/**
+ * EspFlasher namespace
+ */
+export const EspFlasher = Object.freeze({
+  /**
+   * Flash the connected device with an image of the current project's file system
+   */
+  async flash() {
+    Terminal.clear();
 
-  // Configure loader options
-  const loaderOptions = {
-    transport: transport,
-    baudrate: SERIAL_BAUDRATE, // Communication baud rate
-    debugLogging: false, // Optional debug logging
-  };
+    let flashCycleStartTime = performance.now()
 
-  // Create ESPLoader instance
-  const esploader = new ESPLoader(loaderOptions);
+    // use esptool-js to flash the microcontroller
+    // Request port access (user will be prompted to select a device)
+    const port = await navigator.serial.requestPort();
 
-  try {
-    // Connect and detect chip (this will reset the device)
-    const chipName = await esploader.main();
-    console.log(`Connected to: ${chipName}`);
+    if (HEADER_LINE) {
+      Terminal.printLine(HEADER_LINE + "\n");
+    }
 
+    Terminal.print("Building file system image... ");
     // Create the LittleFS image
     const allFiles = FileSystem.getAllFiles();
     const littleFsImage = await createLittleFsImage(
@@ -47,42 +66,126 @@ export async function flashEsp() {
     );
 
     if (!littleFsImage) {
-      console.error("Failed to create LittleFS image");
+      if (onError) onError("Failed to create LittleFS image");
+      Terminal.printLine("Failed to create file system image.");
       return;
     }
 
-    // Configure flash options
-    const flashOptions = {
-      fileArray: [
-        {
-          data: littleFsImage,
-          address: LITTLEFS_PARTITION_OFFSET, // Starting address in flash
+    Terminal.printLine(`Done ! littlefs.bin (${littleFsImage.length} bytes)`);
+
+
+    // ESP-32 C6: VendorID 0x303a ProductID 0x1001
+    // Create transport instance
+    const transport = new Transport(port, DEBUG_TRANSPORT_TRACING);
+
+    // Configure loader options
+    const loaderOptions = {
+      transport: transport,
+      baudrate: SERIAL_BAUDRATE, // Communication baud rate
+      debugLogging: DEBUG_LOGGING_LOADER, // Optional debug logging
+      terminal: {
+        clean() {/* Don't worry, we're gonna handle clearing the terminal ourselves */},
+        writeLine(data) {
+          // For some reason, esptool-js finds a Flash ID of 0 and therefore emits this warning.
+          // However, it's a false alarm and the flash does happen correctly.
+          // So let's filter out noise
+          const excludedLines = [
+            "esptool.js",
+            "Flash ID: 0",
+            `WARNING: Failed to communicate with the flash chip,\nread/write operations will fail.\nTry checking the chip connections or removing\nany other hardware connected to IOs.`,
+          ]
+
+          if (excludedLines.includes(data.trim())) return;
+
+          Terminal.printLine(data);
         },
-      ],
-      flashMode: "dio", // Flash mode: "qio", "qout", "dio", "dout"
-      flashFreq: "40m", // Flash frequency: "80m", "40m", "26m", "20m", etc.
-      flashSize: "4MB", // Flash size: "256KB", "512KB", "1MB", "2MB", "4MB", etc.
-      eraseAll: false, // Set to true to erase entire flash before writing
-      compress: true, // Compress data during transfer
-      reportProgress: (fileIndex, written, total) => {
-        const percent = (written / total) * 100;
-        console.log(`Progress: ${percent.toFixed(1)}%`);
+        write(data) {
+          Terminal.print(data);
+        },
       },
     };
 
-    // Flash the firmware
-    await esploader.writeFlash(flashOptions);
+    // Create ESPLoader instance
+    const esploader = new ESPLoader(loaderOptions);
 
-    // Reset the device after flashing so it boots the app (see HARD_RESET_SEQUENCE)
-    await esploader.after("custom_reset", undefined, HARD_RESET_SEQUENCE);
-  } catch (error) {
-    console.error("Failed to connect:", error);
-  } finally {
+    if (onFlashStart) onFlashStart();
+
     try {
-      await transport.disconnect();
-    } catch (closeError) {
-      // Reset can re-enumerate USB; the port may already be gone.
-      console.debug("Port close after flash:", closeError);
+      // Connect and detect chip (this will reset the device)
+      const chipName = await esploader.main();
+      console.debug(`Connected to: ${chipName}`);
+
+      // Configure flash options
+      const flashOptions = {
+        fileArray: [
+          {
+            data: littleFsImage, // Raw bytes (Uint8Array)
+            address: LITTLEFS_PARTITION_OFFSET, // Starting address in flash
+          },
+        ],
+        // see https://docs.espressif.com/projects/esptool/en/latest/esp32c6/esptool/flash-modes.html
+        flashMode: "dio", // Flash mode: "qio", "qout", "dio", "dout"
+        flashFreq: "40m", // Flash frequency: "80m", "40m", "26m", "20m", etc.
+        flashSize: "4MB", // Flash size: "256KB", "512KB", "1MB", "2MB", "4MB", etc.
+        eraseAll: false, // Set to true to erase entire flash before writing
+        compress: true, // Compress data during transfer
+        reportProgress: onProgress,
+      };
+
+      // Flash the firmware
+      await esploader.writeFlash(flashOptions);
+
+      // Reset the device after flashing so it boots the app (see HARD_RESET_SEQUENCE)
+      await esploader.after("custom_reset", undefined, HARD_RESET_SEQUENCE);
+    } catch (error) {
+      if (onError) onError("Failed to connect:", error);
+    } finally {
+      try {
+        await transport.disconnect();
+      } catch (closeError) {
+        // Reset can re-enumerate USB; the port may already be gone.
+        console.debug("Port close after flash:", closeError);
+      }
+
+      const flashCycleDuration = performance.now() - flashCycleStartTime;
+      Terminal.printLine(`Duration: ${(flashCycleDuration / 1000.0).toPrecision(2)}s`)
+      if (onFlashEnd) onFlashEnd();
     }
-  }
-}
+  },
+
+  /**
+   * Set the progress handler callback. Will be called on each progress tick
+   *
+   * @param {Function} fn
+   */
+  setProgressHandler(fn) {
+    onProgress = fn;
+  },
+
+  /**
+   * Set the error handler callback. Will be called when an error occurs during flashing.
+   *
+   * @param {Function} fn
+   */
+  setErrorHandler(fn) {
+    onError = fn;
+  },
+
+  /**
+   * Set the flash start handler callback. Will be called when the flash starts.
+   *
+   * @param {Function} fn
+   */
+  setFlashStartHandler(fn) {
+    onFlashStart = fn;
+  },
+
+  /**
+   * Set the flash end handler callback. Will be called when the flash ends.
+   *
+   * @param {Function} fn
+   */
+  setFlashEndHandler(fn) {
+    onFlashEnd = fn;
+  },
+});
