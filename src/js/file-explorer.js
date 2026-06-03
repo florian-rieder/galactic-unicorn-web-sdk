@@ -3,11 +3,13 @@ import { saveAs } from "file-saver";
 import Swal from "sweetalert2";
 
 import { FileSystem } from "./file-system.js";
+import { FileTree } from "./file-tree.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
 
 // File name when the user downloads the project as a zip file
 const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
+const DEFAULT_FILE_NAME = "script.lua";
 
 // Keep track of the open folder to avoid all folder collapsing when the file explorer
 // is reloaded
@@ -38,7 +40,8 @@ export const FileExplorer = Object.freeze({
   reload() {
     fileExplorer.innerHTML = "";
     // Build a tree datastructure from the flat stored files paths
-    const root = buildTree();
+    const filePaths = FileSystem.listFiles();
+    const root = FileTree.build(filePaths, FileSystem.PATH_SEPARATOR);
 
     // Render the tree as DOM elements recursively
     const tree = renderNode(root);
@@ -82,8 +85,7 @@ export const FileExplorer = Object.freeze({
 
           if (file.name.toLowerCase().endsWith(".zip")) {
             importZipBytes(view, file.name);
-          }
-          else if (!FileSystem.writeFile("/" + file.name, view)) {
+          } else if (!FileSystem.writeFile("/" + file.name, view)) {
             Terminal.printLine(
               `[Filesystem] Failed to upload file ${file.name}`,
             );
@@ -106,7 +108,7 @@ export const FileExplorer = Object.freeze({
   async createNewFile() {
     const result = await Swal.fire({
       input: "text",
-      inputValue: "script.lua",
+      inputValue: DEFAULT_FILE_NAME,
       title: "New file name",
       showCancelButton: true,
     });
@@ -122,7 +124,7 @@ export const FileExplorer = Object.freeze({
       return;
     }
 
-    const path = normalizeFilePath(value);
+    const path = FileSystem.normalizePath(value);
     if (path === null) {
       Terminal.printLine("[Filesystem] Invalid file name.");
       return;
@@ -173,7 +175,7 @@ export const FileExplorer = Object.freeze({
       return;
     }
 
-    const newPath = normalizeFilePath(value);
+    const newPath = FileSystem.normalizePath(value);
     if (newPath === null) {
       Terminal.printLine("[Filesystem] Invalid file path.");
       return;
@@ -254,82 +256,6 @@ export const FileExplorer = Object.freeze({
 });
 
 /**
- * File System Node data structure, used to represent the file hierarchy as a tree
- */
-class FSNode {
-  /**
-   * Create a new file system node
-   * @param {string} name
-   * @param {string} path
-   * @param {boolean} isFile
-   */
-  constructor(name, path, isFile = false) {
-    this.name = name;
-    this.path = path;
-    this.isFile = isFile;
-    this.children = new Map();
-  }
-
-  /**
-   * Add a child node to this node
-   * @param {FSNode} child
-   */
-  addChild(child) {
-    this.children.set(child.name, child);
-  }
-
-  /**
-   * Get a child node of this node by its name
-   * @param {String} childName
-   * @returns {FSNode|null}
-   */
-  getChildByName(childName) {
-    return this.children.get(childName);
-  }
-}
-
-/**
- * Build the file tree from the flat file storage
- * @returns {FSNode}
- */
-function buildTree() {
-  // Build the file hierarchy from the flat file storage
-  const fileList = FileSystem.listFiles();
-
-  let root = new FSNode("root", "/");
-
-  for (const path of fileList) {
-    let parts = path.split("/");
-
-    let currentLevel = root;
-    let currentPath = root.path;
-
-    // Parts 0 is always empty (paths start with a '/')
-    parts.shift(); // Remove part 0
-
-    parts.forEach((part, index) => {
-      let isFile = false;
-
-      // If this is the last part, then it's a file
-      if (index == parts.length - 1) isFile = true;
-
-      const trailingSlash = isFile ? "" : "/";
-      currentPath += part + trailingSlash;
-
-      if (!currentLevel.getChildByName(part)) {
-        let newNode = new FSNode(part, currentPath, isFile);
-        currentLevel.addChild(newNode);
-        currentLevel = newNode;
-      } else {
-        currentLevel = currentLevel.getChildByName(part);
-      }
-    });
-  }
-
-  return root;
-}
-
-/**
  * Create a tree icon element for a given kind of node
  * @param {string} kind
  * @returns {HTMLElement}
@@ -353,7 +279,7 @@ function renderNode(node) {
 
     const ul = document.createElement("ul");
     ul.className = "file-tree";
-    for (const child of sortedChildren(node)) {
+    for (const child of node.getSortedChildren()) {
       ul.appendChild(renderNode(child));
     }
     return ul;
@@ -398,7 +324,7 @@ function renderNode(node) {
   if (node.children.size > 0) {
     const ul = document.createElement("ul");
 
-    for (const child of sortedChildren(node)) {
+    for (const child of node.getSortedChildren()) {
       ul.appendChild(renderNode(child));
     }
     details.appendChild(ul);
@@ -406,26 +332,6 @@ function renderNode(node) {
 
   li.appendChild(details);
   return li;
-}
-
-/**
- * Sort the children of a node by type and name alphabetically
- * @param {FSNode} node
- * @returns {FSNode[]}
- */
-function sortedChildren(node) {
-  return Array.from(node.children.values()).sort((a, b) => {
-    // a is file and b is directory => a > b
-    if (a.isFile && !b.isFile) {
-      return 1;
-      // a is directory and b is file => a < b
-    } else if (!a.isFile && b.isFile) {
-      return -1;
-    }
-
-    // Fallback on alphabetical sorting if the type of the two files is the same
-    return a.name.localeCompare(b.name);
-  });
 }
 
 /**
@@ -469,11 +375,11 @@ function importZipBytes(bytes, zipFileName) {
 
   const filesToWrite = {};
   for (const [entryName, data] of Object.entries(entries)) {
-    const name = entryName.replace(/\\/g, "/").trim();
-    if (!name || name.endsWith("/")) {
+    const name = entryName.replace(/\\/g, FileSystem.PATH_SEPARATOR).trim();
+    if (!name || name.endsWith(FileSystem.PATH_SEPARATOR)) {
       return null;
     }
-    const path =  normalizeFilePath(name);
+    const path = FileSystem.normalizePath(name);
     if (path === null) {
       continue;
     }
@@ -497,37 +403,4 @@ function importZipBytes(bytes, zipFileName) {
   if (failed.length > 0) {
     Terminal.printLine(`[Filesystem] Failed to import: ${failed.join(", ")}`);
   }
-}
-
-/**
- * Normalize user input into a virtual path like /foo.lua
- * @param {string} input
- * @returns {string|null}
- */
-function normalizeFilePath(input) {
-  // Like any proper input handling, we start by trimming the input
-  let name = input.trim();
-  if (!name) {
-    return null;
-  }
-
-  // Add a leading slash if it's not there
-  if (!name.startsWith("/")) {
-    name = "/" + name;
-  }
-
-  // Remove double slashes
-  const parts = name.split("/").filter((part) => part.length > 0);
-
-  // Reject empty paths or paths that contain "." or ".." (prevent path traversal, in
-  // spirit at least since we use a virtual filesystem)
-  if (
-    parts.length === 0 ||
-    parts.some((part) => part === "." || part === "..")
-  ) {
-    return null;
-  }
-
-  // Return the normalized path (with a leading slash)
-  return "/" + parts.join("/");
 }

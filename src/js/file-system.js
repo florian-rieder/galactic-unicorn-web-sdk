@@ -1,7 +1,3 @@
-import { Terminal } from "./terminal.js";
-
-const PATH_SEPARATOR = "/";
-
 /**
  * Filesystem emulation using localStorage
  * We can use the path as localStorage key, and write base64 encoded data
@@ -10,7 +6,17 @@ const PATH_SEPARATOR = "/";
  * Caller can then decode the bytes into whatever they want to, and have to encode it
  * to a Uint8Array to write it back to the file system.
  */
+
+import { Terminal } from "./terminal.js";
+
+const PATH_SEPARATOR = "/";
+
+/**
+ * File System interface
+ */
 export const FileSystem = Object.freeze({
+  PATH_SEPARATOR: PATH_SEPARATOR,
+
   /**
    * Writes raw bytes to file storage at the given path
    * @param {String} path
@@ -85,6 +91,7 @@ export const FileSystem = Object.freeze({
 
   /**
    * Get the size of a file in the virtual file system
+   *
    * @param {String} path
    * @returns {int} size of the file in bytes
    */
@@ -101,6 +108,7 @@ export const FileSystem = Object.freeze({
 
   /**
    * Check if a file exists in the virtual file system
+   *
    * @param {String} path
    * @returns {bool} whether the file exists
    */
@@ -122,6 +130,7 @@ export const FileSystem = Object.freeze({
 
   /**
    * Move file data to a new path in the virtual file system
+   *
    * @param {String} oldPath
    * @param {String} newPath
    * @returns {boolean} whether the rename succeeded
@@ -162,6 +171,7 @@ export const FileSystem = Object.freeze({
 
   /**
    * List files in the file system
+   *
    * @returns {string[]} list of file paths
    */
   listFiles() {
@@ -178,14 +188,14 @@ export const FileSystem = Object.freeze({
 
   /**
    * Read all files from the file system
-   * 
+   *
    * @returns {Record<string, Uint8Array>} files
    */
   getAllFiles() {
-    const files = FileSystem.listFiles();
+    const files = this.listFiles();
     const allFiles = {};
     for (const filePath of files) {
-      const rawFileData = FileSystem.readFile(filePath);
+      const rawFileData = this.readFile(filePath);
       if (rawFileData === null) {
         Terminal.printLine(`[Filesystem] Failed to read file ${filePath}`);
         continue;
@@ -193,6 +203,40 @@ export const FileSystem = Object.freeze({
       allFiles[filePath] = rawFileData;
     }
     return allFiles;
+  },
+
+  /**
+   * Normalize user input into a virtual path like `/foo.lua`
+   *
+   * @param {string} input
+   * @returns {string|null}
+   */
+  normalizePath(input) {
+    // Like any proper input handling, we start by trimming the input
+    let name = input.trim();
+    if (!name) {
+      return null;
+    }
+
+    // Add a leading slash if it's not there
+    if (!name.startsWith(PATH_SEPARATOR)) {
+      name = PATH_SEPARATOR + name;
+    }
+
+    // Remove double slashes
+    const parts = name.split(PATH_SEPARATOR).filter((part) => part.length > 0);
+
+    // Reject empty paths or paths that contain "." or ".." (prevent path traversal, in
+    // spirit at least since we use a virtual filesystem)
+    if (
+      parts.length === 0 ||
+      parts.some((part) => part === "." || part === "..")
+    ) {
+      return null;
+    }
+
+    // Return the normalized path (with a leading slash)
+    return PATH_SEPARATOR + parts.join(PATH_SEPARATOR);
   },
 });
 
