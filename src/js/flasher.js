@@ -11,7 +11,7 @@ import { createLittleFsImage } from "./littlefs-image.js";
 import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
 
-const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn (Name TBD)"
+const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn (Name TBD)";
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
@@ -20,7 +20,7 @@ const DEBUG_LOGGING_LOADER = false;
 // from partitions.csv (previous chunk offset + size = this partition's offset)
 const LITTLEFS_PARTITION_OFFSET = 0x10000 + 0x100000;
 // from partitions.csv (this partition's size)
-const LITTLEFS_PARTITION_SIZE = 0x2f0000; 
+const LITTLEFS_PARTITION_SIZE = 0x2f0000;
 const MAX_FILENAME_LENGTH = 255;
 const BLOCK_SIZE = 4096;
 const BLOCK_COUNT = LITTLEFS_PARTITION_SIZE / BLOCK_SIZE;
@@ -29,11 +29,28 @@ const SERIAL_BAUDRATE = 115200;
 // The built-in "hard_reset" only sets RTS false and never pulses EN, so it never resets.
 const HARD_RESET_SEQUENCE = "R1|W100|R0";
 
-// Callbacks
-let onProgress = null;
-let onError = null;
-let onFlashStart = null;
-let onFlashEnd = null;
+const TERMINAL_CONFIG = {
+  clean() {
+    /* Don't worry, we're gonna handle clearing the terminal ourselves */
+  },
+  writeLine(data) {
+    // For some reason, esptool-js finds a Flash ID of 0 and therefore emits this warning.
+    // However, it's a false alarm and the flash does happen correctly.
+    // So let's filter out noise
+    const excludedLines = [
+      "esptool.js",
+      "Flash ID: 0",
+      `WARNING: Failed to communicate with the flash chip,\nread/write operations will fail.\nTry checking the chip connections or removing\nany other hardware connected to IOs.`,
+    ];
+
+    if (excludedLines.includes(data.trim())) return;
+
+    Terminal.printLine(data);
+  },
+  write(data) {
+    Terminal.print(data);
+  },
+};
 
 /**
  * EspFlasher namespace
@@ -42,20 +59,23 @@ export const EspFlasher = Object.freeze({
   /**
    * Flash the connected device with an image of the current project's file system
    */
-  async flash() {
-    Terminal.clear();
+  async flash(onProgress) {
+    let flashCycleStartTime = performance.now();
 
-    let flashCycleStartTime = performance.now()
-
-    // use esptool-js to flash the microcontroller
-    // Request port access (user will be prompted to select a device)
-    const port = await navigator.serial.requestPort();
-
-    if (HEADER_LINE) {
-      Terminal.printLine(HEADER_LINE + "\n");
+    let port = null;
+    try {
+      // Request port access (user will be prompted to select a device)
+      port = await navigator.serial.requestPort();
+    } catch (error) {
+      // User cancelled the port selection dialog, do nothing.
+      return null;
     }
 
-    Terminal.print("Building file system image... ");
+    Terminal.clear();
+    Terminal.printLine(HEADER_LINE);
+
+    Terminal.printLine("Building file system image... ");
+
     // Create the LittleFS image
     const allFiles = FileSystem.getAllFiles();
     const littleFsImage = await createLittleFsImage(
@@ -66,13 +86,10 @@ export const EspFlasher = Object.freeze({
     );
 
     if (!littleFsImage) {
-      if (onError) onError("Failed to create LittleFS image");
-      Terminal.printLine("Failed to create file system image.");
-      return;
+      throw new Error("Failed to create file system image");
     }
 
-    Terminal.printLine(`Done ! littlefs.bin (${littleFsImage.length} bytes)`);
-
+    Terminal.printLine(`Done. littlefs.bin (${littleFsImage.length} bytes)`);
 
     // ESP-32 C6: VendorID 0x303a ProductID 0x1001
     // Create transport instance
@@ -83,32 +100,11 @@ export const EspFlasher = Object.freeze({
       transport: transport,
       baudrate: SERIAL_BAUDRATE, // Communication baud rate
       debugLogging: DEBUG_LOGGING_LOADER, // Optional debug logging
-      terminal: {
-        clean() {/* Don't worry, we're gonna handle clearing the terminal ourselves */},
-        writeLine(data) {
-          // For some reason, esptool-js finds a Flash ID of 0 and therefore emits this warning.
-          // However, it's a false alarm and the flash does happen correctly.
-          // So let's filter out noise
-          const excludedLines = [
-            "esptool.js",
-            "Flash ID: 0",
-            `WARNING: Failed to communicate with the flash chip,\nread/write operations will fail.\nTry checking the chip connections or removing\nany other hardware connected to IOs.`,
-          ]
-
-          if (excludedLines.includes(data.trim())) return;
-
-          Terminal.printLine(data);
-        },
-        write(data) {
-          Terminal.print(data);
-        },
-      },
+      terminal: TERMINAL_CONFIG,
     };
 
     // Create ESPLoader instance
     const esploader = new ESPLoader(loaderOptions);
-
-    if (onFlashStart) onFlashStart();
 
     try {
       // Connect and detect chip (this will reset the device)
@@ -138,7 +134,9 @@ export const EspFlasher = Object.freeze({
       // Reset the device after flashing so it boots the app (see HARD_RESET_SEQUENCE)
       await esploader.after("custom_reset", undefined, HARD_RESET_SEQUENCE);
     } catch (error) {
-      if (onError) onError("Failed to connect:", error);
+      throw new Error(
+        `Flash failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       try {
         await transport.disconnect();
@@ -146,46 +144,8 @@ export const EspFlasher = Object.freeze({
         // Reset can re-enumerate USB; the port may already be gone.
         console.debug("Port close after flash:", closeError);
       }
-
-      const flashCycleDuration = performance.now() - flashCycleStartTime;
-      Terminal.printLine(`Duration: ${(flashCycleDuration / 1000.0).toPrecision(2)}s`)
-      if (onFlashEnd) onFlashEnd();
     }
-  },
 
-  /**
-   * Set the progress handler callback. Will be called on each progress tick
-   *
-   * @param {Function} fn
-   */
-  setProgressHandler(fn) {
-    onProgress = fn;
-  },
-
-  /**
-   * Set the error handler callback. Will be called when an error occurs during flashing.
-   *
-   * @param {Function} fn
-   */
-  setErrorHandler(fn) {
-    onError = fn;
-  },
-
-  /**
-   * Set the flash start handler callback. Will be called when the flash starts.
-   *
-   * @param {Function} fn
-   */
-  setFlashStartHandler(fn) {
-    onFlashStart = fn;
-  },
-
-  /**
-   * Set the flash end handler callback. Will be called when the flash ends.
-   *
-   * @param {Function} fn
-   */
-  setFlashEndHandler(fn) {
-    onFlashEnd = fn;
+    return performance.now() - flashCycleStartTime;
   },
 });

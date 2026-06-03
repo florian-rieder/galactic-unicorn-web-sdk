@@ -50,22 +50,23 @@ export async function createLittleFsImage(
     await file.sync();
 
     if (data_size < 0) {
-      console.error(
-        "writing file '" +
-          lfsPath +
-          "' failed with error code '" +
-          data_size +
-          "'",
-      );
       if (data_size === LFS_ERR_NOSPC) {
         const capacity = block_size * block_count;
-        alert(
+        throw new Error(
           `Not enough space in the LittleFS image to write '${lfsPath}'. ` +
             `The filesystem capacity is ${capacity} bytes. ` +
             `Remove some files and try again.`,
         );
       }
-      return;
+      else {
+        throw new Error("writing file '" +
+          lfsPath +
+          "' failed with error code '" +
+          data_size +
+          "'",
+        );
+      }
+
     }
   }
 
