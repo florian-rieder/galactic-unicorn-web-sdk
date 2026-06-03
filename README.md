@@ -67,6 +67,36 @@ To test the production bundle locally, use `npm run preview` (serves `dist/` at 
 - UI assets live under `public/` (e.g. `public/assets/images/`).
 - Inlined UI assets live under `/src/assets` (because they're inlined by Vite when bundling and therefore don't need to be served statically)
 
+## Flashing to device
+
+The toolbar **Flash** button writes the **entire virtual filesystem** (everything listed in the file explorer) to the handheld's LittleFS data partition over USB. It does not flash firmware (the ESP application binary); your device must already be running compatible firmware.
+
+### Requirements
+
+- A **Chromium-based browser** (Chrome, Edge, Brave, etc.). Web Serial is not available in Firefox or Safari.
+- A **Galactic Unicorn** connected by USB, with firmware that matches this SDK's flash layout.
+- A **data filesystem archive** as a `.zip` file with the necessary system scripts (`/system/boot_menu.lua`, `/system/manifest.lson`).
+
+### First-time setup (import from zip)
+
+1. Open the SDK ([hosted app](https://florian-rieder.github.io/galactic-unicorn-web-sdk/) or [local dev](#run-locally)).
+2. In the file explorer, use **Upload** (↑) and select the zip file.
+3. Wait for the import to finish. The file tree should show the expected paths (e.g. `/system/`, `/lib/`, games, and so on).
+
+### Flash
+
+1. Click **Flash** in the toolbar.
+2. Choose the serial port when the browser prompts you.
+3. Wait for the progress UI to finish. Output also appears in the console panel.
+
+Every file currently stored in the workspace gets assembled into a LittleFS image and written to the data partition. Paths in the explorer should match what the device expects (e.g. `/system/boot_menu.lua` for the menu). If you only have a single game file and no system tree, the device may not boot into a working menu until you import a complete data zip.
+
+### Editing and re-flashing
+
+- Use **Run** to test Lua in the browser without touching the device.
+- Change files in the editor, save, then **Flash** again to push the updated workspace to the device.
+- **Export** (⤴) downloads the workspace as `project.zip` for backup or sharing; you can re-import that zip later on another machine.
+
 ## API documentation
 
 Lua host bindings documentation are generated from `src/js/lua.js` JSDoc + API registries.
