@@ -22,14 +22,19 @@ export async function flashWithUi() {
   try {
     const duration = await EspFlasher.flash({
       onPortSelected() {
-        Swal.fire({
-          title: "Flashing device",
-          html: `<p class="flash-status">Building filesystem image...</p>`,
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          heightAuto: false,
-          didOpen: () => Swal.showLoading(),
+        return new Promise((resolve) => {
+          Swal.fire({
+            title: "Flashing device",
+            html: `<p class="flash-status">Building filesystem image...</p>`,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            heightAuto: false,
+            willOpen: () => {
+              Swal.showLoading();
+              resolve();
+            },
+          });
         });
       },
 
@@ -75,6 +80,7 @@ export async function flashWithUi() {
     Terminal.printLine(error.message);
     console.error(error);
 
+    Swal.hideLoading();
     await Swal.fire({
       icon: "error",
       title: "Flash failed",
