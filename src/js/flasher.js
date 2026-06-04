@@ -11,24 +11,38 @@ import { createLittleFsImage } from "./littlefs-image.js";
 import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
 
-const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn (Name TBD)";
+// Flavor text printed at the start of flashing
+const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
 const DEBUG_LOGGING_LOADER = false;
 
-// from partitions.csv (previous chunk offset + size = this partition's offset)
+// LittleFS image configuration
+// from partitions.csv (previous chunk offset + size = this partition's offset in bytes)
 const LITTLEFS_PARTITION_OFFSET = 0x10000 + 0x100000;
-// from partitions.csv (this partition's size)
+// from partitions.csv (this partition's size in bytes)
 const LITTLEFS_PARTITION_SIZE = 0x2f0000;
 const MAX_FILENAME_LENGTH = 255;
 const BLOCK_SIZE = 4096;
 const BLOCK_COUNT = LITTLEFS_PARTITION_SIZE / BLOCK_SIZE;
+
+// Flash options for esptool
 const SERIAL_BAUDRATE = 115200;
+// see https://docs.espressif.com/projects/esptool/en/latest/esp32c6/esptool/flash-modes.html
+const FLASH_MODE = "dio"; // Flash mode: "qio", "qout", "dio", "dout"
+const FLASH_FREQUENCY = "40m"; // Flash frequency: "80m", "40m", "26m", "20m", etc.
+const FLASH_SIZE = "4MB"; // Flash size: "256KB", "512KB", "1MB", "2MB", "4MB", etc.
+const FLASH_ERASE_ALL = false; // Set to true to erase entire flash before writing
+const FLASH_COMPRESS = true; // Compress data during transfer
+
 // Proper hard-reset pulse: RTS true (EN low) -> wait -> RTS false (EN high, boots app).
 // The built-in "hard_reset" only sets RTS false and never pulses EN, so it never resets.
 const HARD_RESET_SEQUENCE = "R1|W100|R0";
 
+/**
+ * Pipe esptool's output to our user-facing SDK console
+ */
 const TERMINAL_CONFIG = {
   clean() {
     /* Don't worry, we're gonna handle clearing the terminal ourselves */
@@ -85,6 +99,7 @@ export const EspFlasher = Object.freeze({
     Terminal.printLine("Building file system image... ");
 
     // Create the LittleFS image
+    // TODO: Merge VFS project files with base
     const allFiles = FileSystem.getAllFiles();
     const littleFsImage = await createLittleFsImage(
       allFiles,
@@ -114,7 +129,7 @@ export const EspFlasher = Object.freeze({
     // Create ESPLoader instance
     const esploader = new ESPLoader(loaderOptions);
 
-    let flashCycleStartTime;
+    let flashStart;
 
     try {
       if (onConnecting) onConnecting();
@@ -123,7 +138,8 @@ export const EspFlasher = Object.freeze({
       const chipName = await esploader.main();
       console.debug(`Connected to: ${chipName}`);
 
-      flashCycleStartTime = performance.now();
+      // Start counting flash duration AFTER the chip has connected
+      flashStart = performance.now();
 
       // Configure flash options
       const flashOptions = {
@@ -133,12 +149,11 @@ export const EspFlasher = Object.freeze({
             address: LITTLEFS_PARTITION_OFFSET, // Starting address in flash
           },
         ],
-        // see https://docs.espressif.com/projects/esptool/en/latest/esp32c6/esptool/flash-modes.html
-        flashMode: "dio", // Flash mode: "qio", "qout", "dio", "dout"
-        flashFreq: "40m", // Flash frequency: "80m", "40m", "26m", "20m", etc.
-        flashSize: "4MB", // Flash size: "256KB", "512KB", "1MB", "2MB", "4MB", etc.
-        eraseAll: false, // Set to true to erase entire flash before writing
-        compress: true, // Compress data during transfer
+        flashMode: FLASH_MODE,
+        flashFreq: FLASH_FREQUENCY,
+        flashSize: FLASH_SIZE,
+        eraseAll: FLASH_ERASE_ALL,
+        compress: FLASH_COMPRESS,
         reportProgress: onProgress,
       };
 
@@ -160,6 +175,6 @@ export const EspFlasher = Object.freeze({
       }
     }
 
-    return performance.now() - flashCycleStartTime;
+    return performance.now() - flashStart;
   },
 });
