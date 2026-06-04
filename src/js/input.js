@@ -8,7 +8,7 @@ const keysPressed = new Set();
  * Map of keyboard events to button names.
  * @type {Record<string, string>}
  */
-export const KEY_MAP = Object.freeze({
+const KEY_MAP = {
   w: "L_UP",
   a: "L_LEFT",
   s: "L_DOWN",
@@ -21,7 +21,7 @@ export const KEY_MAP = Object.freeze({
   e: "R_BUMP",
   1: "MENU",
   2: "ESC",
-});
+};
 
 export const Input = Object.freeze({
   /**
@@ -54,5 +54,14 @@ export const Input = Object.freeze({
    */
   isPressed(key) {
     return keysPressed.has(key);
+  },
+
+  /**
+   * Get the Galactic Unicorn name of a key from an event key.
+   * @param {string} eventKey - The key to get the name of.
+   * @returns {string} The name of the key.
+   */
+  getKeyName(eventKey) {
+    return KEY_MAP[eventKey];
   },
 });

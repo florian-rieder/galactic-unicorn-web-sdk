@@ -5,7 +5,7 @@ import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
 import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
-import { Input, KEY_MAP } from "./input.js";
+import { Input } from "./input.js";
 import { flashWithUi } from "./flash-ui.js";
 
 // Initialize components and set up the initial state of the application.
@@ -79,7 +79,8 @@ window.addEventListener("keydown", (event) => {
   // If a script is running
   if (!isRunning) return;
 
-  const key = KEY_MAP[event.key];
+  const key = Input.getKeyName(event.key);
+
   // If the key corresponds to a button on the device
   if (!key) return;
 
@@ -100,7 +101,8 @@ window.addEventListener("keyup", (event) => {
   // If a script is running
   if (!isRunning) return;
 
-  const key = KEY_MAP[event.key];
+  const key = Input.getKeyName(event.key);
+
   // If the key corresponds to a button on the device
   if (!key) return;
 
