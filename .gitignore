@@ -5,3 +5,8 @@ src/js/vendor/
 public/docs/
 .old
 .vscode/
+.vite/
+node_modules/
+src/js/vendors/
+src/generated
+docs/generated
