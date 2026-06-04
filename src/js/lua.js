@@ -56,6 +56,7 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "read_file", luaFunction: lua_readFile },
   { luaName: "read_file_chunk", luaFunction: lua_readFileChunk },
   { luaName: "file_size", luaFunction: lua_fileSize },
+  { luaName: "list_directory", luaFunction: lua_listDirectory },
 ];
 
 /**
@@ -90,6 +91,73 @@ const LUA_API_CALLBACKS = [
   { luaName: "on_press", luaFunction: lua_callback_onPress },
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
 ];
+
+/**
+ * Helper functions
+ */
+
+/**
+ * Reads a color table from the Lua stack and returns an array of [r, g, b] values.
+ *
+ * @param {LuaState} L - Fengari Lua state
+ * @param {number} colorArgIndex - Index of the color table on the Lua stack.
+ * @returns {Array<number>} Array of [r, g, b] values.
+ */
+function readRgbTableArg(L, colorArgIndex) {
+  lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
+
+  lua.lua_rawgeti(L, colorArgIndex, 1);
+  const r = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 2);
+  const g = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 3);
+  const b = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lauxlib.luaL_argcheck(
+    L,
+    r >= 0 && r <= 255,
+    colorArgIndex,
+    "r out of range 0..255",
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    g >= 0 && g <= 255,
+    colorArgIndex,
+    "g out of range 0..255",
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    b >= 0 && b <= 255,
+    colorArgIndex,
+    "b out of range 0..255",
+  );
+
+  return [r, g, b];
+}
+
+/**
+ * Pushes an RGB color table onto the Lua stack.
+ *
+ * @param {LuaState} L - Fengari Lua state
+ * @param {number} r - Red value
+ * @param {number} g - Green value
+ * @param {number} b - Blue value
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function pushRgbTable(L, r, g, b) {
+  lua.lua_createtable(L, 3, 0);
+  lua.lua_pushinteger(L, r);
+  lua.lua_rawseti(L, -2, 1);
+  lua.lua_pushinteger(L, g);
+  lua.lua_rawseti(L, -2, 2);
+  lua.lua_pushinteger(L, b);
+  lua.lua_rawseti(L, -2, 3);
+}
 
 /**
  * Lua function definitions
@@ -217,53 +285,6 @@ function lua_hsl(L) {
   const rgb = hslToRgb(hInput, sInput, lInput);
   pushRgbTable(L, rgb.r, rgb.g, rgb.b);
   return 1;
-}
-
-function readRgbTableArg(L, colorArgIndex) {
-  lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
-
-  lua.lua_rawgeti(L, colorArgIndex, 1);
-  const r = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lua.lua_rawgeti(L, colorArgIndex, 2);
-  const g = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lua.lua_rawgeti(L, colorArgIndex, 3);
-  const b = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lauxlib.luaL_argcheck(
-    L,
-    r >= 0 && r <= 255,
-    colorArgIndex,
-    "r out of range 0..255",
-  );
-  lauxlib.luaL_argcheck(
-    L,
-    g >= 0 && g <= 255,
-    colorArgIndex,
-    "g out of range 0..255",
-  );
-  lauxlib.luaL_argcheck(
-    L,
-    b >= 0 && b <= 255,
-    colorArgIndex,
-    "b out of range 0..255",
-  );
-
-  return [r, g, b];
-}
-
-function pushRgbTable(L, r, g, b) {
-  lua.lua_createtable(L, 3, 0);
-  lua.lua_pushinteger(L, r);
-  lua.lua_rawseti(L, -2, 1);
-  lua.lua_pushinteger(L, g);
-  lua.lua_rawseti(L, -2, 2);
-  lua.lua_pushinteger(L, b);
-  lua.lua_rawseti(L, -2, 3);
 }
 
 /**
@@ -1019,6 +1040,37 @@ function lua_fileSize(L) {
   let size = FileSystem.fileSizeAtPath(path);
 
   lua.lua_pushinteger(L, size);
+
+  return 1;
+}
+
+/**
+ * Get a list of the contents of the directory at the given path.
+ *
+ * Lua API: `list_directory(path)`
+ *
+ * @luaName list_directory
+ * @luaKind function
+ * @luaCategory file system
+ * @luaParams path:string path to the file
+ * @luaReturns table<string, string>: a table with paths as keys, and a boolean representing if the path is a file (true) or a directory(false)
+ * @luaExample size = list_directory("/my/directory/path")
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_listDirectory(L) {
+  const path = lua.lua_tojsstring(L, 1);
+
+  const contents = FileSystem.listDirectory(path);
+
+  lua.lua_createtable(L, contents.length, 0);
+
+  for (const node of contents) {
+    lua.lua_pushstring(L, to_luastring(node.path));
+    lua.lua_pushboolean(L, node.isFile);
+    lua.lua_rawset(L, -3);
+  }
 
   return 1;
 }
