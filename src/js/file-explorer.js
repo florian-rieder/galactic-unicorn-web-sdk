@@ -40,13 +40,13 @@ export const FileExplorer = Object.freeze({
   reload() {
     fileExplorer.innerHTML = "";
     // Build a tree datastructure from the flat stored files paths
-    const filePaths = FileSystem.listFiles();
+    const filePaths = FileSystem.listAllFiles();
     const root = FileTree.build(filePaths, FileSystem.PATH_SEPARATOR);
 
     // Render the tree as DOM elements recursively
-    const tree = renderNode(root);
-    if (tree) {
-      fileExplorer.appendChild(tree);
+    const domTree = renderNode(root);
+    if (domTree) {
+      fileExplorer.appendChild(domTree);
     }
   },
 

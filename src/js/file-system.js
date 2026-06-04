@@ -8,6 +8,7 @@
  */
 
 import { Terminal } from "./terminal.js";
+import { FileTree } from "./file-tree.js";
 
 const PATH_SEPARATOR = "/";
 
@@ -170,11 +171,11 @@ export const FileSystem = Object.freeze({
   },
 
   /**
-   * List files in the file system
+   * List all files in the file system
    *
    * @returns {string[]} list of file paths
    */
-  listFiles() {
+  listAllFiles() {
     // Prevent listing localStorage methods as file paths
     let filesList = [];
     for (let key in localStorage) {
@@ -187,12 +188,67 @@ export const FileSystem = Object.freeze({
   },
 
   /**
+   * List all files and directories in a directory (therefore needs to return FSNodes, because
+   * directories don't really exist as path keys in localStorage)
+   * @param {string} path
+   * @returns {FSNode[]} list of file system nodes
+   */
+  listDirectory(path = PATH_SEPARATOR) {
+    // This needs to be tree aware. We need an FSNode tree.
+    const files = this.listAllFiles();
+    const root = FileTree.build(files);
+
+    const normalizedPath = this.normalizePath(path);
+
+    if (!normalizedPath) {
+      throw new Error(`Invalid path: ${path}`);
+    }
+
+    // Special case if the given path is the root, we don't even need to walk the FS, just return
+    // the children of the root node
+    if (normalizedPath === PATH_SEPARATOR) {
+      return root.getSortedChildren();
+    }
+
+    // Walk up the tree to the node that represents the directory at path
+    const parts = normalizedPath.split(PATH_SEPARATOR);
+    parts.shift(); // parts[0] is always an empty string
+
+    let current = root;
+    for (const part of parts) {
+      // Find out which child is this path part
+      let next;
+      for (const child of current.getSortedChildren()) {
+        if (child.name === part) {
+          next = child;
+          break;
+        }
+      }
+
+      // Walk up to the child node that is this path part
+      if (next) {
+        current = next;
+      } else {
+        // If we didn't find one, the directory doesn't exist
+        throw new Error(`Not found: ${part} (${path})`);
+      }
+    }
+
+    // If the node at the given path is a file, error out because this isn't for files.
+    if (current.isFile) {
+      throw new Error(`Not a directory: ${path}`);
+    }
+
+    return current.getSortedChildren();
+  },
+
+  /**
    * Read all files from the file system
    *
    * @returns {Record<string, Uint8Array>} files
    */
   getAllFiles() {
-    const files = this.listFiles();
+    const files = this.listAllFiles();
     const allFiles = {};
     for (const filePath of files) {
       const rawFileData = this.readFile(filePath);
@@ -216,6 +272,11 @@ export const FileSystem = Object.freeze({
     let name = input.trim();
     if (!name) {
       return null;
+    }
+
+    // Root path should be unchanged
+    if (name == PATH_SEPARATOR) {
+      return name;
     }
 
     // Add a leading slash if it's not there
