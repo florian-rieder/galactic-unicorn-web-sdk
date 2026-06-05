@@ -100,8 +100,17 @@ Without manual generation or a successful dev-time run, Monaco completions stay 
 ## References
 
 - [Lua 5.3 Reference Manual](https://www.lua.org/manual/5.3/manual.html)
-- [Programming in Lua](https://www.lua.org/pil/contents.html)
+- [Programming in Lua (1st edition)](https://www.lua.org/pil/contents.html)
 - [Lua Metamethods Cheatsheet](https://gist.github.com/oatmealine/655c9e64599d0f0dd47687c1186de99f)
 - [Fengari](https://github.com/fengari-lua/fengari)
 - [UXN Sprites](https://compudanzas.net/uxn_tutorial_day_2.html#drawing%20sprites)
 - [Microbit Sprites](https://microbit-micropython.readthedocs.io/en/latest/image.html)
+
+## Dependencies
+
+- [Fengari](https://github.com/fengari-lua/fengari) - Lua VM in the browser
+- [Monaco Editor](https://github.com/microsoft/monaco-editor) - VS Code editor in the browser
+- [esptool-js](https://github.com/espressif/esptool-js) - esptool in the browser
+- [fflate](https://github.com/101arrowz/fflate) - zip compression/decompression
+- [file-saver](https://github.com/eligrey/FileSaver.js) - file download utility
+- [Sweet Alert 2](https://sweetalert2.github.io/) - simple and beautiful popups
