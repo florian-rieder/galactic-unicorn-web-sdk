@@ -19,6 +19,17 @@ export async function flashWithUi() {
   let progressBar = null;
   let label = null;
 
+  // Check if the browser supports Web Serial API
+  if (!navigator.serial) {
+    // If not, show an error popup.
+    Swal.fire({
+      title: "Web Serial API unavailable",
+      icon: "error",
+      text: "This feature is not available on your browser. Sorry.",
+    });
+    return;
+  }
+
   try {
     const duration = await EspFlasher.flash({
       onPortSelected() {
@@ -54,7 +65,7 @@ export async function flashWithUi() {
             `<div class="flash-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
               <div class="flash-progress-bar"></div>
             </div>
-            <p class="flash-progress-label"></p>`,
+            <p class="flash-progress-label"></p>`
           );
           progressBar = container.querySelector(".flash-progress-bar");
           label = container.querySelector(".flash-progress-label");
