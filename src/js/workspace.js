@@ -1,10 +1,21 @@
+import Swal from "sweetalert2";
+
 import { FileSystem } from "./file-system.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
-const TEXTISH_EXTENSIONS = ["txt", "lua", "lson", "md", "xml", "json", "csv", "tsv"];
+const TEXTISH_EXTENSIONS = [
+  "txt",
+  "lua",
+  "lson",
+  "md",
+  "xml",
+  "json",
+  "csv",
+  "tsv",
+];
 const LUA_EXTENSIONS = ["lua", "lson"];
 const DEFAULT_SCRIPT_PATH = "/main.lua";
 
@@ -41,6 +52,16 @@ export const Workspace = Object.freeze({
       return;
     }
     explorerReloadHandler();
+
+    Swal.fire({
+      toast: true,
+      position: "bottom-end",
+      icon: "success",
+      title: "Changes saved",
+      showConfirmButton: false,
+      timerProgressBar: true,
+      timer: 1000,
+    });
   },
 
   /**
