@@ -1062,7 +1062,15 @@ function lua_fileSize(L) {
 function lua_listDirectory(L) {
   const path = lua.lua_tojsstring(L, 1);
 
-  const contents = FileSystem.listDirectory(path);
+  let contents = [];
+  try {
+    contents = FileSystem.listDirectory(path);
+  } catch (error) {
+    return lauxlib.luaL_error(
+      L,
+      to_luastring(`failed to list directory '${path}': ${error.message}`)
+    );
+  }
 
   lua.lua_createtable(L, contents.length, 0);
 
