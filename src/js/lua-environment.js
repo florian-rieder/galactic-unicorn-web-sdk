@@ -92,8 +92,8 @@ function lua_virtualFsPackageSearcher(L) {
   const modulePath = lua.lua_tojsstring(L, 1);
 
   // TODO: Transform moduleName into host path (?)
-  // require("utils") -> current_script_directory/utils.lua
-  // require("module.utils") -> current_script_directory/module/utils.lua
+  // require("utils") -> /utils.lua
+  // require("module.utils") -> /module/utils.lua
 
   const rawFile = FileSystem.readFile(modulePath);
   if (!rawFile) {

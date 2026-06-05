@@ -122,19 +122,19 @@ function readRgbTableArg(L, colorArgIndex) {
     L,
     r >= 0 && r <= 255,
     colorArgIndex,
-    "r out of range 0..255",
+    "r out of range 0..255"
   );
   lauxlib.luaL_argcheck(
     L,
     g >= 0 && g <= 255,
     colorArgIndex,
-    "g out of range 0..255",
+    "g out of range 0..255"
   );
   lauxlib.luaL_argcheck(
     L,
     b >= 0 && b <= 255,
     colorArgIndex,
-    "b out of range 0..255",
+    "b out of range 0..255"
   );
 
   return [r, g, b];
@@ -449,7 +449,7 @@ function lua_setUnsafePixelBrightness(L) {
     L,
     brightness >= 0 && brightness <= 9,
     3,
-    "brightness out of range 0..9",
+    "brightness out of range 0..9"
   );
 
   // Does nothing in the web version, but available on the hardware.
@@ -942,7 +942,7 @@ function lua_stopMusic(L) {
  * @luaName is_music_playing
  * @luaKind function
  * @luaCategory sound
- * @luaReturns boolean `true` if music is playing, otherwise `false`
+ * @luaReturns boolean: `true` if music is playing, otherwise `false`
  * @luaExample if is_music_playing() then ... end
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -963,7 +963,7 @@ function lua_isMusicPlaying(L) {
  * @luaKind function
  * @luaCategory file system
  * @luaParams path:string path to the file
- * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -994,7 +994,7 @@ function lua_readFile(L) {
  * @luaParams path:string path to the file
  * @luaParams offset:int offset since the start of the file in bytes
  * @luaParams size:int size of the chunk to read in bytes
- * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -1053,7 +1053,7 @@ function lua_fileSize(L) {
  * @luaKind function
  * @luaCategory file system
  * @luaParams path:string path to the file
- * @luaReturns table<string, string>: a table with paths as keys, and a boolean representing if the path is a file (true) or a directory(false)
+ * @luaReturns table:<string,bool> a table with paths as keys, and a boolean representing if the path is a file (true) or a directory(false)
  * @luaExample size = list_directory("/my/directory/path")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -1076,7 +1076,7 @@ function lua_listDirectory(L) {
 }
 
 /**
- * Lua callback definitions
+ * Lua callback definitions (only stubs, for documentation generation purposes)
  */
 
 /**
