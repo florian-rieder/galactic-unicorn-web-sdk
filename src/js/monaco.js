@@ -76,8 +76,14 @@ export const MonacoEditor = Object.freeze({
    * Set a given string as the open buffer in the monaco editor
    * @param {String} text
    */
-  setText(text, readOnly = false) {
+  setText(text, language = "plaintext", readOnly = false) {
     if (!editor) return;
+
+    const model = editor.getModel();
+    if (model) {
+      const langId = language === "lua" ? "lua" : "plaintext";
+      monaco.editor.setModelLanguage(model, langId);
+    }
 
     editor.setValue(text);
     // see https://github.com/microsoft/monaco-editor/issues/54

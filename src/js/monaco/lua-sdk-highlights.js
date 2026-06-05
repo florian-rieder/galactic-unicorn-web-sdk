@@ -101,6 +101,11 @@ export function installSdkNameHighlights(editor, api) {
   }
 
   function computeDecorations() {
+    // Gate SDK highlighting to only work on lua language
+    if (model.getLanguageId() !== "lua") {
+      editor.createDecorationsCollection([]);
+      return;
+    }
     // Decorations are Monaco's lightweight way to visually mark ranges in the
     // document without changing the underlying text or language tokenizer.
     const matches = [];
@@ -138,7 +143,7 @@ export function installSdkNameHighlights(editor, api) {
               start.lineNumber,
               start.column,
               end.lineNumber,
-              end.column,
+              end.column
             ),
             options: { inlineClassName: "sdk-api-symbol" },
           });
@@ -158,7 +163,7 @@ export function installSdkNameHighlights(editor, api) {
     if (updateTimeoutId != null) clearTimeout(updateTimeoutId);
     updateTimeoutId = setTimeout(
       () => computeDecorations(),
-      UPDATE_TIMEOUT_DURATION_MS,
+      UPDATE_TIMEOUT_DURATION_MS
     );
   }
 
