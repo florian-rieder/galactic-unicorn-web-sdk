@@ -5,6 +5,7 @@
  */
 
 import { ESPLoader, Transport } from "esptool-js";
+import { unzipSync } from "fflate";
 
 import { createLittleFsImage } from "./littlefs-image.js";
 
@@ -13,6 +14,9 @@ import { Terminal } from "./terminal.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
+
+const STOCK_FILES_ZIP_DOWNLOAD_URL =
+  "https://florian-rieder.github.io/galactic-unicorn-data/data.zip";
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
@@ -40,9 +44,7 @@ const FLASH_COMPRESS = true; // Compress data during transfer
 // The built-in "hard_reset" only sets RTS false and never pulses EN, so it never resets.
 const HARD_RESET_SEQUENCE = "R1|W100|R0";
 
-/**
- * Pipe esptool's output to our user-facing SDK console
- */
+// Pipe esptool's output to our user-facing SDK console
 const TERMINAL_CONFIG = {
   clean() {
     /* Don't worry, we're gonna handle clearing the terminal ourselves */
@@ -65,6 +67,8 @@ const TERMINAL_CONFIG = {
     Terminal.print(data);
   },
 };
+
+let stockFilesCache;
 
 /**
  * EspFlasher namespace
@@ -96,16 +100,61 @@ export const EspFlasher = Object.freeze({
     Terminal.clear();
     Terminal.printLine(HEADER_LINE);
 
+    // Create the LittleFS image
+    const userFiles = FileSystem.getAllFiles();
+
+    let stockFiles = {};
+
+    if (stockFilesCache) {
+      Terminal.printLine("Reusing cached stock files");
+      stockFiles = stockFilesCache;
+    } else {
+      Terminal.printLine("Downloading stock files...");
+      try {
+        const response = await fetch(STOCK_FILES_ZIP_DOWNLOAD_URL);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch");
+        }
+
+        // Get raw zip file data
+        const buffer = await response.arrayBuffer();
+        const view = new Uint8Array(buffer);
+
+        // Decompress data
+        const decompressed = unzipSync(view);
+
+        stockFiles = Object.fromEntries(
+          // Filter out directories
+          Object.entries(decompressed).filter(([_, v]) => v.length > 0)
+        );
+
+        stockFilesCache = stockFiles; // Cache stockFiles for this session
+      } catch (error) {
+        console.error(
+          `Failed to download stock files from ${STOCK_FILES_ZIP_DOWNLOAD_URL}: ${error.message}`
+        );
+        console.error(error);
+        // Non fatal
+        Terminal.printLine(
+          "Failed to download stock files. Proceeding with user files only. (This may result in an unbootable device)"
+        );
+      }
+    }
+
+    Terminal.printLine("Merging files...");
+
+    // Combine VFS files with stock files
+    // User files have precedence over stock files
+    const allFiles = { ...stockFiles, ...userFiles };
+
     Terminal.printLine("Building file system image... ");
 
-    // Create the LittleFS image
-    // TODO: Merge VFS project files with base
-    const allFiles = FileSystem.getAllFiles();
     const littleFsImage = await createLittleFsImage(
       allFiles,
       BLOCK_SIZE,
       BLOCK_COUNT,
-      MAX_FILENAME_LENGTH,
+      MAX_FILENAME_LENGTH
     );
 
     if (!littleFsImage) {
@@ -164,7 +213,9 @@ export const EspFlasher = Object.freeze({
       await esploader.after("custom_reset", undefined, HARD_RESET_SEQUENCE);
     } catch (error) {
       throw new Error(
-        `Flash failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Flash failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     } finally {
       try {
