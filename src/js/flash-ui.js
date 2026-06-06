@@ -23,9 +23,9 @@ export async function flashWithUi() {
   if (!navigator.serial) {
     // If not, show an error popup.
     Swal.fire({
-      title: "Web Serial API unavailable",
       icon: "error",
-      text: "This feature is not available on your browser. Sorry.",
+      title: "Web Serial API unavailable",
+      text: "This feature is not available in your browser.",
     });
     return;
   }

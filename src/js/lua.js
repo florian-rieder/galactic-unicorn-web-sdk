@@ -42,7 +42,6 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "line", luaFunction: lua_line },
   { luaName: "is_pressed", luaFunction: lua_isPressed },
   { luaName: "get_time", luaFunction: lua_getTime },
-  //{ luaName: "get_frame", luaFunction: lua_getFrame },
   { luaName: "clear", luaFunction: lua_clear },
   { luaName: "buzz", luaFunction: lua_buzz },
   { luaName: "set_tempo", luaFunction: lua_setTempo },
@@ -80,7 +79,7 @@ export const LUA_API_CONSTANTS = [
 
 /**
  * List of Lua lifecycle callbacks implemented by the user in Lua and called by the host.
- * Unused. Used to generate API docs.
+ * Unused from JavaScript. Used to generate API docs.
  *
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
