@@ -79,11 +79,19 @@ export const EspFlasher = Object.freeze({
    *
    * @param {Object} [callbacks]
    * @param {Function} [callbacks.onPortSelected] Invoked after the user picks a serial port (awaited).
+   * @param {Function} [callbacks.onStockDownloadFailed] Invoked when stock files cannot be downloaded.
+   *   Receives `error` and must resolve to `true` to flash with user files only, or `false` to abort.
+   *   If omitted, flash is aborted when the download fails.
    * @param {Function} [callbacks.onConnecting] Invoked just before connecting to the chip.
    * @param {Function} [callbacks.onProgress] Invoked during writeFlash with (fileIndex, written, total).
-   * @returns {Promise<number|null>} Elapsed ms on success, or null if the port dialog was cancelled.
+   * @returns {Promise<number|null>} Elapsed ms on success, or null if cancelled or aborted.
    */
-  async flash({ onPortSelected, onConnecting, onProgress } = {}) {
+  async flash({
+    onPortSelected,
+    onStockDownloadFailed,
+    onConnecting,
+    onProgress,
+  } = {}) {
     let port = null;
     try {
       // Request port access (user will be prompted to select a device)
@@ -114,7 +122,7 @@ export const EspFlasher = Object.freeze({
         const response = await fetch(STOCK_FILES_ZIP_DOWNLOAD_URL);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch");
+          throw new Error(`HTTP ${response.status}`);
         }
 
         // Get raw zip file data
@@ -124,8 +132,8 @@ export const EspFlasher = Object.freeze({
         // Decompress data
         const decompressed = unzipSync(view);
 
+        // Filter out directories from the list of files
         stockFiles = Object.fromEntries(
-          // Filter out directories
           Object.entries(decompressed).filter(([_, v]) => v.length > 0)
         );
 
@@ -135,10 +143,25 @@ export const EspFlasher = Object.freeze({
           `Failed to download stock files from ${STOCK_FILES_ZIP_DOWNLOAD_URL}: ${error.message}`
         );
         console.error(error);
-        // Non fatal
+
         Terminal.printLine(
-          "Failed to download stock files. Proceeding with user files only. (This may result in an unbootable device)"
+          `Failed to download stock files from ${STOCK_FILES_ZIP_DOWNLOAD_URL}: ${error.message}`
         );
+
+        let proceed = false;
+        if (onStockDownloadFailed) {
+          proceed = await onStockDownloadFailed(error);
+        }
+
+        if (!proceed) {
+          Terminal.printLine("Flash cancelled.");
+          return null;
+        }
+
+        Terminal.printLine(
+          "Proceeding with user files only. The device may not boot correctly."
+        );
+        stockFiles = {};
       }
     }
 
