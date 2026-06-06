@@ -25,15 +25,9 @@ export const FileSystem = Object.freeze({
    * @returns {boolean} whether the write succeeded
    */
   writeFile(path, data) {
-    // Convert raw data to a binary string; we transform an int between 0 and 255
-    // into a character using fromCharCode()
-    const binaryChars = Array.from(data, (val) => String.fromCharCode(val));
-    const binaryString = binaryChars.join("");
-    // Encode binary string to base64 for storage
-    const base64EncodedData = btoa(binaryString);
-
     try {
-      localStorage.setItem(path, base64EncodedData);
+      // Encode raw bytes to base64 for storage
+      localStorage.setItem(path, data.toBase64());
       return true;
     } catch (err) {
       reportFsError(`save ${path}`, err);
@@ -54,25 +48,14 @@ export const FileSystem = Object.freeze({
    */
   readFile(path) {
     let encoded = localStorage.getItem(path);
+
     if (encoded === null) {
       console.error("Failed to open file " + path);
       return null;
     }
 
-    // Decode base64 encoded string into binary string
-    // Each character in the string has a charCodeAt() value between 0 and 255
-    let decoded = atob(encoded);
-
-    // Turn into Uint8Array (raw bytes)
-    let bytes = new Uint8Array(decoded.length);
-    for (let i = 0; i < decoded.length; i++) {
-      // Obtaining the charCode of the character allows us to translate it back
-      // into a byte (int value between 0 and 255)
-      bytes[i] = decoded.charCodeAt(i);
-    }
-
     // Return the raw bytes to the caller
-    return bytes;
+    return Uint8Array.fromBase64(encoded);
   },
 
   /**
@@ -314,7 +297,9 @@ function reportFsError(action, err) {
   if (isQuotaExceededError(err)) {
     message = `Browser storage is full (${action}). Delete files, then try again.`;
   } else {
-    message = `Could not ${action}: ${err instanceof Error ? err.message : String(err)}`;
+    message = `Could not ${action}: ${
+      err instanceof Error ? err.message : String(err)
+    }`;
   }
   Terminal.printLine(`[Filesystem] ${message}`);
   console.error(err);
