@@ -23,7 +23,6 @@ import { hslToRgb } from "./color.js";
  */
 export const LUA_API_FUNCTIONS = [
   { luaName: "print", luaFunction: lua_print },
-  { luaName: "clamp", luaFunction: lua_clamp },
   { luaName: "rgb", luaFunction: lua_rgb },
   { luaName: "hsl", luaFunction: lua_hsl },
   { luaName: "get_pixel", luaFunction: lua_getPixel },
@@ -200,32 +199,6 @@ function lua_print(L) {
 
   Terminal.printLine(parts.join("\t"));
   return 0;
-}
-
-/**
- * Clamp a value between a minimum and maximum.
- *
- * Lua API: `clamp(value, min, max)` -> `clamped`
- *
- * @luaName clamp
- * @luaKind function
- * @luaCategory math
- * @luaParams value:number value to clamp
- * @luaParams min:number minimum value
- * @luaParams max:number maximum value
- * @luaReturns `number` clamped value
- * @luaExample local clamped = clamp(10, 0, 20)
- *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
- * @returns {number} Number of values returned to Lua (always 1).
- */
-function lua_clamp(L) {
-  const value = lua.lua_tonumber(L, 1);
-  const min = lua.lua_tonumber(L, 2);
-  const max = lua.lua_tonumber(L, 3);
-  const clamped = Math.max(min, Math.min(max, value));
-  lua.lua_pushnumber(L, clamped);
-  return 1;
 }
 
 /**
