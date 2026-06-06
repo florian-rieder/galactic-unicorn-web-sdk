@@ -1,5 +1,7 @@
 /**
- * Modified from: https://github.com/hurzhurz/littlefs-image-creator/
+ * Modified from: https://github.com/hurzhurz/littlefs-image-creator/blob/main/index.html
+ * Uses vendored lfs.js and lfs_js.js, copied at build time from
+ * https://github.com/hurzhurz/littlefs-image-creator/
  */
 
 import {
@@ -16,7 +18,7 @@ export async function createLittleFsImage(
   files,
   block_size,
   block_count,
-  max_filename_length,
+  max_filename_length
 ) {
   if (block_size < 104) {
     throw new Error("Invalid block size!");
@@ -25,8 +27,8 @@ export async function createLittleFsImage(
   var bdev = new MemoryBlockDevice(block_size, block_count);
   var lfs = new LFS(bdev, -1, max_filename_length);
 
-  await lfs.format()
-  await lfs.mount()
+  await lfs.format();
+  await lfs.mount();
 
   for (const [path, data] of Object.entries(files)) {
     // If the file path has directories and the directories don't already exist, create them
@@ -35,12 +37,12 @@ export async function createLittleFsImage(
 
     let file = await lfs.open(
       lfsPath,
-      LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC,
+      LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC
     );
 
     if (file < 0) {
       console.warn(
-        `Failed to open '${lfsPath}' for writing, error code: ${file}`,
+        `Failed to open '${lfsPath}' for writing, error code: ${file}`
       );
       continue;
     }
@@ -55,18 +57,17 @@ export async function createLittleFsImage(
         throw new Error(
           `Not enough space in the LittleFS image to write '${lfsPath}'. ` +
             `The filesystem capacity is ${capacity} bytes. ` +
-            `Remove some files and try again.`,
+            `Remove some files and try again.`
+        );
+      } else {
+        throw new Error(
+          "writing file '" +
+            lfsPath +
+            "' failed with error code '" +
+            data_size +
+            "'"
         );
       }
-      else {
-        throw new Error("writing file '" +
-          lfsPath +
-          "' failed with error code '" +
-          data_size +
-          "'",
-        );
-      }
-
     }
   }
 
@@ -94,7 +95,6 @@ function dump_bin(bd) {
   return uint8Array;
 }
 
-
 // Helper to ensure all parent directories exist
 async function ensureDirs(lfs, filePath) {
   const parts = filePath.split("/").filter((p) => p.length > 0);
@@ -106,7 +106,7 @@ async function ensureDirs(lfs, filePath) {
     const err = await lfs.mkdir(current);
     if (err < 0 && err !== LFS_ERR_EXIST) {
       console.error(
-        `Failed to create directory '${current}', error code: ${err}`,
+        `Failed to create directory '${current}', error code: ${err}`
       );
       return err;
     }
