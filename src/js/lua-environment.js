@@ -47,7 +47,7 @@ function loadStandardLibraries(L) {
 
   // Better: load specific standard libraries.
   for (const [libName, libOpener] of Object.entries(
-    LUA_SAFE_STANDARD_LIBRARIES,
+    LUA_SAFE_STANDARD_LIBRARIES
   )) {
     lauxlib.luaL_requiref(L, to_luastring(libName), lualib[libOpener], 1);
     lua.lua_pop(L, 1);
@@ -84,22 +84,34 @@ function registerApiFunctions(L) {
 /**
  * Lua package searcher function for the virtual filesystem.
  * @see https://www.lua.org/manual/5.3/manual.html#6.3
+ * @see https://www.lua.org/pil/8.1.html
  *
  * @param {LuaState} L - Fengari Lua state.
  * @returns {number} Number of values returned to Lua (always 1).
  */
 function lua_virtualFsPackageSearcher(L) {
-  const modulePath = lua.lua_tojsstring(L, 1);
+  const moduleName = lua.lua_tojsstring(L, 1);
 
-  // TODO: Transform moduleName into host path (?)
+  // Transform moduleName into host path
   // require("utils") -> /utils.lua
   // require("module.utils") -> /module/utils.lua
+
+  const parts = moduleName
+    .split(".")
+    .filter((e) => e.trim()) // Remove empty parts if any
+    .join("/"); // Replace "." with "/"
+
+  const modulePath = FileSystem.normalizePath(parts + ".lua");
+
+  if (!modulePath) {
+    return lauxlib.luaL_error(L, `Invalid module path: ${moduleName}`);
+  }
 
   const rawFile = FileSystem.readFile(modulePath);
   if (!rawFile) {
     lua.lua_pushstring(
       L,
-      to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`),
+      to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`)
     );
     return 1;
   }
@@ -108,7 +120,7 @@ function lua_virtualFsPackageSearcher(L) {
     L,
     rawFile, // fengari already expects a Uint8Array for strings so we don't need to do anything !
     rawFile.length,
-    to_luastring(`@${modulePath}`),
+    to_luastring(`@${modulePath}`)
   );
   if (loadStatus !== lua.LUA_OK) {
     const err = lua.lua_tojsstring(L, -1);
@@ -116,8 +128,8 @@ function lua_virtualFsPackageSearcher(L) {
     lua.lua_pushstring(
       L,
       to_luastring(
-        `\n\terror loading '${modulePath}' from virtual filesystem:\n\t${err}`,
-      ),
+        `\n\terror loading '${modulePath}' from virtual filesystem:\n\t${err}`
+      )
     );
     return 1;
   }
