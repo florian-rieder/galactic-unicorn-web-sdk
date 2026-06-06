@@ -52,16 +52,6 @@ export const Workspace = Object.freeze({
       return;
     }
     explorerReloadHandler();
-
-    Swal.fire({
-      toast: true,
-      position: "bottom-end",
-      icon: "success",
-      title: "Changes saved",
-      showConfirmButton: false,
-      timerProgressBar: true,
-      timer: 1000,
-    });
   },
 
   /**
