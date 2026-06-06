@@ -124,17 +124,16 @@ end
 return M
 ```
 
-`/maygame/main.lua`:
+`/mygame/main.lua`:
 
 ```lua
-local Vector2 = require("lib.vector2")
 local colors = require("mygame.lib.colors")
 
 local player_position = Vector2.ZERO
 
 function draw()
   clear()
-  set_pixel(player_position.x, player_position.y, colors.player())
+  set_pixel(10, 4, colors.player())
 end
 ```
 
