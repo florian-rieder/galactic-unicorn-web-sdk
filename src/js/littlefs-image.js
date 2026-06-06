@@ -1,7 +1,7 @@
 /**
  * Modified from: https://github.com/hurzhurz/littlefs-image-creator/blob/main/index.html
  * Uses vendored lfs.js and lfs_js.js, copied at build time from
- * https://github.com/hurzhurz/littlefs-image-creator/
+ * https://github.com/hurzhurz/littlefs-js/releases
  */
 
 import {
@@ -78,21 +78,26 @@ export async function createLittleFsImage(
 }
 
 function dump_bin(bd) {
-  var binary = "";
+  // Allocate a byte array the size of the partition
+  let binary = new Uint8Array(bd.block_count * bd.block_size);
+
+  // Populate the array
   for (var i = 0; i < bd.block_count; i++) {
+    // If the block exists
     if (bd._storage[i]) {
-      binary += String.fromCharCode.apply(null, bd._storage[i]);
+      // Copy the block bytes into our byte array
+      for (const [idx, byte] of bd._storage[i].entries()) {
+        binary[i * bd.block_size + idx] = byte;
+      }
     } else {
-      binary += "\xff".repeat(bd.block_size);
+      // If the block is empty, fill it with 0xFF (255)
+      for (let idx = 0; idx < bd.block_size; idx++) {
+        binary[i * bd.block_size + idx] = 0xff;
+      }
     }
   }
 
-  // Convert binary string to Uint8Array
-  const uint8Array = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    uint8Array[i] = binary.charCodeAt(i);
-  }
-  return uint8Array;
+  return binary;
 }
 
 // Helper to ensure all parent directories exist
