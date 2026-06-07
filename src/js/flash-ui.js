@@ -19,6 +19,17 @@ export async function flashWithUi() {
   let progressBar = null;
   let label = null;
 
+  // Check if the browser supports Web Serial API
+  if (!navigator.serial) {
+    // If not, show an error popup.
+    Swal.fire({
+      icon: "error",
+      title: "Web Serial API unavailable",
+      text: "This feature is not available in your browser.",
+    });
+    return;
+  }
+
   try {
     const duration = await EspFlasher.flash({
       onPortSelected() {
@@ -38,6 +49,42 @@ export async function flashWithUi() {
         });
       },
 
+      async onStockDownloadFailed(error) {
+        Swal.hideLoading();
+
+        const result = await Swal.fire({
+          icon: "warning",
+          title: "Stock files unavailable",
+          html: `<p>Could not download the stock data package</p>
+            <p>Flashing with only your project files may leave the device unable to boot until you flash again with a successful download</p>
+            <p>Error: ${error.message}</p>`,
+          showCancelButton: true,
+          confirmButtonText: "Flash anyway",
+          cancelButtonText: "Cancel",
+          allowOutsideClick: false,
+          heightAuto: false,
+        });
+
+        if (!result.isConfirmed) {
+          Swal.close();
+          return false;
+        }
+
+        Swal.fire({
+          title: "Flashing device",
+          html: `<p class="flash-status">Building filesystem image...</p>`,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          heightAuto: false,
+          willOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        return true;
+      },
+
       onConnecting() {
         setStatus("Connecting to device...");
       },
@@ -54,7 +101,7 @@ export async function flashWithUi() {
             `<div class="flash-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
               <div class="flash-progress-bar"></div>
             </div>
-            <p class="flash-progress-label"></p>`,
+            <p class="flash-progress-label"></p>`
           );
           progressBar = container.querySelector(".flash-progress-bar");
           label = container.querySelector(".flash-progress-label");

@@ -1,10 +1,22 @@
+import Swal from "sweetalert2";
+
 import { FileSystem } from "./file-system.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
-const TEXTISH_EXTENSIONS = ["txt", "lua", "lson"];
+const TEXTISH_EXTENSIONS = [
+  "txt",
+  "lua",
+  "lson",
+  "md",
+  "xml",
+  "json",
+  "csv",
+  "tsv",
+];
+const LUA_EXTENSIONS = ["lua", "lson"];
 const DEFAULT_SCRIPT_PATH = "/main.lua";
 
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
@@ -55,21 +67,28 @@ export const Workspace = Object.freeze({
 
     currentOpenPath = path;
 
-    const extension = path.split(".").slice(-1)[0];
+    const extension = path.split(".").slice(-1)[0].toLowerCase();
 
     if (TEXTISH_EXTENSIONS.includes(extension)) {
       readOnly = false;
       // Plain text file: simply decode the bytes into text
       const decodedString = new TextDecoder().decode(rawFile);
+
+      let language = "plaintext";
+      if (LUA_EXTENSIONS.includes(extension)) {
+        language = "lua";
+      }
+
       // Load into monaco
-      MonacoEditor.setText(decodedString, readOnly);
+      MonacoEditor.setText(decodedString, language, readOnly);
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
       // Binary file: show file size
       MonacoEditor.setText(
         `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
-        readOnly,
+        "plaintext",
+        readOnly
       );
     }
   },
@@ -86,7 +105,7 @@ export const Workspace = Object.freeze({
       this.openFile(DEFAULT_SCRIPT_PATH);
     } else {
       // Set default script
-      MonacoEditor.setText(defaultSnakeLua, false);
+      MonacoEditor.setText(defaultSnakeLua, "lua", false);
       this.saveCurrentFile(); // Create the default file in the file system
     }
   },
@@ -110,7 +129,7 @@ export const Workspace = Object.freeze({
     }
 
     // Open main if it exists, otherwise create the default script.
-    this.maybeLoadDefaultScript()
+    this.maybeLoadDefaultScript();
   },
 
   /**

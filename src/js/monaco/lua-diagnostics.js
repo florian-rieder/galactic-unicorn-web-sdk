@@ -57,7 +57,7 @@ function inferErrorRangeOnLine(lineText, errorMessage) {
   const lineLen = lineText.length;
 
   const nearMatch = errorMessage.match(
-    /\bnear\s+(?:<eof>|'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)")/i,
+    /\bnear\s+(?:<eof>|'((?:\\'|[^'])*)'|"((?:\\"|[^"])*)")/i
   );
   if (nearMatch) {
     if (/near\s+<eof>/i.test(errorMessage)) {
@@ -109,7 +109,7 @@ function validateLuaSyntax(source) {
     L,
     to_luastring(source),
     source.length,
-    to_luastring(CHUNK_NAME),
+    to_luastring(CHUNK_NAME)
   );
 
   if (status === lua.LUA_OK) {
@@ -136,6 +136,12 @@ export function installLuaDiagnostics(editor, monaco) {
   let timeoutId = null;
 
   function validate() {
+    // Gate Lua diagnostics to only work on lua language
+    if (model.getLanguageId() !== "lua") {
+      monaco.editor.setModelMarkers(model, MARKER_OWNER_SYNTAX, []);
+      return;
+    }
+
     const text = model.getValue();
 
     if (!text.trim()) {
@@ -154,7 +160,7 @@ export function installLuaDiagnostics(editor, monaco) {
     const lineText = model.getLineContent(line);
     const { startColumn, endColumn } = inferErrorRangeOnLine(
       lineText,
-      error.message,
+      error.message
     );
 
     // MARKER_OWNER_SYNTAX groups our diagnostics so we can replace/clear them

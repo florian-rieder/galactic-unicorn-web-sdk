@@ -70,46 +70,38 @@ These are the default keyboard keys and button names used by `is_pressed`,
 `on_press`, and `on_release`.
 
 | Logical button | Keyboard key |
-| --- | --- |
-| `L_UP` | `w` |
-| `L_LEFT` | `a` |
-| `L_DOWN` | `s` |
-| `L_RIGHT` | `d` |
-| `R_UP` | Arrow Up |
-| `R_LEFT` | Arrow Left |
-| `R_DOWN` | Arrow Down |
-| `R_RIGHT` | Arrow Right |
-| `L_BUMP` | `q` |
-| `R_BUMP` | `e` |
-| `MENU` | `1` |
-| `ESC` | `2` |
+| -------------- | ------------ |
+| `L_UP`         | `w`          |
+| `L_LEFT`       | `a`          |
+| `L_DOWN`       | `s`          |
+| `L_RIGHT`      | `d`          |
+| `R_UP`         | Arrow Up     |
+| `R_LEFT`       | Arrow Left   |
+| `R_DOWN`       | Arrow Down   |
+| `R_RIGHT`      | Arrow Right  |
+| `L_BUMP`       | `q`          |
+| `R_BUMP`       | `e`          |
+| `MENU`         | `1`          |
+| `ESC`          | `2`          |
 
 ## Project files
 
 In the browser SDK, your project lives in a **virtual file system** stored locally in the browser.
 
 - Use the **file explorer** on the right to create, upload, rename, and delete files.
-- Paths always start with `/`, for example `/main.lua` or `/lib/mylib.lua`.
 - **Save** the file you are editing with Ctrl+S (Windows/Linux) or Cmd+S (macOS).
 - Press **Run** to execute whatever is currently open in the editor.
 
 ## Loading other Lua files
 
-You can split a game or library across multiple `.lua` files and load them with **`require`**.
+You can split a game or library across multiple `.lua` files and load them with `require`.
 
 ### How to call `require`
 
-Pass the **full path** to the file in the project, including the leading `/` and the `.lua` extension:
+Pass the **full path** to the file in the project, replacing `/` with `.` and omitting the `.lua` extension:
 
 ```lua
-local mylib = require("/lib/mylib.lua")
-```
-
-Do not rely on module-style names yet:
-
-```lua
--- Not supported yet (TODO on SDK and firmware):
--- local mylib = require("lib.mylib")
+local mylib = require("mygame.lib.mylib") -- Will load /mygame/lib/mylib.lua
 ```
 
 ### What `require` does
@@ -120,7 +112,7 @@ Do not rely on module-style names yet:
 
 ### Example: main + library
 
-`/lib/colors.lua`:
+`/mygame/lib/colors.lua`:
 
 ```lua
 local M = {}
@@ -132,10 +124,12 @@ end
 return M
 ```
 
-`/main.lua`:
+`/mygame/main.lua`:
 
 ```lua
-local colors = require("/lib/colors.lua")
+local colors = require("mygame.lib.colors")
+
+local player_position = Vector2.ZERO
 
 function draw()
   clear()
@@ -145,7 +139,7 @@ end
 
 Create both files in the explorer, open `/main.lua` and press Run.
 
-### What is *not* available
+### What is _not_ available
 
 For sandboxing, only **`require`** can load other Lua files. These are **not** available in scripts:
 
@@ -153,4 +147,4 @@ For sandboxing, only **`require`** can load other Lua files. These are **not** a
 - `loadfile`
 - `load` / `loadstring`
 
-Use the editor + Run for your entry script, and `require("/path/to/file.lua")` for everything else.
+Use the editor + Run for your entry script, and `require("path.to.luafile")` for any other lua script file you might need. To read other kinds of data files, use `read_file()`.

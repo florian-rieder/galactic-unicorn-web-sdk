@@ -11,6 +11,7 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
 
 ## What is included
+
 - Lua runtime in the browser via [Fengari](https://github.com/fengari-lua/fengari)
 - Emulator for the project display/input model
 - Monaco-based (VS Code) in-browser Lua editor
@@ -69,33 +70,11 @@ To test the production bundle locally, use `npm run preview` (serves `dist/` at 
 
 ## Flashing to device
 
-The toolbar **Flash** button writes the **entire virtual filesystem** (everything listed in the file explorer) to the handheld's LittleFS data partition over USB. It does not flash firmware (the ESP application binary); your device must already be running compatible firmware.
+**Flash** writes the device’s LittleFS `/data` partition over USB. It does not flash the ESP firmware; the board must already run a compatible build.
 
-### Requirements
+Use a **Chromium** browser (Chrome, Edge, Brave, etc.). Web Serial does not work in Firefox or Safari.
 
-- A **Chromium-based browser** (Chrome, Edge, Brave, etc.). Web Serial is not available in Firefox or Safari.
-- A **Galactic Unicorn** connected by USB, with firmware that matches this SDK's flash layout.
-- A **data filesystem archive** as a `.zip` file with the necessary system scripts (`/system/boot_menu.lua`, `/system/manifest.lson`).
-
-### First-time setup (import from zip)
-
-1. Open the SDK ([hosted app](https://florian-rieder.github.io/galactic-unicorn-web-sdk/) or [local dev](#run-locally)).
-2. In the file explorer, use **Upload** (↑) and select the zip file.
-3. Wait for the import to finish. The file tree should show the expected paths (e.g. `/system/`, `/lib/`, games, and so on).
-
-### Flash
-
-1. Click **Flash** in the toolbar.
-2. Choose the serial port when the browser prompts you.
-3. Wait for the progress UI to finish. Output also appears in the console panel.
-
-Every file currently stored in the workspace gets assembled into a LittleFS image and written to the data partition. Paths in the explorer should match what the device expects (e.g. `/system/boot_menu.lua` for the menu). If you only have a single game file and no system tree, the device may not boot into a working menu until you import a complete data zip.
-
-### Editing and re-flashing
-
-- Use **Run** to test Lua in the browser without touching the device.
-- Change files in the editor, save, then **Flash** again to push the updated workspace to the device.
-- **Export** (⤴) downloads the workspace as `project.zip` for backup or sharing; you can re-import that zip later on another machine.
+On flash, the SDK downloads the stock [data zip](https://github.com/florian-rieder/galactic-unicorn-data/), merges it with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full stock tree first.
 
 ## API documentation
 
@@ -121,8 +100,17 @@ Without manual generation or a successful dev-time run, Monaco completions stay 
 ## References
 
 - [Lua 5.3 Reference Manual](https://www.lua.org/manual/5.3/manual.html)
-- [Programming in Lua](https://www.lua.org/pil/contents.html)
+- [Programming in Lua (1st edition)](https://www.lua.org/pil/contents.html)
 - [Lua Metamethods Cheatsheet](https://gist.github.com/oatmealine/655c9e64599d0f0dd47687c1186de99f)
 - [Fengari](https://github.com/fengari-lua/fengari)
 - [UXN Sprites](https://compudanzas.net/uxn_tutorial_day_2.html#drawing%20sprites)
 - [Microbit Sprites](https://microbit-micropython.readthedocs.io/en/latest/image.html)
+
+## Dependencies
+
+- [Fengari](https://github.com/fengari-lua/fengari) - Lua VM in the browser
+- [Monaco Editor](https://github.com/microsoft/monaco-editor) - VS Code editor in the browser
+- [esptool-js](https://github.com/espressif/esptool-js) - esptool in the browser
+- [fflate](https://github.com/101arrowz/fflate) - zip compression/decompression
+- [file-saver](https://github.com/eligrey/FileSaver.js) - file download utility
+- [Sweet Alert 2](https://sweetalert2.github.io/) - simple and beautiful popups

@@ -1,8 +1,8 @@
 const canvas = document.getElementById("display");
 const ctx = canvas.getContext("2d");
 
-export const SCREEN_W = 20;
-export const SCREEN_H = 10;
+const SCREEN_W = 20;
+const SCREEN_H = 10;
 const CELL = 20;
 const GAP = 4;
 const PAD = Math.floor(GAP / 2);

@@ -23,7 +23,6 @@ import { hslToRgb } from "./color.js";
  */
 export const LUA_API_FUNCTIONS = [
   { luaName: "print", luaFunction: lua_print },
-  { luaName: "clamp", luaFunction: lua_clamp },
   { luaName: "rgb", luaFunction: lua_rgb },
   { luaName: "hsl", luaFunction: lua_hsl },
   { luaName: "get_pixel", luaFunction: lua_getPixel },
@@ -42,7 +41,6 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "line", luaFunction: lua_line },
   { luaName: "is_pressed", luaFunction: lua_isPressed },
   { luaName: "get_time", luaFunction: lua_getTime },
-  //{ luaName: "get_frame", luaFunction: lua_getFrame },
   { luaName: "clear", luaFunction: lua_clear },
   { luaName: "buzz", luaFunction: lua_buzz },
   { luaName: "set_tempo", luaFunction: lua_setTempo },
@@ -56,6 +54,7 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "read_file", luaFunction: lua_readFile },
   { luaName: "read_file_chunk", luaFunction: lua_readFileChunk },
   { luaName: "file_size", luaFunction: lua_fileSize },
+  { luaName: "list_directory", luaFunction: lua_listDirectory },
 ];
 
 /**
@@ -79,7 +78,7 @@ export const LUA_API_CONSTANTS = [
 
 /**
  * List of Lua lifecycle callbacks implemented by the user in Lua and called by the host.
- * Unused. Used to generate API docs.
+ * Unused from JavaScript. Used to generate API docs.
  *
  * @type {Array<{luaName: string, luaFunction: function}>}
  */
@@ -90,6 +89,73 @@ const LUA_API_CALLBACKS = [
   { luaName: "on_press", luaFunction: lua_callback_onPress },
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
 ];
+
+/**
+ * Helper functions
+ */
+
+/**
+ * Reads a color table from the Lua stack and returns an array of [r, g, b] values.
+ *
+ * @param {LuaState} L - Fengari Lua state
+ * @param {number} colorArgIndex - Index of the color table on the Lua stack.
+ * @returns {Array<number>} Array of [r, g, b] values.
+ */
+function readRgbTableArg(L, colorArgIndex) {
+  lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
+
+  lua.lua_rawgeti(L, colorArgIndex, 1);
+  const r = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 2);
+  const g = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lua.lua_rawgeti(L, colorArgIndex, 3);
+  const b = lauxlib.luaL_checkinteger(L, -1);
+  lua.lua_pop(L, 1);
+
+  lauxlib.luaL_argcheck(
+    L,
+    r >= 0 && r <= 255,
+    colorArgIndex,
+    "r out of range 0..255"
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    g >= 0 && g <= 255,
+    colorArgIndex,
+    "g out of range 0..255"
+  );
+  lauxlib.luaL_argcheck(
+    L,
+    b >= 0 && b <= 255,
+    colorArgIndex,
+    "b out of range 0..255"
+  );
+
+  return [r, g, b];
+}
+
+/**
+ * Pushes an RGB color table onto the Lua stack.
+ *
+ * @param {LuaState} L - Fengari Lua state
+ * @param {number} r - Red value
+ * @param {number} g - Green value
+ * @param {number} b - Blue value
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function pushRgbTable(L, r, g, b) {
+  lua.lua_createtable(L, 3, 0);
+  lua.lua_pushinteger(L, r);
+  lua.lua_rawseti(L, -2, 1);
+  lua.lua_pushinteger(L, g);
+  lua.lua_rawseti(L, -2, 2);
+  lua.lua_pushinteger(L, b);
+  lua.lua_rawseti(L, -2, 3);
+}
 
 /**
  * Lua function definitions
@@ -133,32 +199,6 @@ function lua_print(L) {
 
   Terminal.printLine(parts.join("\t"));
   return 0;
-}
-
-/**
- * Clamp a value between a minimum and maximum.
- *
- * Lua API: `clamp(value, min, max)` -> `clamped`
- *
- * @luaName clamp
- * @luaKind function
- * @luaCategory math
- * @luaParams value:number value to clamp
- * @luaParams min:number minimum value
- * @luaParams max:number maximum value
- * @luaReturns `number` clamped value
- * @luaExample local clamped = clamp(10, 0, 20)
- *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..3.
- * @returns {number} Number of values returned to Lua (always 1).
- */
-function lua_clamp(L) {
-  const value = lua.lua_tonumber(L, 1);
-  const min = lua.lua_tonumber(L, 2);
-  const max = lua.lua_tonumber(L, 3);
-  const clamped = Math.max(min, Math.min(max, value));
-  lua.lua_pushnumber(L, clamped);
-  return 1;
 }
 
 /**
@@ -217,53 +257,6 @@ function lua_hsl(L) {
   const rgb = hslToRgb(hInput, sInput, lInput);
   pushRgbTable(L, rgb.r, rgb.g, rgb.b);
   return 1;
-}
-
-function readRgbTableArg(L, colorArgIndex) {
-  lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
-
-  lua.lua_rawgeti(L, colorArgIndex, 1);
-  const r = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lua.lua_rawgeti(L, colorArgIndex, 2);
-  const g = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lua.lua_rawgeti(L, colorArgIndex, 3);
-  const b = lauxlib.luaL_checkinteger(L, -1);
-  lua.lua_pop(L, 1);
-
-  lauxlib.luaL_argcheck(
-    L,
-    r >= 0 && r <= 255,
-    colorArgIndex,
-    "r out of range 0..255",
-  );
-  lauxlib.luaL_argcheck(
-    L,
-    g >= 0 && g <= 255,
-    colorArgIndex,
-    "g out of range 0..255",
-  );
-  lauxlib.luaL_argcheck(
-    L,
-    b >= 0 && b <= 255,
-    colorArgIndex,
-    "b out of range 0..255",
-  );
-
-  return [r, g, b];
-}
-
-function pushRgbTable(L, r, g, b) {
-  lua.lua_createtable(L, 3, 0);
-  lua.lua_pushinteger(L, r);
-  lua.lua_rawseti(L, -2, 1);
-  lua.lua_pushinteger(L, g);
-  lua.lua_rawseti(L, -2, 2);
-  lua.lua_pushinteger(L, b);
-  lua.lua_rawseti(L, -2, 3);
 }
 
 /**
@@ -428,7 +421,7 @@ function lua_setUnsafePixelBrightness(L) {
     L,
     brightness >= 0 && brightness <= 9,
     3,
-    "brightness out of range 0..9",
+    "brightness out of range 0..9"
   );
 
   // Does nothing in the web version, but available on the hardware.
@@ -921,7 +914,7 @@ function lua_stopMusic(L) {
  * @luaName is_music_playing
  * @luaKind function
  * @luaCategory sound
- * @luaReturns boolean `true` if music is playing, otherwise `false`
+ * @luaReturns boolean: `true` if music is playing, otherwise `false`
  * @luaExample if is_music_playing() then ... end
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -942,7 +935,7 @@ function lua_isMusicPlaying(L) {
  * @luaKind function
  * @luaCategory file system
  * @luaParams path:string path to the file
- * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -973,7 +966,7 @@ function lua_readFile(L) {
  * @luaParams path:string path to the file
  * @luaParams offset:int offset since the start of the file in bytes
  * @luaParams size:int size of the chunk to read in bytes
- * @luaReturns string binary string representing the file contents or null if the file couldn't be found
+ * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -1024,7 +1017,46 @@ function lua_fileSize(L) {
 }
 
 /**
- * Lua callback definitions
+ * Get a list of the contents of the directory at the given path.
+ *
+ * Lua API: `list_directory(path)`
+ *
+ * @luaName list_directory
+ * @luaKind function
+ * @luaCategory file system
+ * @luaParams path:string path to the file
+ * @luaReturns table:<string,bool> a table with paths as keys, and a boolean representing if the path is a file (true) or a directory(false)
+ * @luaExample size = list_directory("/my/directory/path")
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 1).
+ */
+function lua_listDirectory(L) {
+  const path = lua.lua_tojsstring(L, 1);
+
+  let contents = [];
+  try {
+    contents = FileSystem.listDirectory(path);
+  } catch (error) {
+    return lauxlib.luaL_error(
+      L,
+      to_luastring(`failed to list directory '${path}': ${error.message}`)
+    );
+  }
+
+  lua.lua_createtable(L, contents.length, 0);
+
+  for (const node of contents) {
+    lua.lua_pushstring(L, to_luastring(node.path));
+    lua.lua_pushboolean(L, node.isFile);
+    lua.lua_rawset(L, -3);
+  }
+
+  return 1;
+}
+
+/**
+ * Lua callback definitions (only stubs, for documentation generation purposes)
  */
 
 /**
