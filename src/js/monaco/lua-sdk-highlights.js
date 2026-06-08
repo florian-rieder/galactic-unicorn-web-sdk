@@ -61,7 +61,8 @@ export function installSdkNameHighlights(editor, api) {
   // One big alternation: \b(?:clear|set_pixel|…)\b
   const regex = new RegExp(`\\b(?:${escaped.join("|")})\\b`, "g");
 
-  let decorationIds = [];
+  // One collection, replaced on each scan.
+  const decorations = editor.createDecorationsCollection();
   let updateTimeoutId = null;
 
   function getScanRanges() {
@@ -103,7 +104,7 @@ export function installSdkNameHighlights(editor, api) {
   function computeDecorations() {
     // Gate SDK highlighting to only work on lua language
     if (model.getLanguageId() !== "lua") {
-      editor.createDecorationsCollection([]);
+      decorations.clear();
       return;
     }
     // Decorations are Monaco's lightweight way to visually mark ranges in the
@@ -153,8 +154,7 @@ export function installSdkNameHighlights(editor, api) {
       }
     }
 
-    decorationIds = editor.createDecorationsCollection(matches);
-    // createDecorationsCollection replaces previous decoration IDs with the new set.
+    decorations.set(matches);
   }
 
   function scheduleUpdate() {
