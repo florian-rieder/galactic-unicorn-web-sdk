@@ -1,3 +1,5 @@
+import * as corona from "./corona.js";
+
 const canvas = document.getElementById("display");
 const ctx = canvas.getContext("2d");
 
@@ -7,9 +9,14 @@ const CELL = 20;
 const GAP = 4;
 const PAD = Math.floor(GAP / 2);
 
+// 0-31 5-bit default brightness value
+const BR_BASE = 224; // 0b11100000, the base value for brightness (0-31) in the 8-bit brightness byte
+const defaultBrightnessValue = BR_BASE + 1; // This should less than 9 !
+const maxBrightnessValue = BR_BASE + 11;
+
 // Functions to interact with the display write to the buffer instead of the canvas
 // The canvas is then rendered at once at the end of the frame from the buffer
-const buffer = new Uint8Array(SCREEN_W * SCREEN_H * 3).fill(0); // 3 bytes per pixel: RGB
+const buffer = new Uint8Array(SCREEN_W * SCREEN_H * 4).fill(0); // 4 bytes per pixel: RGB + brightness
 
 // 2*PAD + N*CELL + (N-1)*GAP gives a nice ratio of 2:1 when PAD = GAP/2, which is exactly the display ratio.
 canvas.width = 2 * PAD + SCREEN_W * CELL + (SCREEN_W - 1) * GAP; // 480
@@ -41,22 +48,39 @@ export const Display = Object.freeze({
    * Flush the buffer to the canvas.
    */
   render() {
+    ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = "#111111";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const stride = CELL + GAP;
+
+    ctx.globalCompositeOperation = "lighter";
     for (let row = 0; row < SCREEN_H; row++) {
+      const y = PAD + row * stride;
       for (let col = 0; col < SCREEN_W; col++) {
-        const r = buffer[3 * (row * SCREEN_W + col)];
-        const g = buffer[3 * (row * SCREEN_W + col) + 1];
-        const b = buffer[3 * (row * SCREEN_W + col) + 2];
+        const x = PAD + col * stride;
+        const i = 4 * (row * SCREEN_W + col);
+        const r = buffer[i];
+        const g = buffer[i + 1];
+        const b = buffer[i + 2];
+        const brightness = buffer[i + 3];
 
         ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        ctx.fillRect(
-          PAD + col * (CELL + GAP),
-          PAD + row * (CELL + GAP),
-          CELL,
-          CELL,
-        );
+        ctx.fillRect(x, y, CELL, CELL);
+
+        // Draw corona effect for brightness above the default value
+        if (brightness > defaultBrightnessValue) {
+          corona.draw(
+            ctx,
+            x + CELL / 2,
+            y + CELL / 2,
+            r,
+            g,
+            b,
+            CELL, // Size
+            (brightness - BR_BASE), // 5-bit power value
+          );
+        }
       }
     }
   },
@@ -85,9 +109,9 @@ export const Display = Object.freeze({
     }
 
     return [
-      buffer[3 * (py * SCREEN_W + px)],
-      buffer[3 * (py * SCREEN_W + px) + 1],
-      buffer[3 * (py * SCREEN_W + px) + 2],
+      buffer[4 * (py * SCREEN_W + px)],
+      buffer[4 * (py * SCREEN_W + px) + 1],
+      buffer[4 * (py * SCREEN_W + px) + 2],
     ];
   },
 
@@ -109,9 +133,10 @@ export const Display = Object.freeze({
       return;
     }
 
-    buffer[3 * (py * SCREEN_W + px)] = r;
-    buffer[3 * (py * SCREEN_W + px) + 1] = g;
-    buffer[3 * (py * SCREEN_W + px) + 2] = b;
+    buffer[4 * (py * SCREEN_W + px)] = r;
+    buffer[4 * (py * SCREEN_W + px) + 1] = g;
+    buffer[4 * (py * SCREEN_W + px) + 2] = b;
+    buffer[4 * (py * SCREEN_W + px) + 3] = defaultBrightnessValue; // Set brightness to max when setting a pixel
   },
 
   /**
@@ -133,7 +158,7 @@ export const Display = Object.freeze({
     }
 
     const clampedAlpha = Math.max(0, Math.min(1, alpha));
-    const i = 3 * (py * SCREEN_W + px);
+    const i = 4 * (py * SCREEN_W + px);
     const inv = 1 - clampedAlpha;
 
     // Blend the color with the existing color in the buffer.
@@ -162,6 +187,18 @@ export const Display = Object.freeze({
     this.setPixelBlend(px + 1, py, r, g, b, fx * (1 - fy));
     this.setPixelBlend(px, py + 1, r, g, b, (1 - fx) * fy);
     this.setPixelBlend(px + 1, py + 1, r, g, b, fx * fy);
+  },
+
+  setUnsafePixelBrightness(x, y, brightness) {
+    const px = Math.floor(x);
+    const py = Math.floor(y);
+
+    if (px < 0 || px >= SCREEN_W || py < 0 || py >= SCREEN_H) {
+      return;
+    }
+
+    const i = 4 * (py * SCREEN_W + px) + 3; // The brightness is stored in the 4th byte of each pixel in the buffer
+    buffer[i] = Math.min(BR_BASE + brightness, maxBrightnessValue);
   },
 
   /**

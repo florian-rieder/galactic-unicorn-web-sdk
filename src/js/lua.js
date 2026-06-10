@@ -413,8 +413,8 @@ function lua_setPixelF(L) {
  * @returns {number} Number of values returned to Lua (always 0).
  */
 function lua_setUnsafePixelBrightness(L) {
-  const _x = lua.lua_tointeger(L, 1);
-  const _y = lua.lua_tointeger(L, 2);
+  const x = lua.lua_tointeger(L, 1);
+  const y = lua.lua_tointeger(L, 2);
   const brightness = lua.lua_tonumber(L, 3);
 
   lauxlib.luaL_argcheck(
@@ -426,6 +426,8 @@ function lua_setUnsafePixelBrightness(L) {
 
   // Does nothing in the web version, but available on the hardware.
   // TODO: emulate the error behavior in the web version.
+
+  Display.setUnsafePixelBrightness(x, y, brightness);
 
   return 0;
 }
