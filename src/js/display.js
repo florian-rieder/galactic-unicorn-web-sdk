@@ -52,37 +52,34 @@ export const Display = Object.freeze({
     ctx.fillStyle = "#111111";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const stride = CELL + GAP;
+
     ctx.globalCompositeOperation = "lighter";
     for (let row = 0; row < SCREEN_H; row++) {
+      const y = PAD + row * stride;
       for (let col = 0; col < SCREEN_W; col++) {
-        const r = buffer[4 * (row * SCREEN_W + col)];
-        const g = buffer[4 * (row * SCREEN_W + col) + 1];
-        const b = buffer[4 * (row * SCREEN_W + col) + 2];
-        const brightness = buffer[4 * (row * SCREEN_W + col) + 3];
+        const x = PAD + col * stride;
+        const i = 4 * (row * SCREEN_W + col);
+        const r = buffer[i];
+        const g = buffer[i + 1];
+        const b = buffer[i + 2];
+        const brightness = buffer[i + 3];
 
         ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        ctx.fillRect(
-          PAD + col * (CELL + GAP),
-          PAD + row * (CELL + GAP),
-          CELL,
-          CELL,
-        );
+        ctx.fillRect(x, y, CELL, CELL);
 
         // Draw corona effect for brightness above the default value
         if (brightness > defaultBrightnessValue) {
-          corona.setup(
-            PAD,
-            CELL,
-            GAP,
-            PAD + col * (CELL + GAP) + CELL / 2, // x
-            PAD + row * (CELL + GAP) + CELL / 2, // y
+          corona.draw(
+            ctx,
+            x + CELL / 2,
+            y + CELL / 2,
             r,
             g,
             b,
-            CELL / 1.7, // Size
-           (brightness - BR_BASE) * 0.2 // Power
+            CELL, // Size
+            (brightness - BR_BASE), // 5-bit power value
           );
-          corona.draw(ctx, col, row);
         }
       }
     }
