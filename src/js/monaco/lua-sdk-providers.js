@@ -8,6 +8,7 @@
  * request because Monaco mutates completion objects in place.
  */
 import * as monaco from "./custom-monaco.js";
+import { COLOR_SNIPPET_DEFAULTS } from "./lua-color-snippet-defaults.js";
 import {
   collectDocumentSymbols,
   documentSymbolsToCompletionItems,
@@ -31,6 +32,18 @@ function snippetPlaceholder(index, text) {
   return "${" + index + ":" + text + "}";
 }
 
+function buildColorFunctionInsertText(item, defaults) {
+  const params = item.params || [];
+  let tabIndex = 1;
+  const args = params.map((param, index) => {
+    const value = defaults[index] ?? 0;
+    const placeholder = snippetPlaceholder(tabIndex, String(value));
+    tabIndex += 1;
+    return placeholder;
+  });
+  return `${item.lua_name}(${args.join(", ")})`;
+}
+
 function buildSdkFunctionInsertText(item) {
   const params = item.params || [];
   const paramNames = params.map((p) => p.name);
@@ -39,6 +52,11 @@ function buildSdkFunctionInsertText(item) {
   // the completion still behaves like a snippet and feels consistent.
   if (paramNames.length === 0) {
     return `${item.lua_name}($0)`;
+  }
+
+  const colorDefaults = COLOR_SNIPPET_DEFAULTS[item.lua_name];
+  if (item.category === "color" && colorDefaults) {
+    return buildColorFunctionInsertText(item, colorDefaults);
   }
 
   // For arg calls, prefill with parameter names and let Tab jump argument-by-argument.
