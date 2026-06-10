@@ -47,10 +47,13 @@ export const Workspace = Object.freeze({
     // Convert text to Uint8Array
     const encoded = new TextEncoder().encode(text);
     // Write file to FS
-    if (!FileSystem.writeFile(currentOpenPath, encoded)) {
-      Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
+    try {
+      FileSystem.writeFile(currentOpenPath, encoded);
+    } catch (error) {
+      Terminal.printLine(error.message);
       return;
     }
+
     explorerReloadHandler();
   },
 

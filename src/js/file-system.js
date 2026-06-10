@@ -7,7 +7,6 @@
  * to a Uint8Array to write it back to the file system.
  */
 
-import { Terminal } from "./terminal.js";
 import { FileTree } from "./file-tree.js";
 
 const PATH_SEPARATOR = "/";
@@ -21,18 +20,12 @@ export const FileSystem = Object.freeze({
   /**
    * Writes raw bytes to file storage at the given path
    * @param {String} path
-   * @param {Uint8Array} data
+   * @param {Uint8Array} data - raw bytes
    * @returns {boolean} whether the write succeeded
    */
   writeFile(path, data) {
-    try {
-      // Encode raw bytes to base64 for storage
-      localStorage.setItem(path, data.toBase64());
-      return true;
-    } catch (err) {
-      reportFsError(`save ${path}`, err);
-      return false;
-    }
+    // Encode raw bytes to base64 for storage
+    localStorage.setItem(path, data.toBase64());
   },
 
   /**
@@ -50,8 +43,7 @@ export const FileSystem = Object.freeze({
     let encoded = localStorage.getItem(path);
 
     if (encoded === null) {
-      console.error("Failed to open file " + path);
-      return null;
+      throw new Error("Failed to open file " + path);
     }
 
     // Return the raw bytes to the caller
@@ -69,7 +61,6 @@ export const FileSystem = Object.freeze({
     // Inefficient emulation of chunked reading. We can't really read only a chunk
     // of a value from localStorage
     const file = this.readFile(path);
-    if (file === null) return null;
     return file.subarray(offset, offset + size);
   },
 
@@ -105,11 +96,7 @@ export const FileSystem = Object.freeze({
    * @param {String} path
    */
   deleteFile(path) {
-    try {
-      localStorage.removeItem(path);
-    } catch (err) {
-      reportFsError(`delete ${path}`, err);
-    }
+    localStorage.removeItem(path);
   },
 
   /**
@@ -144,8 +131,7 @@ export const FileSystem = Object.freeze({
         const errorMessage =
           `[Filesystem] Failed to restore file ${oldPath} after rename failure.\n` +
           `The data has been lost. Sorry about that!`;
-        Terminal.printLine(errorMessage);
-        console.error(errorMessage);
+        throw new Error(errorMessage);
       }
       return false;
     }
@@ -235,10 +221,6 @@ export const FileSystem = Object.freeze({
     const allFiles = {};
     for (const filePath of files) {
       const rawFileData = this.readFile(filePath);
-      if (rawFileData === null) {
-        Terminal.printLine(`[Filesystem] Failed to read file ${filePath}`);
-        continue;
-      }
       allFiles[filePath] = rawFileData;
     }
     return allFiles;
@@ -283,24 +265,3 @@ export const FileSystem = Object.freeze({
     return PATH_SEPARATOR + parts.join(PATH_SEPARATOR);
   },
 });
-
-function isQuotaExceededError(err) {
-  return err instanceof DOMException && err.name === "QuotaExceededError";
-}
-
-/**
- * @param {string} action e.g. "save /bigfile.mp4"
- * @param {Error} err
- */
-function reportFsError(action, err) {
-  let message = "";
-  if (isQuotaExceededError(err)) {
-    message = `Browser storage is full (${action}). Delete files, then try again.`;
-  } else {
-    message = `Could not ${action}: ${
-      err instanceof Error ? err.message : String(err)
-    }`;
-  }
-  Terminal.printLine(`[Filesystem] ${message}`);
-  console.error(err);
-}

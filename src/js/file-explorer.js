@@ -100,9 +100,12 @@ export const FileExplorer = Object.freeze({
 
           if (file.name.toLowerCase().endsWith(".zip")) {
             importZipBytes(view, file.name);
-          } else if (!FileSystem.writeFile("/" + file.name, view)) {
+          } else {
+            try {
+              FileSystem.writeFile("/" + file.name, view);
+            } catch (error) {}
             Terminal.printLine(
-              `[Filesystem] Failed to upload file ${file.name}`
+              `[Filesystem] Failed to upload file: ${error.message}`
             );
           }
 
@@ -152,8 +155,12 @@ export const FileExplorer = Object.freeze({
 
     Workspace.saveCurrentFile();
 
-    if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
-      Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
+    try {
+      FileSystem.writeFile(path, new TextEncoder().encode(""));
+    } catch (error) {
+      Terminal.printLine(
+        `[Filesystem] Failed to create file: ${error.message}`
+      );
       return;
     }
 
@@ -206,8 +213,11 @@ export const FileExplorer = Object.freeze({
     }
 
     Workspace.saveCurrentFile();
-    if (!FileSystem.renameFile(currentPath, newPath)) {
-      Terminal.printLine("[Filesystem] Could not rename " + currentPath);
+
+    try {
+      FileSystem.renameFile(currentPath, newPath);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not rename: ${error.message}`);
       return;
     }
 
@@ -471,12 +481,17 @@ function importZipBytes(bytes, zipFileName) {
 
   const failed = [];
   for (const [path, data] of Object.entries(filesToWrite)) {
-    if (!FileSystem.writeFile(path, data)) {
+    try {
+      FileSystem.writeFile(path, data);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Failed to import: ${error.message}`);
       failed.push(path);
     }
   }
 
   if (failed.length > 0) {
-    Terminal.printLine(`[Filesystem] Failed to import: ${failed.join(", ")}`);
+    Terminal.printLine(
+      `[Filesystem] Failed to import files: ${failed.join(", ")}`
+    );
   }
 }
