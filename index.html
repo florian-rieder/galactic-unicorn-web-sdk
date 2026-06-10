@@ -90,7 +90,23 @@
           </button>
           <input id="file-upload-input" type="file" multiple hidden />
         </div>
-        <div id="file-explorer"></div>
+        <div id="file-explorer-panels">
+          <section
+            id="user-files-panel"
+            class="file-explorer-panel"
+            aria-label="User files"
+          >
+            <div id="file-explorer" class="file-explorer-tree"></div>
+          </section>
+          <div class="resizer resizer-h" data-fixed="prev"></div>
+          <section
+            id="stock-files-panel"
+            class="file-explorer-panel"
+            aria-label="Stock files"
+          >
+            <div id="stock-file-explorer" class="file-explorer-tree"></div>
+          </section>
+        </div>
       </aside>
     </div>
 

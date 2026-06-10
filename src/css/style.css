@@ -265,7 +265,25 @@ body.swal2-height-auto {
     opacity: 0.6;
 }
 
-#file-explorer {
+#file-explorer-panels {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.file-explorer-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 60px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.file-explorer-tree {
     flex: 1;
     min-height: 0;
     min-width: 0;
@@ -274,17 +292,18 @@ body.swal2-height-auto {
     overflow: auto;
 }
 
-#file-explorer ul {
+.file-explorer-panel ul {
     list-style: none;
     margin: 0;
     padding-left: 1em;
 }
 
-#file-explorer > .file-tree {
+.file-explorer-panel > .file-tree,
+.file-explorer-tree > .file-tree {
     padding-left: 0;
 }
 
-#file-explorer button {
+.file-explorer-panel button {
     border: none;
     background: none;
     color: inherit;
@@ -296,14 +315,14 @@ body.swal2-height-auto {
     white-space: nowrap;
 }
 
-#file-explorer summary {
+.file-explorer-panel summary {
     cursor: pointer;
     display: flex;
     align-items: center;
     white-space: nowrap;
 }
 
-#file-explorer .tree-icon {
+.file-explorer-panel .tree-icon {
     display: inline-block;
     flex-shrink: 0;
     width: 16px;
@@ -315,16 +334,16 @@ body.swal2-height-auto {
 }
 
 /* mask + color for svg icons: tints external SVGs (background-image can't be recolored) */
-#file-explorer .tree-icon--folder {
+.file-explorer-panel .tree-icon--folder {
     color: var(--tree-icon-folder-color);
     mask-image: url("../assets/images/folder.svg");
 }
 
-#file-explorer .tree-icon--file {
+.file-explorer-panel .tree-icon--file {
     color: var(--tree-icon-file-color);
     mask-image: url("../assets/images/file.svg");
 }
 
-#file-explorer button.current-open-file {
+.file-explorer-panel button.current-open-file {
     font-weight: 800;
 }

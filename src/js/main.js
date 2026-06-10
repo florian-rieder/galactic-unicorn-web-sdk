@@ -7,9 +7,11 @@ import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input } from "./input.js";
 import { flashWithUi } from "./flash-ui.js";
+import { StockFiles } from "./stock-files.js";
 
 // Initialize components and set up the initial state of the application.
 
+await StockFiles.load();
 await MonacoEditor.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 // Open main if it exists, otherwise create the default script.

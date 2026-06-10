@@ -6,6 +6,7 @@ import { FileSystem } from "./file-system.js";
 import { FileTree } from "./file-tree.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
+import { StockFiles } from "./stock-files.js";
 
 // File name when the user downloads the project as a zip file
 const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
@@ -17,6 +18,7 @@ const openFolders = new Set();
 
 const fileInput = document.querySelector("#file-upload-input");
 const fileExplorer = document.querySelector("#file-explorer");
+const stockFileExplorer = document.querySelector("#stock-file-explorer");
 const fileNewBtn = document.querySelector("#file-new-btn");
 const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
@@ -40,13 +42,26 @@ export const FileExplorer = Object.freeze({
   reload() {
     fileExplorer.innerHTML = "";
     // Build a tree datastructure from the flat stored files paths
-    const filePaths = FileSystem.listAllFiles();
-    const root = FileTree.build(filePaths, FileSystem.PATH_SEPARATOR);
+    const userFilePaths = FileSystem.listAllFiles();
+    const userRoot = FileTree.build(userFilePaths, FileSystem.PATH_SEPARATOR);
 
     // Render the tree as DOM elements recursively
-    const domTree = renderNode(root);
-    if (domTree) {
-      fileExplorer.appendChild(domTree);
+    const userDomTree = renderNode(userRoot);
+    if (userDomTree) {
+      fileExplorer.appendChild(userDomTree);
+    }
+
+    stockFileExplorer.innerHTML = "";
+    const stockFilePaths = Object.keys(StockFiles.getAllFiles());
+    const stockRoot = FileTree.build(stockFilePaths, FileSystem.PATH_SEPARATOR);
+    const stockDomTree = renderNode(stockRoot);
+
+    console.log(StockFiles.getAllFiles());
+    console.log(stockFilePaths);
+    console.log(stockRoot);
+
+    if (stockDomTree) {
+      stockFileExplorer.appendChild(stockDomTree);
     }
   },
 
@@ -87,7 +102,7 @@ export const FileExplorer = Object.freeze({
             importZipBytes(view, file.name);
           } else if (!FileSystem.writeFile("/" + file.name, view)) {
             Terminal.printLine(
-              `[Filesystem] Failed to upload file ${file.name}`,
+              `[Filesystem] Failed to upload file ${file.name}`
             );
           }
 
@@ -95,7 +110,7 @@ export const FileExplorer = Object.freeze({
         })
         .catch((error) => {
           Terminal.printLine(
-            `[Filesystem] Failed to upload file ${file.name}: ${error}`,
+            `[Filesystem] Failed to upload file ${file.name}: ${error}`
           );
           onFileDone();
         });
@@ -371,7 +386,7 @@ function stripSingleZipRootPrefix(paths) {
   }
 
   const partsList = paths.map((path) =>
-    path.split(FileSystem.PATH_SEPARATOR).filter((part) => part.length > 0),
+    path.split(FileSystem.PATH_SEPARATOR).filter((part) => part.length > 0)
   );
 
   const root = partsList[0][0];
@@ -380,7 +395,7 @@ function stripSingleZipRootPrefix(paths) {
   }
 
   const canStrip = partsList.every(
-    (parts) => parts.length >= 2 && parts[0] === root,
+    (parts) => parts.length >= 2 && parts[0] === root
   );
   if (!canStrip) {
     return paths;
@@ -388,8 +403,7 @@ function stripSingleZipRootPrefix(paths) {
 
   return partsList.map(
     (parts) =>
-      FileSystem.PATH_SEPARATOR +
-      parts.slice(1).join(FileSystem.PATH_SEPARATOR),
+      FileSystem.PATH_SEPARATOR + parts.slice(1).join(FileSystem.PATH_SEPARATOR)
   );
 }
 
@@ -421,7 +435,9 @@ function importZipBytes(bytes, zipFileName) {
     entries = unzipSync(bytes);
   } catch (error) {
     Terminal.printLine(
-      `[Filesystem] Failed to read ZIP ${zipFileName}: ${error instanceof Error ? error.message : error}`,
+      `[Filesystem] Failed to read ZIP ${zipFileName}: ${
+        error instanceof Error ? error.message : error
+      }`
     );
     return;
   }
@@ -446,7 +462,7 @@ function importZipBytes(bytes, zipFileName) {
 
   if (Object.keys(filesToImport).length === 0) {
     Terminal.printLine(
-      `[Filesystem] ${zipFileName} contains no importable files.`,
+      `[Filesystem] ${zipFileName} contains no importable files.`
     );
     return;
   }

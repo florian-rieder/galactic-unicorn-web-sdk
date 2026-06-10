@@ -5,18 +5,14 @@
  */
 
 import { ESPLoader, Transport } from "esptool-js";
-import { unzipSync } from "fflate";
 
 import { createLittleFsImage } from "./littlefs-image.js";
-
 import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
+import { StockFiles } from "./stock-files.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
-
-const STOCK_FILES_ZIP_DOWNLOAD_URL =
-  "https://florian-rieder.github.io/galactic-unicorn-data/data.zip";
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
@@ -68,8 +64,6 @@ const TERMINAL_CONFIG = {
   },
 };
 
-let stockFilesCache;
-
 /**
  * EspFlasher namespace
  */
@@ -110,60 +104,15 @@ export const EspFlasher = Object.freeze({
 
     // Create the LittleFS image
     const userFiles = FileSystem.getAllFiles();
-
     let stockFiles = {};
-
-    if (stockFilesCache) {
-      Terminal.printLine("Reusing cached stock files");
-      stockFiles = stockFilesCache;
-    } else {
-      Terminal.printLine("Downloading stock files...");
-      try {
-        const response = await fetch(STOCK_FILES_ZIP_DOWNLOAD_URL);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        // Get raw zip file data
-        const buffer = await response.arrayBuffer();
-        const view = new Uint8Array(buffer);
-
-        // Decompress data
-        const decompressed = unzipSync(view);
-
-        // Filter out directories from the list of files
-        stockFiles = Object.fromEntries(
-          Object.entries(decompressed).filter(([_, v]) => v.length > 0)
-        );
-
-        stockFilesCache = stockFiles; // Cache stockFiles for this session
-      } catch (error) {
-        console.error(
-          `Failed to download stock files from ${STOCK_FILES_ZIP_DOWNLOAD_URL}: ${error.message}`
-        );
-        console.error(error);
-
-        Terminal.printLine(
-          `Failed to download stock files from ${STOCK_FILES_ZIP_DOWNLOAD_URL}: ${error.message}`
-        );
-
-        let proceed = false;
-        if (onStockDownloadFailed) {
-          proceed = await onStockDownloadFailed(error);
-        }
-
-        if (!proceed) {
-          Terminal.printLine("Flash cancelled.");
-          return null;
-        }
-
-        Terminal.printLine(
-          "Proceeding with user files only. The device may not boot correctly."
-        );
-        stockFiles = {};
-      }
+    let proceed = true;
+    try {
+      stockFiles = StockFiles.getAllFiles();
+    } catch {
+      proceed = await onStockDownloadFailed();
     }
+
+    if (!proceed) return null;
 
     Terminal.printLine("Merging files...");
 
