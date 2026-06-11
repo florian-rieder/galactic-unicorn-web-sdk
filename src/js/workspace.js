@@ -3,24 +3,15 @@ import Swal from "sweetalert2";
 import { FileSystem } from "./file-system.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
-
+import { StockFiles } from "./stock-files.js";
 import defaultSnakeLua from "../lua/snake.lua?raw";
 
-const TEXTISH_EXTENSIONS = [
-  "txt",
-  "lua",
-  "lson",
-  "md",
-  "xml",
-  "json",
-  "csv",
-  "tsv",
-];
-const LUA_EXTENSIONS = ["lua", "lson"];
+const TEXTISH_EXTENSIONS = ["txt", "lua", "md", "xml", "json", "csv", "tsv"];
+const LUA_EXTENSIONS = ["lua"];
 const DEFAULT_SCRIPT_PATH = "/main.lua";
 
 let currentOpenPath = DEFAULT_SCRIPT_PATH;
-let readOnly = false;
+let readOnly = false; // is the currently open file read-only ?
 
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
 let explorerReloadHandler = () => {};
@@ -46,6 +37,7 @@ export const Workspace = Object.freeze({
     const text = MonacoEditor.getText();
     // Convert text to Uint8Array
     const encoded = new TextEncoder().encode(text);
+
     // Write file to FS
     try {
       FileSystem.writeFile(currentOpenPath, encoded);
@@ -62,18 +54,26 @@ export const Workspace = Object.freeze({
    * @param {string} path - The path of the file to open.
    */
   openFile(path) {
-    const rawFile = FileSystem.readFile(path);
-    if (rawFile === null) {
+    let rawFile;
+
+    try {
+      rawFile = FileSystem.readFile(path);
+      readOnly = false;
+    } catch {
+      rawFile = StockFiles.readFile(path);
+      readOnly = true;
+    }
+
+    if (!rawFile) {
       console.error("Couldn't open file " + path);
       return;
     }
 
     currentOpenPath = path;
 
-    const extension = path.split(".").slice(-1)[0].toLowerCase();
+    const extension = path.toLowerCase().split(".").slice(-1)[0];
 
     if (TEXTISH_EXTENSIONS.includes(extension)) {
-      readOnly = false;
       // Plain text file: simply decode the bytes into text
       const decodedString = new TextDecoder().decode(rawFile);
 
@@ -88,11 +88,13 @@ export const Workspace = Object.freeze({
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
       // Binary file: show file size
-      MonacoEditor.setText(
-        `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
-        "plaintext",
-        readOnly
-      );
+      let size = 0;
+      try {
+        size = FileSystem.fileSizeAtPath(path);
+      } catch (e) {
+        size = StockFiles.fileSizeAtPath(path);
+      }
+      MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
     }
   },
 

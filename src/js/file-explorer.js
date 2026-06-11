@@ -51,14 +51,11 @@ export const FileExplorer = Object.freeze({
       fileExplorer.appendChild(userDomTree);
     }
 
+    // Build the stock files tree, separate from the user files tree
     stockFileExplorer.innerHTML = "";
     const stockFilePaths = Object.keys(StockFiles.getAllFiles());
     const stockRoot = FileTree.build(stockFilePaths, FileSystem.PATH_SEPARATOR);
     const stockDomTree = renderNode(stockRoot);
-
-    console.log(StockFiles.getAllFiles());
-    console.log(stockFilePaths);
-    console.log(stockRoot);
 
     if (stockDomTree) {
       stockFileExplorer.appendChild(stockDomTree);
