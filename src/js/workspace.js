@@ -171,23 +171,6 @@ export const Workspace = Object.freeze({
     explorerReloadHandler();
   },
 
-  // /**
-  //  * Load the default script if it exists, otherwise create it.
-  //  *
-  //  * Design decision: there will always be a default script in the file system.
-  //  * If it doesn't exist, create it.
-  //  */
-  // maybeLoadDefaultScript() {
-  //   if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
-  //     // Open the default file from the file system
-  //     this.openFile(DEFAULT_SCRIPT_PATH);
-  //   } else {
-  //     // Set default script
-  //     MonacoEditor.setText(defaultSnakeLua, "lua", false);
-  //     this.saveCurrentFile(); // Create the default file in the file system
-  //   }
-  // },
-
   /**
    * Get the path of the currently open file.
    * @returns {string} The path of the currently open file.
