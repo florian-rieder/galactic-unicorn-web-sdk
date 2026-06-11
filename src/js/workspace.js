@@ -8,7 +8,7 @@ import { BuiltinFiles } from "./builtin-files.js";
 import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
 import luaMainTemplate from "../lua/templates/main.lua?raw";
 
-const DEFAULT_PROJECT_NAME = "myproject";
+const DEFAULT_PROJECT_NAME = "My project";
 const TEXTISH_EXTENSIONS = ["txt", "lua", "md", "xml", "json", "csv", "tsv"];
 
 let currentOpenPath = null;
@@ -39,6 +39,8 @@ export const Workspace = Object.freeze({
       .addEventListener("click", () =>
         Workspace.copyBuiltinOpenFileToProject()
       );
+
+    MonacoEditor.setText("", "plaintext", true);
   },
 
   /**
@@ -154,7 +156,11 @@ export const Workspace = Object.freeze({
     });
 
     // Might as well enforce style now...
-    const projectName = result.value.toLowerCase();
+    const projectName = result.value
+      .trim()
+      .toLowerCase()
+      .split(RegExp("\\s"))
+      .join("-");
 
     // Entrypoint script
     const mainPath = `/${projectName}/main.lua`;
@@ -163,7 +169,9 @@ export const Workspace = Object.freeze({
 
     // Manifest file
     const manifestPath = `/${projectName}/manifest.lua`;
-    const manifestData = new TextEncoder().encode(luaManifestTemplate);
+    // Replace placeholder
+    const manifest = luaManifestTemplate.replace("<game_name>", result.value);
+    const manifestData = new TextEncoder().encode(manifest);
     FileSystem.writeFile(manifestPath, manifestData);
 
     Workspace.openFile(mainPath);
@@ -191,7 +199,7 @@ export const Workspace = Object.freeze({
 
     // Empty editor and prevent saving
     currentOpenPath = null;
-    MonacoEditor.setText("");
+    MonacoEditor.setText("", "plaintext", true);
   },
 
   /**
