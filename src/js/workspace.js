@@ -4,13 +4,14 @@ import { FileSystem } from "./file-system.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 import { StockFiles } from "./stock-files.js";
-import defaultSnakeLua from "../lua/snake.lua?raw";
 
+import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
+import luaMainTemplate from "../lua/templates/main.lua?raw";
+
+const DEFAULT_PROJECT_NAME = "myproject";
 const TEXTISH_EXTENSIONS = ["txt", "lua", "md", "xml", "json", "csv", "tsv"];
-const LUA_EXTENSIONS = ["lua"];
-const DEFAULT_SCRIPT_PATH = "/main.lua";
 
-let currentOpenPath = DEFAULT_SCRIPT_PATH;
+let currentOpenPath = null;
 let readOnly = false; // is the currently open file read-only ?
 
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
@@ -77,13 +78,8 @@ export const Workspace = Object.freeze({
       // Plain text file: simply decode the bytes into text
       const decodedString = new TextDecoder().decode(rawFile);
 
-      let language = "plaintext";
-      if (LUA_EXTENSIONS.includes(extension)) {
-        language = "lua";
-      }
-
       // Load into monaco
-      MonacoEditor.setText(decodedString, language, readOnly);
+      MonacoEditor.setText(decodedString, extension, readOnly);
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
@@ -99,21 +95,52 @@ export const Workspace = Object.freeze({
   },
 
   /**
-   * Load the default script if it exists, otherwise create it.
-   *
-   * Design decision: there will always be a default script in the file system.
-   * If it doesn't exist, create it.
+   * Creates a minimal main.lua and manifest.lua
    */
-  maybeLoadDefaultScript() {
-    if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
-      // Open the default file from the file system
-      this.openFile(DEFAULT_SCRIPT_PATH);
-    } else {
-      // Set default script
-      MonacoEditor.setText(defaultSnakeLua, "lua", false);
-      this.saveCurrentFile(); // Create the default file in the file system
-    }
+  async createEmptyProject() {
+    if (!FileSystem.isEmpty()) return;
+
+    const result = await Swal.fire({
+      input: "text",
+      inputValue: DEFAULT_PROJECT_NAME,
+      title: "Project name",
+      showCancelButton: true,
+    });
+
+    // Might as well enforce style now...
+    const projectName = result.value.toLowerCase();
+
+    // Entrypoint script
+    const mainPath = `/${projectName}/main.lua`;
+    const mainData = new TextEncoder().encode(luaMainTemplate);
+    FileSystem.writeFile(mainPath, mainData);
+
+    // Manifest file
+    const manifestPath = `/${projectName}/manifest.lua`;
+    const manifestData = new TextEncoder().encode(luaManifestTemplate);
+    FileSystem.writeFile(manifestPath, manifestData);
+
+    Workspace.openFile(mainPath);
+
+    explorerReloadHandler();
   },
+
+  // /**
+  //  * Load the default script if it exists, otherwise create it.
+  //  *
+  //  * Design decision: there will always be a default script in the file system.
+  //  * If it doesn't exist, create it.
+  //  */
+  // maybeLoadDefaultScript() {
+  //   if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
+  //     // Open the default file from the file system
+  //     this.openFile(DEFAULT_SCRIPT_PATH);
+  //   } else {
+  //     // Set default script
+  //     MonacoEditor.setText(defaultSnakeLua, "lua", false);
+  //     this.saveCurrentFile(); // Create the default file in the file system
+  //   }
+  // },
 
   /**
    * Get the path of the currently open file.
@@ -134,7 +161,7 @@ export const Workspace = Object.freeze({
     }
 
     // Open main if it exists, otherwise create the default script.
-    this.maybeLoadDefaultScript();
+    //this.maybeLoadDefaultScript();
   },
 
   /**

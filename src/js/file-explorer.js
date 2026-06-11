@@ -41,14 +41,32 @@ export const FileExplorer = Object.freeze({
    */
   reload() {
     fileExplorer.innerHTML = "";
-    // Build a tree datastructure from the flat stored files paths
-    const userFilePaths = FileSystem.listAllFiles();
-    const userRoot = FileTree.build(userFilePaths, FileSystem.PATH_SEPARATOR);
 
-    // Render the tree as DOM elements recursively
-    const userDomTree = renderNode(userRoot);
-    if (userDomTree) {
-      fileExplorer.appendChild(userDomTree);
+    if (FileSystem.isEmpty()) {
+      // First time setup
+      // Display two buttons in the user file explorer panel:
+      // 1) Setup empty project => creates a minimal main.lua and manifest.lua
+      // 2) Fork project => select stock folder to copy into the user space
+      const bootstrapBtn = document.createElement("button");
+      bootstrapBtn.innerHTML = "Setup empty project";
+      bootstrapBtn.classList.add("file-explorer-start-btn");
+      bootstrapBtn.addEventListener("click", Workspace.createEmptyProject);
+
+      const forkInstructions = document.createElement("p");
+      forkInstructions.innerHTML = "TBD";
+
+      fileExplorer.appendChild(bootstrapBtn);
+      fileExplorer.appendChild(forkInstructions);
+    } else {
+      // Build a tree datastructure from the flat stored files paths
+      const userFilePaths = FileSystem.listAllFiles();
+      const userRoot = FileTree.build(userFilePaths, FileSystem.PATH_SEPARATOR);
+
+      // Render the tree as DOM elements recursively
+      const userDomTree = renderNode(userRoot);
+      if (userDomTree) {
+        fileExplorer.appendChild(userDomTree);
+      }
     }
 
     // Build the stock files tree, separate from the user files tree

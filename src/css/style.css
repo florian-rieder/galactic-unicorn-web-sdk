@@ -1,349 +1,358 @@
 html {
-    overflow: hidden;
-    height: 100%;
+  overflow: hidden;
+  height: 100%;
 }
 
 :root {
-    --primary-bg: #1e1e1e;
-    --primary-border: #2c2c2c;
-    --success-color: #205c28;
-    --text-color: #d4d4d4;
-    --tree-icon-folder-color: #e69c2d;
-    --tree-icon-file-color: #529dfa;
+  --primary-bg: #1e1e1e;
+  --primary-border: #2c2c2c;
+  --success-color: #205c28;
+  --text-color: #d4d4d4;
+  --tree-icon-folder-color: #e69c2d;
+  --tree-icon-file-color: #529dfa;
 }
 
 .swal2-popup {
-    --swal2-background: var(--primary-bg);
-    --swal2-color: var(--text-color);
-    --swal2-confirm-button-background-color: var(--success-color);
-    --swal2-border-radius: 6px;
+  --swal2-background: var(--primary-bg);
+  --swal2-color: var(--text-color);
+  --swal2-confirm-button-background-color: var(--success-color);
+  --swal2-border-radius: 6px;
 }
 
 .swal2-title {
-    font-size: 1.3em;
+  font-size: 1.3em;
 }
 
 .swal2-popup.swal2-popup--danger {
-    --swal2-confirm-button-background-color: #8b2635;
+  --swal2-confirm-button-background-color: #8b2635;
 }
 
 .flash-status {
-    margin: 0.5rem 0 0;
+  margin: 0.5rem 0 0;
 }
 
 .flash-progress {
-    width: 100%;
-    height: 8px;
-    margin-top: 1rem;
-    background-color: var(--primary-border);
-    border-radius: 4px;
-    overflow: hidden;
+  width: 100%;
+  height: 8px;
+  margin-top: 1rem;
+  background-color: var(--primary-border);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
 .flash-progress-bar {
-    height: 100%;
-    width: 0%;
-    background-color: var(--success-color);
-    border-radius: 4px;
-    transition: width 0.12s ease-out;
+  height: 100%;
+  width: 0%;
+  background-color: var(--success-color);
+  border-radius: 4px;
+  transition: width 0.12s ease-out;
 }
 
 .flash-progress-label {
-    margin: 0.5rem 0 0;
-    font-size: 0.9em;
-    text-align: center;
-    color: var(--text-color);
+  margin: 0.5rem 0 0;
+  font-size: 0.9em;
+  text-align: center;
+  color: var(--text-color);
 }
 
 body {
-    color: var(--text-color);
-    background-color: var(--primary-bg);
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    min-height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    font-family: sans-serif;
+  color: var(--text-color);
+  background-color: var(--primary-bg);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
 }
 
 /* SweetAlert2 sets height-auto on html and body while a modal is open. */
 html.swal2-height-auto,
 body.swal2-height-auto {
-    height: 100% !important;
-    min-height: 100vh !important;
+  height: 100% !important;
+  min-height: 100vh !important;
 }
 
 #console {
-    flex: 4 1 0;
-    min-height: 0;
-    background-color: var(--primary-bg);
-    border-top: 1px solid var(--primary-border);
-    padding: 10px;
-    font-family: monospace;
-    font-size: 12px;
-    overflow: auto;
-    box-sizing: border-box;
+  flex: 4 1 0;
+  min-height: 0;
+  background-color: var(--primary-bg);
+  border-top: 1px solid var(--primary-border);
+  padding: 10px;
+  font-family: monospace;
+  font-size: 12px;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 #console-output {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-all;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 #container {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    flex: 1;
-    min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .resizer-h {
-    height: 5px;
-    cursor: row-resize;
-    background: var(--primary-border);
-    flex-shrink: 0;
-    transition: background 0.1s;
+  height: 5px;
+  cursor: row-resize;
+  background: var(--primary-border);
+  flex-shrink: 0;
+  transition: background 0.1s;
 }
 
 .resizer-v {
-    width: 5px;
-    cursor: col-resize;
-    background: var(--primary-border);
-    flex-shrink: 0;
-    transition: background 0.1s;
+  width: 5px;
+  cursor: col-resize;
+  background: var(--primary-border);
+  flex-shrink: 0;
+  transition: background 0.1s;
 }
 
 .resizer-h:hover,
 .resizer-v:hover {
-    background: #444;
+  background: #444;
 }
 #toolbar {
-    border-bottom: 1px solid var(--primary-border);
-    padding: 0 12px;
-    height: 42px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
+  border-bottom: 1px solid var(--primary-border);
+  padding: 0 12px;
+  height: 42px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
 }
 
 .toolbar-btn {
-    position: relative;
-    background: none;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 8px;
-    margin: 0 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
+  position: relative;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
 }
 
 .toolbar-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .toolbar-btn:active {
-    background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .toolbar-btn-docs {
-    margin-left: auto;
+  margin-left: auto;
 }
 
 .tooltip {
-    visibility: hidden;
-    opacity: 0;
-    display: none;
-    pointer-events: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--primary-border);
-    color: #ccc;
-    font-size: 12px;
-    font-family: sans-serif;
-    white-space: nowrap;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #3c3c3c;
-    transition: opacity 0.15s;
-    z-index: 10;
+  visibility: hidden;
+  opacity: 0;
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-border);
+  color: #ccc;
+  font-size: 12px;
+  font-family: sans-serif;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #3c3c3c;
+  transition: opacity 0.15s;
+  z-index: 10;
 }
 
 .toolbar-btn:hover .tooltip {
-    display: block;
-    visibility: visible;
-    opacity: 1;
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 #display-wrapper {
-    flex: 2 1 0;
-    min-height: 0;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+  flex: 2 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 #display {
-    display: block;
-    image-rendering: pixelated;
+  display: block;
+  image-rendering: pixelated;
 }
 
 #app {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 150px;
 }
 
 #monaco-container {
-    flex: 4;
-    min-width: 200px;
-    min-height: 0;
-    border-left: 1px solid var(--primary-border);
+  flex: 4;
+  min-width: 200px;
+  min-height: 0;
+  border-left: 1px solid var(--primary-border);
 }
 
 #file-explorer-pane {
-    display: flex;
-    flex-direction: column;
-    flex: 0 0 220px;
-    min-width: 180px;
-    min-height: 0;
-    padding: 8px;
-    gap: 10px;
-    box-sizing: border-box;
-    background-color: var(--primary-bg);
-    border-left: 1px solid var(--primary-border);
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+  min-width: 180px;
+  min-height: 0;
+  padding: 8px;
+  gap: 10px;
+  box-sizing: border-box;
+  background-color: var(--primary-bg);
+  border-left: 1px solid var(--primary-border);
+  overflow: hidden;
 }
 
 #file-explorer-toolbar {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
 }
 
 .explorer-btn {
-    background: none;
-    border: 1px solid var(--primary-border);
-    border-radius: 6px;
-    color: inherit;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1;
-    min-width: 28px;
-    padding: 4px 6px;
-    transition: background 0.15s;
+  background: none;
+  border: 1px solid var(--primary-border);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  min-width: 28px;
+  padding: 4px 6px;
+  transition: background 0.15s;
 }
 
 .explorer-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .explorer-btn:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .explorer-btn:disabled {
-    color: #666;
-    cursor: not-allowed;
-    opacity: 0.6;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 #file-explorer-panels {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .file-explorer-panel {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
-    min-height: 60px;
-    min-width: 0;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 60px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .file-explorer-tree {
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-    font-family: monospace;
-    font-size: 14px;
-    overflow: auto;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  font-family: monospace;
+  font-size: 14px;
+  overflow: auto;
 }
 
 .file-explorer-panel ul {
-    list-style: none;
-    margin: 0;
-    padding-left: 1em;
+  list-style: none;
+  margin: 0;
+  padding-left: 1em;
 }
 
 .file-explorer-panel > .file-tree,
 .file-explorer-tree > .file-tree {
-    padding-left: 0;
+  padding-left: 0;
 }
 
 .file-explorer-panel button {
-    border: none;
-    background: none;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .file-explorer-panel summary {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .file-explorer-panel .tree-icon {
-    display: inline-block;
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-    vertical-align: -3px;
-    background-color: currentColor;
-    mask: center / 16px no-repeat;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  vertical-align: -3px;
+  background-color: currentColor;
+  mask: center / 16px no-repeat;
 }
 
 /* mask + color for svg icons: tints external SVGs (background-image can't be recolored) */
 .file-explorer-panel .tree-icon--folder {
-    color: var(--tree-icon-folder-color);
-    mask-image: url("../assets/images/folder.svg");
+  color: var(--tree-icon-folder-color);
+  mask-image: url("../assets/images/folder.svg");
 }
 
 .file-explorer-panel .tree-icon--file {
-    color: var(--tree-icon-file-color);
-    mask-image: url("../assets/images/file.svg");
+  color: var(--tree-icon-file-color);
+  mask-image: url("../assets/images/file.svg");
 }
 
 .file-explorer-panel button.current-open-file {
-    font-weight: 800;
+  font-weight: 800;
+}
+
+button.file-explorer-start-btn {
+  background-color: #a12645;
+  padding: 1em 2em;
+  border-radius: 3px;
+  border: none;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
 }

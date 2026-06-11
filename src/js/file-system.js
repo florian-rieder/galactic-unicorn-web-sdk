@@ -264,4 +264,8 @@ export const FileSystem = Object.freeze({
     // Return the normalized path (with a leading slash)
     return PATH_SEPARATOR + parts.join(PATH_SEPARATOR);
   },
+
+  isEmpty() {
+    return this.listAllFiles().length == 0;
+  },
 });
