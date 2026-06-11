@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser editor, and serial-style console output so you can iterate without reflashing hardware on every change.",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "build:fengari": "esbuild node_modules/fengari/src/fengari.js --bundle --format=esm --platform=browser --define:process.env.FENGARICONF=undefined --define:process.env.NODE_DEBUG=undefined --define:process.platform='\"browser\"' --external:os --external:fs --external:path --external:child_process --external:readline-sync --external:tmp --outfile=src/js/vendor/fengari.js",
     "build:littlefs": "mkdir -p src/js/vendor/littlefs && curl -fsSL -o src/js/vendor/littlefs/lfs.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs.js && curl -fsSL -o src/js/vendor/littlefs/lfs_js.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs_js.js",

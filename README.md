@@ -28,7 +28,7 @@ The Lua API is still subject to breaking changes.
 
 ## Run locally
 
-The app is built with [Vite](https://vitejs.dev/). Use Node.js 18+.
+The app is built with [Vite 8](https://vitejs.dev/).
 
 ### 1) Install dependencies
 
