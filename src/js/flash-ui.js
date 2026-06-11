@@ -55,7 +55,7 @@ export async function flashWithUi() {
         const result = await Swal.fire({
           icon: "warning",
           title: "Stock files unavailable",
-          html: `<p>Could not download the stock data package</p>
+          html: `<p>Could not download the built-in data package</p>
             <p>Flashing with only your project files may leave the device unable to boot until you flash again with a successful download</p>
             <p>Error: ${error.message}</p>`,
           showCancelButton: true,

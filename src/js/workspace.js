@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import { FileSystem } from "./file-system.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
-import { StockFiles } from "./stock-files.js";
+import { BuiltinFiles } from "./builtin-files.js";
 
 import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
 import luaMainTemplate from "../lua/templates/main.lua?raw";
@@ -12,6 +12,7 @@ const DEFAULT_PROJECT_NAME = "myproject";
 const TEXTISH_EXTENSIONS = ["txt", "lua", "md", "xml", "json", "csv", "tsv"];
 
 let currentOpenPath = null;
+let isBuiltIn = false; // is the currently open file built-in ?
 let readOnly = false; // is the currently open file read-only ?
 
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
@@ -60,9 +61,11 @@ export const Workspace = Object.freeze({
     try {
       rawFile = FileSystem.readFile(path);
       readOnly = false;
+      isBuiltIn = false;
     } catch {
-      rawFile = StockFiles.readFile(path);
+      rawFile = BuiltinFiles.readFile(path);
       readOnly = true;
+      isBuiltIn = true;
     }
 
     if (!rawFile) {
@@ -88,7 +91,7 @@ export const Workspace = Object.freeze({
       try {
         size = FileSystem.fileSizeAtPath(path);
       } catch (e) {
-        size = StockFiles.fileSizeAtPath(path);
+        size = BuiltinFiles.fileSizeAtPath(path);
       }
       MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
     }

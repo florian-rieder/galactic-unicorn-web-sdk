@@ -6,7 +6,7 @@ import { FileSystem } from "./file-system.js";
 import { FileTree } from "./file-tree.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
-import { StockFiles } from "./stock-files.js";
+import { BuiltinFiles } from "./builtin-files.js";
 
 // File name when the user downloads the project as a zip file
 const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
@@ -18,7 +18,7 @@ const openFolders = new Set();
 
 const fileInput = document.querySelector("#file-upload-input");
 const fileExplorer = document.querySelector("#file-explorer");
-const stockFileExplorer = document.querySelector("#stock-file-explorer");
+const builtinFileExplorer = document.querySelector("#builtin-file-explorer");
 const fileNewBtn = document.querySelector("#file-new-btn");
 const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
@@ -46,17 +46,13 @@ export const FileExplorer = Object.freeze({
       // First time setup
       // Display two buttons in the user file explorer panel:
       // 1) Setup empty project => creates a minimal main.lua and manifest.lua
-      // 2) Fork project => select stock folder to copy into the user space
+      // 2) Fork project => select built-in folder to copy into the user space
       const bootstrapBtn = document.createElement("button");
       bootstrapBtn.innerHTML = "Setup empty project";
       bootstrapBtn.classList.add("file-explorer-start-btn");
       bootstrapBtn.addEventListener("click", Workspace.createEmptyProject);
 
-      const forkInstructions = document.createElement("p");
-      forkInstructions.innerHTML = "TBD";
-
       fileExplorer.appendChild(bootstrapBtn);
-      fileExplorer.appendChild(forkInstructions);
     } else {
       // Build a tree datastructure from the flat stored files paths
       const userFilePaths = FileSystem.listAllFiles();
@@ -69,14 +65,17 @@ export const FileExplorer = Object.freeze({
       }
     }
 
-    // Build the stock files tree, separate from the user files tree
-    stockFileExplorer.innerHTML = "";
-    const stockFilePaths = Object.keys(StockFiles.getAllFiles());
-    const stockRoot = FileTree.build(stockFilePaths, FileSystem.PATH_SEPARATOR);
-    const stockDomTree = renderNode(stockRoot);
+    // Build the built-in files tree, separate from the user files tree
+    builtinFileExplorer.innerHTML = "";
+    const builtinFilePaths = Object.keys(BuiltinFiles.getAllFiles());
+    const builtinRoot = FileTree.build(
+      builtinFilePaths,
+      FileSystem.PATH_SEPARATOR
+    );
+    const builtinDomTree = renderNode(builtinRoot);
 
-    if (stockDomTree) {
-      stockFileExplorer.appendChild(stockDomTree);
+    if (builtinDomTree) {
+      builtinFileExplorer.appendChild(builtinDomTree);
     }
   },
 

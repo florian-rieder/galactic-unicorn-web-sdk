@@ -74,7 +74,7 @@ To test the production bundle locally, use `npm run preview` (serves `dist/` at 
 
 Use a **Chromium** browser (Chrome, Edge, Brave, etc.). Web Serial does not work in Firefox or Safari.
 
-On flash, the SDK downloads the stock [data zip](https://github.com/florian-rieder/galactic-unicorn-data/), merges it with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full stock tree first.
+On flash, the SDK downloads the built-in [data zip](https://github.com/florian-rieder/galactic-unicorn-data/), merges it with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full built-in tree first.
 
 ## API documentation
 

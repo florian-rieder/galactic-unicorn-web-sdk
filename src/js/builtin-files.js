@@ -1,19 +1,19 @@
 import { unzipSync } from "fflate";
 
-const STOCK_FILES_ZIP_DOWNLOAD_URL =
+const BUILTIN_FILES_ZIP_DOWNLOAD_URL =
   "https://florian-rieder.github.io/galactic-unicorn-data/data.zip";
 
 let cache;
 
-export const StockFiles = Object.freeze({
+export const BuiltinFiles = Object.freeze({
   /**
-   * Populate the stock files cache. Necessary to use other methods
+   * Populate the builtin files cache. Necessary to use other methods
    */
   async load() {
     if (cacheExists()) return;
 
     try {
-      const response = await fetch(STOCK_FILES_ZIP_DOWNLOAD_URL);
+      const response = await fetch(BUILTIN_FILES_ZIP_DOWNLOAD_URL);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -47,7 +47,7 @@ export const StockFiles = Object.freeze({
     const data = cache[path];
 
     if (!data) {
-      throw new Error("File doesn't exist in stock files cache: " + path);
+      throw new Error("File doesn't exist in built-in files cache: " + path);
     }
 
     return data.length;

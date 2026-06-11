@@ -9,7 +9,7 @@ import { ESPLoader, Transport } from "esptool-js";
 import { createLittleFsImage } from "./littlefs-image.js";
 import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
-import { StockFiles } from "./stock-files.js";
+import { BuiltinFiles as BuiltinFiles } from "./builtin-files.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
@@ -73,7 +73,7 @@ export const EspFlasher = Object.freeze({
    *
    * @param {Object} [callbacks]
    * @param {Function} [callbacks.onPortSelected] Invoked after the user picks a serial port (awaited).
-   * @param {Function} [callbacks.onStockDownloadFailed] Invoked when stock files cannot be downloaded.
+   * @param {Function} [callbacks.onStockDownloadFailed] Invoked when built-in files cannot be downloaded.
    *   Receives `error` and must resolve to `true` to flash with user files only, or `false` to abort.
    *   If omitted, flash is aborted when the download fails.
    * @param {Function} [callbacks.onConnecting] Invoked just before connecting to the chip.
@@ -104,21 +104,13 @@ export const EspFlasher = Object.freeze({
 
     // Create the LittleFS image
     const userFiles = FileSystem.getAllFiles();
-    let stockFiles = {};
-    let proceed = true;
-    try {
-      stockFiles = StockFiles.getAllFiles();
-    } catch {
-      proceed = await onStockDownloadFailed();
-    }
-
-    if (!proceed) return null;
+    const builtinFiles = BuiltinFiles.getAllFiles();
 
     Terminal.printLine("Merging files...");
 
-    // Combine VFS files with stock files
-    // User files have precedence over stock files
-    const allFiles = { ...stockFiles, ...userFiles };
+    // Combine VFS files with built-in files
+    // User files have precedence over built-in files
+    const allFiles = { ...builtinFiles, ...userFiles };
 
     Terminal.printLine("Building file system image... ");
 
