@@ -15,6 +15,8 @@ let currentOpenPath = null;
 let isBuiltIn = false; // is the currently open file built-in ?
 let readOnly = false; // is the currently open file read-only ?
 
+const banner = document.getElementById("builtin-readonly-banner");
+
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
 let explorerReloadHandler = () => {};
 
@@ -26,6 +28,44 @@ export const Workspace = Object.freeze({
    */
   setExplorerReloadHandler(handler) {
     explorerReloadHandler = handler;
+  },
+
+  /**
+   * Wire the built-in read-only banner copy button. Call once at startup.
+   */
+  init() {
+    document
+      .getElementById("builtin-copy-btn")
+      .addEventListener("click", () =>
+        Workspace.copyBuiltinOpenFileToProject()
+      );
+  },
+
+  /**
+   * Copy the currently open built-in file into the user project at the same path.
+   */
+  copyBuiltinOpenFileToProject() {
+    if (!isBuiltIn || currentOpenPath === null) {
+      return;
+    }
+
+    let rawFile;
+    try {
+      rawFile = BuiltinFiles.readFile(currentOpenPath);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not copy: ${error.message}`);
+      return;
+    }
+
+    try {
+      FileSystem.writeFile(currentOpenPath, rawFile);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not copy: ${error.message}`);
+      return;
+    }
+
+    Workspace.openFile(currentOpenPath);
+    explorerReloadHandler();
   },
 
   /**
@@ -83,6 +123,7 @@ export const Workspace = Object.freeze({
 
       // Load into monaco
       MonacoEditor.setText(decodedString, extension, readOnly);
+      banner.hidden = !isBuiltIn;
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
@@ -93,7 +134,9 @@ export const Workspace = Object.freeze({
       } catch (e) {
         size = BuiltinFiles.fileSizeAtPath(path);
       }
+
       MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
+      banner.hidden = true;
     }
   },
 
@@ -163,8 +206,9 @@ export const Workspace = Object.freeze({
       return;
     }
 
-    // Open main if it exists, otherwise create the default script.
-    //this.maybeLoadDefaultScript();
+    // Empty editor and prevent saving
+    currentOpenPath = null;
+    MonacoEditor.setText("");
   },
 
   /**

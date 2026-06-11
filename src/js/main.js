@@ -13,6 +13,7 @@ import { BuiltinFiles } from "./builtin-files.js";
 
 await BuiltinFiles.load();
 await MonacoEditor.init();
+Workspace.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
 FileExplorer.reload();

@@ -44,7 +44,18 @@
         </div>
       </div>
       <div class="resizer resizer-v" data-fixed="prev"></div>
-      <div id="monaco-container" aria-label="Text editor"></div>
+      <div id="monaco-pane" class="monaco-pane" aria-label="Text editor">
+        <div
+          id="builtin-readonly-banner"
+          class="builtin-readonly-banner"
+          role="status"
+          hidden
+        >
+          <p>Built-in file (read-only). Copy to your project to edit.</p>
+          <button type="button" id="builtin-copy-btn">Copy to project</button>
+        </div>
+        <div id="monaco-container"></div>
+      </div>
       <div class="resizer resizer-v" data-fixed="next"></div>
       <aside id="file-explorer-pane" aria-label="Project files">
         <div id="file-explorer-toolbar" aria-label="File actions">

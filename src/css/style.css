@@ -208,11 +208,41 @@ body.swal2-height-auto {
   min-width: 150px;
 }
 
-#monaco-container {
+.monaco-pane {
   flex: 4;
   min-width: 200px;
   min-height: 0;
   border-left: 1px solid var(--primary-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#monaco-container {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.builtin-readonly-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 24px;
+  border-bottom: 1px solid var(--primary-border);
+  background: #264e9f;
+  font-size: 14px;
+}
+
+.builtin-readonly-banner[hidden] {
+  display: none;
+}
+
+#builtin-copy-btn {
+  background-color: transparent;
+  border: 1px solid var(--text-color);
+  color: var(--text-color);
+  padding: 5px 10px;
 }
 
 #file-explorer-pane {
