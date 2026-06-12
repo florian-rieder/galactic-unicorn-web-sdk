@@ -133,12 +133,13 @@ export const Workspace = Object.freeze({
       let size = 0;
       try {
         size = FileSystem.fileSizeAtPath(path);
+        banner.hidden = true;
       } catch (e) {
         size = BuiltinFiles.fileSizeAtPath(path);
+        banner.hidden = false;
       }
 
       MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
-      banner.hidden = true;
     }
   },
 
@@ -175,7 +176,6 @@ export const Workspace = Object.freeze({
     FileSystem.writeFile(manifestPath, manifestData);
 
     Workspace.openFile(mainPath);
-
     explorerReloadHandler();
   },
 
