@@ -12,7 +12,7 @@ import {
   LFS_O_WRONLY,
   LFS_ERR_EXIST,
   LFS_ERR_NOSPC,
-} from "./vendor/littlefs/lfs_js.js";
+} from "../vendor/littlefs/lfs_js.js";
 
 export async function createLittleFsImage(
   files,

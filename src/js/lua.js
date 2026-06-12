@@ -12,11 +12,11 @@ const { lua, lauxlib, to_luastring } = fengari;
 import { Display } from "./display.js";
 import { Input } from "./input.js";
 import { Music } from "./music.js";
-import { FileSystem } from "./file-system.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 import { Terminal } from "./terminal.js";
 import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
-import { BuiltinFiles } from "./builtin-files.js";
 import { FileExplorer } from "./file-explorer.js";
 
 /**

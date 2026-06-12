@@ -7,9 +7,9 @@
 import { ESPLoader, Transport } from "esptool-js";
 
 import { createLittleFsImage } from "./littlefs-image.js";
-import { FileSystem } from "./file-system.js";
-import { Terminal } from "./terminal.js";
-import { BuiltinFiles as BuiltinFiles } from "./builtin-files.js";
+import { FileSystem } from "../fs/file-system.js";
+import { Terminal } from "../terminal.js";
+import { BuiltinFiles as BuiltinFiles } from "../fs/builtin-files.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";

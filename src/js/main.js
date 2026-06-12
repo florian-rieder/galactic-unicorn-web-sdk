@@ -1,5 +1,5 @@
 import { Display } from "./display.js";
-import { initResizers } from "./resizer.js";
+import { initResizers } from "./ui/resizer.js";
 import { Lua } from "./lua-runtime.js";
 import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
@@ -7,15 +7,15 @@ import { MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input } from "./input.js";
 import { flashWithUi } from "./flash-ui.js";
-import { BuiltinFiles } from "./builtin-files.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 
 // Initialize components and set up the initial state of the application.
 
-await BuiltinFiles.load();
 await MonacoEditor.init();
 Workspace.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
+await BuiltinFiles.load();
 FileExplorer.reload();
 Display.render(); // Render the initial state of the display
 

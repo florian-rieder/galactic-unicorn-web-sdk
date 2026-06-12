@@ -4,7 +4,7 @@
 
 import Swal from "sweetalert2";
 
-import { EspFlasher } from "./flasher.js";
+import { EspFlasher } from "./flash/flasher.js";
 import { Terminal } from "./terminal.js";
 
 const setStatus = (text) =>

@@ -2,11 +2,11 @@ import { zipSync, unzipSync } from "fflate";
 import { saveAs } from "file-saver";
 import Swal from "sweetalert2";
 
-import { FileSystem } from "./file-system.js";
-import { FileTree } from "./file-tree.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
+import { FileTree } from "./fs/file-tree.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
-import { BuiltinFiles } from "./builtin-files.js";
 
 // File name when the user downloads the project as a zip file
 const PROJECT_EXPORT_ZIP_FILE_NAME = "project-export.zip";

@@ -9,10 +9,10 @@
 import fengari from "./vendor/fengari.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
-import { FileSystem } from "./file-system.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 
 import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
-import { BuiltinFiles } from "./builtin-files.js";
 
 /**
  * List of Lua standard libraries to open with their associated opener function name

@@ -1,9 +1,9 @@
 import Swal from "sweetalert2";
 
-import { FileSystem } from "./file-system.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
-import { BuiltinFiles } from "./builtin-files.js";
 
 import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
 import luaMainTemplate from "../lua/templates/main.lua?raw";
