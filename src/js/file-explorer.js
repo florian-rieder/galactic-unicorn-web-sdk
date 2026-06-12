@@ -32,15 +32,24 @@ fileDeleteBtn.addEventListener("click", () => FileExplorer.deleteOpenFile());
 fileUploadBtn.addEventListener("click", () => fileInput.click());
 exportBtn.addEventListener("click", () => FileExplorer.exportZip());
 
+let commonFileTree;
+
 /**
  * File explorer component, used to display the file system as a tree
  */
 export const FileExplorer = Object.freeze({
+  tree() {
+    return commonFileTree;
+  },
+
   /**
    * Reload the file explorer
    */
   reload() {
     fileExplorer.innerHTML = "";
+
+    const userFilePaths = FileSystem.listAllFiles();
+    const builtinFilePaths = BuiltinFiles.listAllFiles();
 
     if (FileSystem.isEmpty()) {
       // First time setup
@@ -55,11 +64,12 @@ export const FileExplorer = Object.freeze({
       fileExplorer.appendChild(bootstrapBtn);
     } else {
       // Build a tree datastructure from the flat stored files paths
-      const userFilePaths = FileSystem.listAllFiles();
-      const userRoot = FileTree.build(userFilePaths, FileSystem.PATH_SEPARATOR);
-
+      const userFileTree = new FileTree(
+        userFilePaths,
+        FileSystem.PATH_SEPARATOR
+      );
       // Render the tree as DOM elements recursively
-      const userDomTree = renderNode(userRoot);
+      const userDomTree = renderNode(userFileTree.root);
       if (userDomTree) {
         fileExplorer.appendChild(userDomTree);
       }
@@ -67,16 +77,21 @@ export const FileExplorer = Object.freeze({
 
     // Build the built-in files tree, separate from the user files tree
     builtinFileExplorer.innerHTML = "";
-    const builtinFilePaths = Object.keys(BuiltinFiles.getAllFiles());
-    const builtinRoot = FileTree.build(
+    const builtinFileTree = new FileTree(
       builtinFilePaths,
       FileSystem.PATH_SEPARATOR
     );
-    const builtinDomTree = renderNode(builtinRoot);
-
+    // Render the tree as DOM elements recursively
+    const builtinDomTree = renderNode(builtinFileTree.root);
     if (builtinDomTree) {
       builtinFileExplorer.appendChild(builtinDomTree);
     }
+
+    // Create a common file tree that can be used to list directories of the combined file system
+    const commonFiles = Array.from(
+      new Set(userFilePaths).union(new Set(builtinFilePaths))
+    );
+    commonFileTree = new FileTree(commonFiles, FileSystem.PATH_SEPARATOR);
   },
 
   /**

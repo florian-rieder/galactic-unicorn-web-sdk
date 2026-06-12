@@ -4,24 +4,25 @@
  * further processing that needs to be tree-aware (i.e. file explorer UI)
  */
 
-/**
- * FileTree namespace
- */
-export const FileTree = Object.freeze({
+import { FSNode } from "./fs-node.js";
+import { FileSystem } from "./file-system.js";
+
+export class FileTree {
   /**
-   * Build the file tree from a flat array of file paths
+   * Build
    *
-   * @param {Array<string>} fileList
-   * @returns {FSNode}
+   * @param {[string]} flatFilepathsList flat array of file paths to build a tree from
+   * @param {string} pathSeparator defaults to "/"
    */
-  build(fileList, pathSeparator = "/") {
-    let root = new FSNode("root", pathSeparator);
+  constructor(flatFilepathsList, pathSeparator = "/") {
+    this.pathSeparator = pathSeparator;
+    this.root = new FSNode("root", this.pathSeparator);
 
-    for (const path of fileList) {
-      let parts = path.split(pathSeparator);
+    for (const path of flatFilepathsList) {
+      let parts = path.split(this.pathSeparator);
 
-      let currentLevel = root;
-      let currentPath = root.path;
+      let currentLevel = this.root;
+      let currentPath = this.root.path;
 
       // Parts 0 is always empty (paths start with a '/')
       parts.shift(); // Remove part 0
@@ -32,7 +33,7 @@ export const FileTree = Object.freeze({
         // If this is the last part, then it's a file
         if (index == parts.length - 1) isFile = true;
 
-        const trailingSeparator = isFile ? "" : pathSeparator;
+        const trailingSeparator = isFile ? "" : this.pathSeparator;
         currentPath += part + trailingSeparator;
 
         if (!currentLevel.getChildByName(part)) {
@@ -44,66 +45,56 @@ export const FileTree = Object.freeze({
         }
       });
     }
-
-    return root;
-  },
-});
-
-/**
- * File System Node data structure, used to represent a file hierarchy as a tree
- */
-export class FSNode {
-  /**
-   * Create a new file system node
-   *
-   * @param {string} name
-   * @param {string} path
-   * @param {boolean} isFile
-   */
-  constructor(name, path, isFile = false) {
-    this.name = name;
-    this.path = path;
-    this.isFile = isFile;
-    this.children = new Map();
   }
 
   /**
-   * Add a child node to this node
-   *
-   * @param {FSNode} child
+   * List all files and directories in a directory (therefore needs to return FSNodes, because
+   * directories don't really exist as path keys in localStorage)
+   * @param {FSNode} root
+   * @returns {FSNode[]} list of file system nodes
    */
-  addChild(child) {
-    this.children.set(child.name, child);
-  }
+  listDirectory(path) {
+    const normalizedPath = FileSystem.normalizePath(path);
 
-  /**
-   * Get a child node of this node by its name
-   *
-   * @param {String} childName
-   * @returns {FSNode|null}
-   */
-  getChildByName(childName) {
-    return this.children.get(childName);
-  }
+    if (!normalizedPath) {
+      throw new Error(`Invalid path: ${path}`);
+    }
 
-  /**
-   * Return a sorted array of the child nodes of this node, sorted by type and name alphabetical
-   *
-   * @param {FSNode} node
-   * @returns {FSNode[]}
-   */
-  getSortedChildren() {
-    return Array.from(this.children.values()).sort((a, b) => {
-      // a is file and b is directory => a > b
-      if (a.isFile && !b.isFile) {
-        return 1;
-        // a is directory and b is file => a < b
-      } else if (!a.isFile && b.isFile) {
-        return -1;
+    // Special case if the given path is the root, we don't even need to walk the FS, just return
+    // the children of the root node
+    if (normalizedPath === this.pathSeparator) {
+      return this.root.getSortedChildren();
+    }
+
+    // Walk up the tree to the node that represents the directory at path
+    const parts = normalizedPath.split(this.pathSeparator);
+    parts.shift(); // parts[0] is always an empty string
+
+    let current = root;
+    for (const part of parts) {
+      // Find out which child is this path part
+      let next;
+      for (const child of current.getSortedChildren()) {
+        if (child.name === part) {
+          next = child;
+          break;
+        }
       }
 
-      // Fallback on alphabetical sorting if the type of the two files is the same
-      return a.name.localeCompare(b.name);
-    });
+      // Walk up to the child node that is this path part
+      if (next) {
+        current = next;
+      } else {
+        // If we didn't find one, the directory doesn't exist
+        throw new Error(`Not found: ${part} (${path})`);
+      }
+    }
+
+    // If the node at the given path is a file, error out because this isn't for files.
+    if (current.isFile) {
+      throw new Error(`Not a directory: ${path}`);
+    }
+
+    return current.getSortedChildren();
   }
 }

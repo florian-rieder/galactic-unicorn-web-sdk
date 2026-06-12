@@ -17,6 +17,7 @@ import { Terminal } from "./terminal.js";
 import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
 import { BuiltinFiles } from "./builtin-files.js";
+import { FileExplorer } from "./file-explorer.js";
 
 /**
  * List of Lua API functions.
@@ -1068,8 +1069,7 @@ function lua_listDirectory(L) {
 
   let contents = [];
   try {
-    contents += FileSystem.listDirectory(path);
-    //contents += BuiltinFiles.listDirectory(path);
+    contents = FileExplorer.tree().listDirectory(path);
   } catch (error) {
     return lauxlib.luaL_error(
       L,
