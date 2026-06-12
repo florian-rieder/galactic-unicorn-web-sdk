@@ -11,6 +11,8 @@ import { FileTree } from "./file-tree.js";
 
 const PATH_SEPARATOR = "/";
 
+const cache = {};
+
 /**
  * File System interface
  */
@@ -40,14 +42,20 @@ export const FileSystem = Object.freeze({
    * @returns {Uint8Array} raw bytes read from the file at path or null if it failed to read a file
    */
   readFile(path) {
+    if (cache[path]) return cache[path];
+
     let encoded = localStorage.getItem(path);
 
     if (encoded === null) {
       throw new Error("Failed to open file " + path);
     }
 
+    const data = Uint8Array.fromBase64(encoded);
+
+    cache[path] = data;
+
     // Return the raw bytes to the caller
-    return Uint8Array.fromBase64(encoded);
+    return data;
   },
 
   /**
