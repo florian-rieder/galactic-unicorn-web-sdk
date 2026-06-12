@@ -1,4 +1,4 @@
-import { unzipSync } from "fflate";
+import { unzip } from "./zip.js";
 
 const BUILTIN_FILES_ZIP_DOWNLOAD_URL =
   "https://florian-rieder.github.io/galactic-unicorn-data/data.zip";
@@ -24,14 +24,7 @@ export const BuiltinFiles = Object.freeze({
       const view = new Uint8Array(buffer);
 
       // Decompress data
-      const decompressed = unzipSync(view);
-
-      // Filter out directories from the list of files
-      cache = Object.fromEntries(
-        Object.entries(decompressed)
-          .filter(([_, v]) => v.length > 0)
-          .map(([k, v]) => ["/" + k, v])
-      );
+      cache = unzip(view);
     } catch (e) {
       // In case of error, seed an empty object to prevent startup crash
       cache = {};
@@ -51,7 +44,8 @@ export const BuiltinFiles = Object.freeze({
    */
   readFile(path) {
     if (!cacheExists()) throw new Error("Cache doesn't exist");
-    if (!cache[path]) throw new Error("File doesn't exist in built-in files cache: " + path);
+    if (!cache[path])
+      throw new Error("File doesn't exist in built-in files cache: " + path);
     return cache[path];
   },
 
