@@ -9,7 +9,7 @@ import { FileSystem } from "./file-system.js";
 
 export class FileTree {
   /**
-   * Build
+   * Build FSNode tree from a flat array of file paths
    *
    * @param {[string]} flatFilepathsList flat array of file paths to build a tree from
    * @param {string} pathSeparator defaults to "/"
@@ -50,6 +50,7 @@ export class FileTree {
   /**
    * List all files and directories in a directory (therefore needs to return FSNodes, because
    * directories don't really exist as path keys in localStorage)
+   *
    * @param {FSNode} root
    * @returns {FSNode[]} list of file system nodes
    */
@@ -70,7 +71,7 @@ export class FileTree {
     const parts = normalizedPath.split(this.pathSeparator);
     parts.shift(); // parts[0] is always an empty string
 
-    let current = root;
+    let current = this.root;
     for (const part of parts) {
       // Find out which child is this path part
       let next;

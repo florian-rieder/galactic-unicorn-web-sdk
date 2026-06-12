@@ -53,9 +53,7 @@ export const FileExplorer = Object.freeze({
 
     if (FileSystem.isEmpty()) {
       // First time setup
-      // Display two buttons in the user file explorer panel:
-      // 1) Setup empty project => creates a minimal main.lua and manifest.lua
-      // 2) Fork project => select built-in folder to copy into the user space
+      // Display a "setup empty project" button in the user file explorer panel
       const bootstrapBtn = document.createElement("button");
       bootstrapBtn.innerHTML = "Setup empty project";
       bootstrapBtn.classList.add("file-explorer-start-btn");
@@ -63,6 +61,7 @@ export const FileExplorer = Object.freeze({
 
       fileExplorer.appendChild(bootstrapBtn);
     } else {
+      // Otherwise, build the user files tree
       // Build a tree datastructure from the flat stored files paths
       const userFileTree = new FileTree(
         userFilePaths,
@@ -132,10 +131,11 @@ export const FileExplorer = Object.freeze({
           } else {
             try {
               FileSystem.writeFile("/" + file.name, view);
-            } catch (error) {}
-            Terminal.printLine(
-              `[Filesystem] Failed to upload file: ${error.message}`
-            );
+            } catch (error) {
+              Terminal.printLine(
+                `[Filesystem] Failed to upload file: ${error.message}`
+              );
+            }
           }
 
           onFileDone();
@@ -203,6 +203,8 @@ export const FileExplorer = Object.freeze({
    * Rename the currently open file
    */
   async renameOpenFile() {
+    if (Workspace.isCurrentOpenPathBuiltIn()) return;
+
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;
@@ -247,6 +249,7 @@ export const FileExplorer = Object.freeze({
       FileSystem.renameFile(currentPath, newPath);
     } catch (error) {
       Terminal.printLine(`[Filesystem] Could not rename: ${error.message}`);
+      return;
     }
 
     Workspace.onFileRenamed(currentPath, newPath);
@@ -257,6 +260,8 @@ export const FileExplorer = Object.freeze({
    * Delete the currently open file
    */
   async deleteOpenFile() {
+    if (Workspace.isCurrentOpenPathBuiltIn()) return;
+
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;

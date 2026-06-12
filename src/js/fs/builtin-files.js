@@ -51,6 +51,7 @@ export const BuiltinFiles = Object.freeze({
    */
   readFile(path) {
     if (!cacheExists()) throw new Error("Cache doesn't exist");
+    if (!cache[path]) throw new Error("File doesn't exist in built-in files cache: " + path);
     return cache[path];
   },
 

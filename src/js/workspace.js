@@ -74,9 +74,7 @@ export const Workspace = Object.freeze({
    * Save the currently open file in the editor
    */
   saveCurrentFile() {
-    if (readOnly || currentOpenPath === null) {
-      return;
-    }
+    if (readOnly || isBuiltIn || !currentOpenPath) return;
 
     const text = MonacoEditor.getText();
     // Convert text to Uint8Array
@@ -156,6 +154,15 @@ export const Workspace = Object.freeze({
       showCancelButton: true,
     });
 
+    if (result.isDismissed) {
+      return;
+    }
+
+    if (result.value.trim() === "") {
+      Terminal.printLine("[Filesystem] Invalid project name.");
+      return;
+    }
+
     // Might as well enforce style now...
     const projectName = result.value
       .trim()
@@ -188,6 +195,15 @@ export const Workspace = Object.freeze({
   },
 
   /**
+   * Check whether the currently open file is built-in or comes from the user files
+   *
+   * @returns {boolean} whether the currently open file is built in
+   */
+  isCurrentOpenPathBuiltIn() {
+    return isBuiltIn;
+  },
+
+  /**
    * Handle the event of a file being removed.
    * @param {string} path - The path of the file that was removed.
    */
@@ -196,6 +212,8 @@ export const Workspace = Object.freeze({
     if (currentOpenPath !== path) {
       return;
     }
+
+    if (isBuiltIn) return;
 
     // Empty editor and prevent saving
     currentOpenPath = null;

@@ -106,6 +106,9 @@ export const FileSystem = Object.freeze({
    */
   deleteFile(path) {
     localStorage.removeItem(path);
+
+    // Invalidate cache
+    cache[path] = undefined;
   },
 
   /**
@@ -113,21 +116,15 @@ export const FileSystem = Object.freeze({
    *
    * @param {String} oldPath
    * @param {String} newPath
-   * @returns {boolean} whether the rename succeeded
    */
   renameFile(oldPath, newPath) {
-    if (oldPath === newPath) {
-      return true;
-    }
+    if (oldPath === newPath) return;
 
     if (!this.fileExists(oldPath) || this.fileExists(newPath)) {
-      return false;
+      throw new Error("Failed to rename file " + oldPath + " to " + newPath);
     }
 
     const data = this.readFile(oldPath);
-    if (data === null || data === undefined) {
-      return false;
-    }
 
     // We delete the old file first so we don't risk a quota exceeded error just to rename it.
     this.deleteFile(oldPath);
@@ -147,11 +144,7 @@ export const FileSystem = Object.freeze({
           `The data has been lost. Sorry about that!`;
         throw new Error(errorMessage);
       }
-
-      return false;
     }
-
-    return true;
   },
 
   /**
