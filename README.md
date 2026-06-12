@@ -18,7 +18,7 @@ Developing directly on device is slow when every test requires another flash cyc
 - Console output panel for script logging and runtime errors
 - Virtual file system and file explorer
 - Export project as a zip file
-- Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers)
+- Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers and Firefox 151+)
 - Example Lua scripts in `src/lua/`
 
 ## Project status
