@@ -302,6 +302,10 @@ body.swal2-height-auto {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+
+  h2 {
+    font-size: 18px;
+  }
 }
 
 .file-explorer-panel {
