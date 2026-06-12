@@ -9,7 +9,7 @@ import { Terminal } from "./terminal.js";
 import { BuiltinFiles } from "./builtin-files.js";
 
 // File name when the user downloads the project as a zip file
-const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
+const PROJECT_EXPORT_ZIP_FILE_NAME = "project-export.zip";
 const DEFAULT_FILE_NAME = "script.lua";
 
 // Keep track of the open folder to avoid all folder collapsing when the file explorer
@@ -232,7 +232,6 @@ export const FileExplorer = Object.freeze({
       FileSystem.renameFile(currentPath, newPath);
     } catch (error) {
       Terminal.printLine(`[Filesystem] Could not rename: ${error.message}`);
-      return;
     }
 
     Workspace.onFileRenamed(currentPath, newPath);

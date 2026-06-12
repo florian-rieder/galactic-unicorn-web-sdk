@@ -28,6 +28,9 @@ export const FileSystem = Object.freeze({
   writeFile(path, data) {
     // Encode raw bytes to base64 for storage
     localStorage.setItem(path, data.toBase64());
+
+    // Update cache
+    cache[path] = data;
   },
 
   /**
@@ -118,6 +121,7 @@ export const FileSystem = Object.freeze({
     if (oldPath === newPath) {
       return true;
     }
+
     if (!this.fileExists(oldPath) || this.fileExists(newPath)) {
       return false;
     }
@@ -130,17 +134,22 @@ export const FileSystem = Object.freeze({
     // We delete the old file first so we don't risk a quota exceeded error just to rename it.
     this.deleteFile(oldPath);
 
-    if (!this.writeFile(newPath, data)) {
+    try {
+      this.writeFile(newPath, data);
+    } catch {
       // This should never happen since we just freed the exact size of the file.
       // Hopefully it doesn't.
       // If it does, we'll try to best-effort restore the file.
-      if (!this.writeFile(oldPath, data)) {
+      try {
+        this.writeFile(oldPath, data);
+      } catch {
         // Welp... Oops. We're out of luck. This should never ever happen.
         const errorMessage =
           `[Filesystem] Failed to restore file ${oldPath} after rename failure.\n` +
           `The data has been lost. Sorry about that!`;
         throw new Error(errorMessage);
       }
+
       return false;
     }
 
