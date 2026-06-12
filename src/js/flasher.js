@@ -80,12 +80,7 @@ export const EspFlasher = Object.freeze({
    * @param {Function} [callbacks.onProgress] Invoked during writeFlash with (fileIndex, written, total).
    * @returns {Promise<number|null>} Elapsed ms on success, or null if cancelled or aborted.
    */
-  async flash({
-    onPortSelected,
-    onStockDownloadFailed,
-    onConnecting,
-    onProgress,
-  } = {}) {
+  async flash({ onPortSelected, onConnecting, onProgress } = {}) {
     let port = null;
     try {
       // Request port access (user will be prompted to select a device)
