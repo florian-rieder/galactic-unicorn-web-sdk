@@ -16,6 +16,7 @@ import { FileSystem } from "./file-system.js";
 import { Terminal } from "./terminal.js";
 import { Buzzer } from "./buzzer.js";
 import { hslToRgb } from "./color.js";
+import { BuiltinFiles } from "./builtin-files.js";
 
 /**
  * List of Lua API functions.
@@ -937,7 +938,7 @@ function lua_isMusicPlaying(L) {
  * @luaKind function
  * @luaCategory file system
  * @luaParams path:string path to the file
- * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
+ * @luaReturns string: binary string representing the file contents or errors if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
  * @param {LuaState} L - Fengari Lua state.
@@ -946,10 +947,18 @@ function lua_isMusicPlaying(L) {
 function lua_readFile(L) {
   const path = lua.lua_tojsstring(L, 1);
 
-  let file = FileSystem.readFile(path);
-  if (file === null) {
-    lua.lua_pushnil(L);
-    return 1;
+  let file;
+  try {
+    file = FileSystem.readFile(path);
+  } catch (error) {
+    try {
+      file = BuiltinFiles.readFile(path);
+    } catch (error) {
+      return lauxlib.luaL_error(
+        L,
+        to_luastring(`failed read file '${path}': ${error.message}`)
+      );
+    }
   }
 
   lua.lua_pushlstring(L, file, file.length);
@@ -979,10 +988,19 @@ function lua_readFileChunk(L) {
   const offset = lua.lua_tointeger(L, 2);
   const size = lua.lua_tointeger(L, 3);
 
-  let chunk = FileSystem.readFileChunk(path, offset, size);
+  let chunk;
+  try {
+    chunk = FileSystem.readFileChunk(path, offset, size);
+  } catch {
+    try {
+      chunk = BuiltinFiles.readFileChunk(path, offset, size);
+    } catch {
+      console.warn("Failed to read file chunk");
+    }
+  }
 
   // If the chunk couldn't be read, return nil.
-  if (chunk === null) {
+  if (!chunk) {
     lua.lua_pushnil(L);
     return 1;
   }
@@ -1011,7 +1029,19 @@ function lua_readFileChunk(L) {
 function lua_fileSize(L) {
   const path = lua.lua_tojsstring(L, 1);
 
-  let size = FileSystem.fileSizeAtPath(path);
+  let size;
+  try {
+    size = FileSystem.fileSizeAtPath(path);
+  } catch (error) {
+    try {
+      size = BuiltinFiles.fileSizeAtPath(path);
+    } catch {
+      return lauxlib.luaL_error(
+        L,
+        to_luastring(`failed get file size '${path}': ${error.message}`)
+      );
+    }
+  }
 
   lua.lua_pushinteger(L, size);
 
@@ -1038,7 +1068,8 @@ function lua_listDirectory(L) {
 
   let contents = [];
   try {
-    contents = FileSystem.listDirectory(path);
+    contents += FileSystem.listDirectory(path);
+    //contents += BuiltinFiles.listDirectory(path);
   } catch (error) {
     return lauxlib.luaL_error(
       L,
