@@ -3,6 +3,7 @@ node_modules/
 dist/
 src/js/vendor/
 public/docs/
+public/data/
 .old
 .vscode/
 .vite/

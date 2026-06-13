@@ -1,7 +1,6 @@
 import { unzip } from "./zip.js";
 
-const BUILTIN_FILES_ZIP_DOWNLOAD_URL =
-  "https://florian-rieder.github.io/galactic-unicorn-data/data.zip";
+const BUILTIN_FILES_ZIP_URL = "./data/builtin-data.zip";
 
 let cache;
 
@@ -13,7 +12,7 @@ export const BuiltinFiles = Object.freeze({
     if (cacheExists()) return;
 
     try {
-      const response = await fetch(BUILTIN_FILES_ZIP_DOWNLOAD_URL);
+      const response = await fetch(BUILTIN_FILES_ZIP_URL);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
