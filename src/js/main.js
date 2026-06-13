@@ -11,11 +11,10 @@ import { BuiltinFiles } from "./fs/builtin-files.js";
 
 // Initialize components and set up the initial state of the application.
 
-await MonacoEditor.init();
+await Promise.all([BuiltinFiles.load(), MonacoEditor.init()]);
 Workspace.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
-await BuiltinFiles.load();
 FileExplorer.reload();
 Display.render(); // Render the initial state of the display
 
