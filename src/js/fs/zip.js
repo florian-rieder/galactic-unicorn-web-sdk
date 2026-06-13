@@ -10,7 +10,7 @@ import { FileSystem } from "./file-system.js";
 export function zip(files) {
   // fflate expects raw Uint8Array as file data, which is perfect since it's
   // exactly what our FileSystem outputs ! Bingo !
-  // And it accepts a flar array of filepaths, so we don't need to do anything
+  // And it accepts a flat array of filepaths, so we don't need to do anything
 
   // Zip the tree using fflate
   const zippedBytes = zipSync(files, {
@@ -44,7 +44,8 @@ export function unzip(zipBytes) {
           !path.includes(".DS_Store")
         );
       })
-      .map(([k, v]) => [FileSystem.normalizePath(k), v]) // Normalize file paths
+      .map(([path, data]) => [FileSystem.normalizePath(path), data]) // Normalize file paths
+      .filter(([path, _data]) => path !== null) // Filter out null paths (can be produced by normalizePath)
   );
 
   // Strip one leading path segment when every entry lives under the same folder

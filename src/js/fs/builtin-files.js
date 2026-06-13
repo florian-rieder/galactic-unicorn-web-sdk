@@ -25,7 +25,8 @@ export const BuiltinFiles = Object.freeze({
 
       // Decompress data
       cache = unzip(view);
-    } catch (e) {
+    } catch (error) {
+      console.error("Failed to load built-in files: " + error.message);
       // In case of error, seed an empty object to prevent startup crash
       cache = {};
     }

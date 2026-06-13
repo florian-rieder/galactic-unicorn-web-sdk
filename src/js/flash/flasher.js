@@ -8,8 +8,8 @@ import { ESPLoader, Transport } from "esptool-js";
 
 import { createLittleFsImage } from "./littlefs-image.js";
 import { FileSystem } from "../fs/file-system.js";
+import { BuiltinFiles } from "../fs/builtin-files.js";
 import { Terminal } from "../terminal.js";
-import { BuiltinFiles as BuiltinFiles } from "../fs/builtin-files.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
@@ -73,9 +73,6 @@ export const EspFlasher = Object.freeze({
    *
    * @param {Object} [callbacks]
    * @param {Function} [callbacks.onPortSelected] Invoked after the user picks a serial port (awaited).
-   * @param {Function} [callbacks.onStockDownloadFailed] Invoked when built-in files cannot be downloaded.
-   *   Receives `error` and must resolve to `true` to flash with user files only, or `false` to abort.
-   *   If omitted, flash is aborted when the download fails.
    * @param {Function} [callbacks.onConnecting] Invoked just before connecting to the chip.
    * @param {Function} [callbacks.onProgress] Invoked during writeFlash with (fileIndex, written, total).
    * @returns {Promise<number|null>} Elapsed ms on success, or null if cancelled or aborted.

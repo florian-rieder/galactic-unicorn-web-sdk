@@ -108,7 +108,7 @@ export const FileSystem = Object.freeze({
     localStorage.removeItem(path);
 
     // Invalidate cache
-    cache[path] = undefined;
+    delete cache[path];
   },
 
   /**

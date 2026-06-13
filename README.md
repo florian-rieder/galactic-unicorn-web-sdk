@@ -72,7 +72,7 @@ To test the production bundle locally, use `npm run preview` (serves `dist/` at 
 
 **Flash** writes the device’s LittleFS `/data` partition over USB. It does not flash the ESP firmware; the board must already run a compatible build.
 
-Use a **Chromium** browser (Chrome, Edge, Brave, etc.). Web Serial does not work in Firefox or Safari.
+Use a browser that supports Web Serial API: Chromium browsers (Chrome, Edge, Brave, etc.), or Firefox 151+.
 
 On flash, the SDK downloads the built-in [data zip](https://github.com/florian-rieder/galactic-unicorn-data/), merges it with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full built-in tree first.
 
