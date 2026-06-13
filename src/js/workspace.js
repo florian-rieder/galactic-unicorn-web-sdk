@@ -174,6 +174,10 @@ export const Workspace = Object.freeze({
     const mainPath = `/${projectName}/main.lua`;
     const mainData = new TextEncoder().encode(luaMainTemplate);
     const cleanMainPath = FileSystem.normalizePath(mainPath);
+    if (cleanMainPath === null) {
+      Terminal.printLine("[Filesystem] Invalid main path.");
+      return;
+    }
     FileSystem.writeFile(cleanMainPath, mainData);
 
     // Manifest file
@@ -182,6 +186,10 @@ export const Workspace = Object.freeze({
     const manifest = luaManifestTemplate.replace("<game_name>", result.value);
     const manifestData = new TextEncoder().encode(manifest);
     const cleanManifestPath = FileSystem.normalizePath(manifestPath);
+    if (cleanManifestPath === null) {
+      Terminal.printLine("[Filesystem] Invalid manifest path.");
+      return;
+    }
     FileSystem.writeFile(cleanManifestPath, manifestData);
 
     Workspace.openFile(cleanMainPath);
