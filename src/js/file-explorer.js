@@ -95,9 +95,7 @@ export const FileExplorer = Object.freeze({
     }
 
     // Create a common file tree that can be used to list directories of the combined file system
-    const commonFiles = Array.from(
-      new Set(userFilePaths).union(new Set(builtinFilePaths))
-    );
+    const commonFiles = [...new Set([...userFilePaths, ...builtinFilePaths])]
     commonFileTree = new FileTree(commonFiles, FileSystem.PATH_SEPARATOR);
   },
 

@@ -173,16 +173,18 @@ export const Workspace = Object.freeze({
     // Entrypoint script
     const mainPath = `/${projectName}/main.lua`;
     const mainData = new TextEncoder().encode(luaMainTemplate);
-    FileSystem.writeFile(mainPath, mainData);
+    const cleanMainPath = FileSystem.normalizePath(mainPath);
+    FileSystem.writeFile(cleanMainPath, mainData);
 
     // Manifest file
     const manifestPath = `/${projectName}/manifest.lua`;
     // Replace placeholder
     const manifest = luaManifestTemplate.replace("<game_name>", result.value);
     const manifestData = new TextEncoder().encode(manifest);
-    FileSystem.writeFile(manifestPath, manifestData);
+    const cleanManifestPath = FileSystem.normalizePath(manifestPath);
+    FileSystem.writeFile(cleanManifestPath, manifestData);
 
-    Workspace.openFile(mainPath);
+    Workspace.openFile(cleanMainPath);
     explorerReloadHandler();
   },
 
