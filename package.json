@@ -8,9 +8,9 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "build:fengari": "esbuild node_modules/fengari/src/fengari.js --bundle --format=esm --platform=browser --define:process.env.FENGARICONF=undefined --define:process.env.NODE_DEBUG=undefined --define:process.platform='\"browser\"' --external:os --external:fs --external:path --external:child_process --external:readline-sync --external:tmp --outfile=src/js/vendor/fengari.js",
-    "build:littlefs": "mkdir -p src/js/vendor/littlefs && curl -fsSL -o src/js/vendor/littlefs/lfs.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs.js && curl -fsSL -o src/js/vendor/littlefs/lfs_js.js https://github.com/hurzhurz/littlefs-js/releases/download/v2.5.1.0-name_max/lfs_js.js",
-    "build:data": "cd builtin-data && make build && mkdir -p ../public/data && mv dist/data.zip ../public/data/builtin-data.zip",
+    "build:fengari": "sh ./scripts/build-fengari.sh",
+    "build:littlefs": "sh ./scripts/build-littlefs.sh",
+    "build:data": "sh ./scripts/build-data.sh",
     "build:vendor": "npm run build:fengari && npm run build:littlefs && npm run build:data",
     "predev": "npm run build:vendor",
     "prebuild": "npm run build:vendor",
