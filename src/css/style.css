@@ -10,6 +10,30 @@ html {
   --text-color: #d4d4d4;
   --tree-icon-folder-color: #e69c2d;
   --tree-icon-file-color: #529dfa;
+
+  --accent-bg: #264e9f;
+  --accent-border: #1e3d7a;
+  --accent-bg-hover: #2f5eb8;
+  --accent-border-hover: #264e9f;
+  --accent-bg-active: #1e4088;
+  --accent-border-active: #183266;
+
+  --danger-bg: #a12645;
+  --danger-border: #8b2635;
+  --danger-bg-hover: #b82e50;
+  --danger-text: #ffffff;
+
+  --btn-disabled-bg: #333333;
+  --btn-disabled-border: #404040;
+  --btn-disabled-color: #777777;
+  --btn-disabled-opacity: 0.55;
+
+  --muted-text: #888888;
+  --tooltip-text: #cccccc;
+  --tooltip-border: #3c3c3c;
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --surface-active: rgba(255, 255, 255, 0.14);
+  --resizer-hover-bg: #444444;
 }
 
 .swal2-popup {
@@ -24,7 +48,7 @@ html {
 }
 
 .swal2-popup.swal2-popup--danger {
-  --swal2-confirm-button-background-color: #8b2635;
+  --swal2-confirm-button-background-color: var(--danger-border);
 }
 
 .flash-status {
@@ -120,7 +144,7 @@ body.swal2-height-auto {
 
 .resizer-h:hover,
 .resizer-v:hover {
-  background: #444;
+  background: var(--resizer-hover-bg);
 }
 #toolbar {
   border-bottom: 1px solid var(--primary-border);
@@ -134,7 +158,6 @@ body.swal2-height-auto {
 }
 
 .toolbar-btn {
-  position: relative;
   background: none;
   border: none;
   border-radius: 6px;
@@ -147,16 +170,45 @@ body.swal2-height-auto {
   transition: background 0.15s;
 }
 
-.toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+.toolbar-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
 }
 
-.toolbar-btn:active {
-  background: rgba(255, 255, 255, 0.14);
+.toolbar-btn:active:not(:disabled) {
+  background: var(--surface-active);
+}
+
+.toolbar-btn:disabled {
+  opacity: var(--btn-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.toolbar-btn:disabled img {
+  filter: grayscale(1);
 }
 
 .toolbar-btn-docs {
+  margin-left: 0;
+}
+
+.tooltip-host {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-host--end {
   margin-left: auto;
+}
+
+#file-explorer-toolbar .tooltip-host {
+  display: flex;
+  min-width: 0;
+}
+
+#file-explorer-toolbar .tooltip-host .explorer-btn {
+  flex: 1;
+  width: 100%;
 }
 
 .tooltip {
@@ -169,18 +221,24 @@ body.swal2-height-auto {
   left: 50%;
   transform: translateX(-50%);
   background: var(--primary-border);
-  color: #ccc;
+  color: var(--tooltip-text);
   font-size: 12px;
   font-family: sans-serif;
   white-space: nowrap;
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid var(--tooltip-border);
   transition: opacity 0.15s;
   z-index: 10;
 }
 
-.toolbar-btn:hover .tooltip {
+.tooltip--align-end {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.tooltip-host:hover .tooltip {
   display: block;
   visibility: visible;
   opacity: 1;
@@ -230,7 +288,7 @@ body.swal2-height-auto {
   justify-content: space-between;
   padding: 0px 24px;
   border-bottom: 1px solid var(--primary-border);
-  background: #264e9f;
+  background: var(--accent-bg);
   font-size: 14px;
 }
 
@@ -251,8 +309,6 @@ body.swal2-height-auto {
   flex: 0 0 220px;
   min-width: 180px;
   min-height: 0;
-  padding: 8px;
-  gap: 10px;
   box-sizing: border-box;
   background-color: var(--primary-bg);
   border-left: 1px solid var(--primary-border);
@@ -261,38 +317,48 @@ body.swal2-height-auto {
 
 #file-explorer-toolbar {
   flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--primary-border);
+  overflow: visible;
 }
 
 .explorer-btn {
-  background: none;
-  border: 1px solid var(--primary-border);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
   border-radius: 6px;
-  color: inherit;
+  color: var(--text-color);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1;
-  min-width: 28px;
-  padding: 4px 6px;
-  transition: background 0.15s;
+  min-height: 32px;
+  min-width: 0;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .explorer-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--accent-bg-hover);
+  border-color: var(--accent-border-hover);
 }
 
 .explorer-btn:active:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--accent-bg-active);
+  border-color: var(--accent-border-active);
 }
 
 .explorer-btn:disabled {
-  color: #666;
+  background: var(--btn-disabled-bg);
+  border-color: var(--btn-disabled-border);
+  color: var(--btn-disabled-color);
   cursor: not-allowed;
-  opacity: 0.6;
+  pointer-events: none;
 }
 
 #file-explorer-panels {
@@ -302,10 +368,6 @@ body.swal2-height-auto {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-
-  h2 {
-    font-size: 18px;
-  }
 }
 
 .file-explorer-panel {
@@ -317,13 +379,33 @@ body.swal2-height-auto {
   overflow: hidden;
 }
 
+.file-explorer-panel h2 {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-text);
+}
+
 .file-explorer-tree {
   flex: 1;
   min-height: 0;
   min-width: 0;
+  padding: 4px 10px 8px;
   font-family: monospace;
   font-size: 14px;
   overflow: auto;
+  box-sizing: border-box;
+}
+
+.file-explorer-tree:has(> .file-explorer-start-btn) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 10px;
 }
 
 .file-explorer-panel ul {
@@ -383,10 +465,25 @@ body.swal2-height-auto {
 }
 
 button.file-explorer-start-btn {
-  background-color: #a12645;
-  padding: 1em 2em;
-  border-radius: 3px;
-  border: none;
-  color: white;
-  font-family: Arial, Helvetica, sans-serif;
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  min-height: 52px;
+  padding: 14px 20px;
+  border: 1px solid var(--danger-border);
+  border-radius: 6px;
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  transition: background 0.15s;
+}
+
+button.file-explorer-start-btn:hover {
+  background-color: var(--danger-bg-hover);
 }
