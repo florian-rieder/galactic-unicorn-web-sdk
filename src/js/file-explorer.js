@@ -48,6 +48,14 @@ export const FileExplorer = Object.freeze({
   reload() {
     fileExplorer.innerHTML = "";
 
+    // Enable/disable toolbar buttons
+    const openPath = Workspace.getCurrentOpenPath();
+    const isBuiltIn = Workspace.isCurrentOpenPathBuiltIn();
+    fileRenameBtn.disabled = isBuiltIn || !openPath;
+    fileDeleteBtn.disabled = isBuiltIn || !openPath;
+    exportBtn.disabled = FileSystem.isEmpty();
+
+    // Generate file explorer panels
     const userFilePaths = FileSystem.listAllFiles();
     const builtinFilePaths = BuiltinFiles.listAllFiles();
 
@@ -130,7 +138,14 @@ export const FileExplorer = Object.freeze({
             importZipBytes(view, file.name);
           } else {
             try {
-              FileSystem.writeFile("/" + file.name, view);
+              const path = FileSystem.normalizePath(file.name);
+              if (path === null) {
+                Terminal.printLine(
+                  "[Filesystem] Invalid file name: " + file.name
+                );
+                return;
+              }
+              FileSystem.writeFile(path, view);
             } catch (error) {
               Terminal.printLine(
                 `[Filesystem] Failed to upload file: ${error.message}`
