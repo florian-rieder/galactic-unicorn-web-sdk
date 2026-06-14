@@ -9,7 +9,8 @@
 import fengari from "./vendor/fengari.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
-import { FileSystem } from "./file-system.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 
 import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
 
@@ -107,13 +108,19 @@ function lua_virtualFsPackageSearcher(L) {
     return lauxlib.luaL_error(L, `Invalid module path: ${moduleName}`);
   }
 
-  const rawFile = FileSystem.readFile(modulePath);
-  if (!rawFile) {
-    lua.lua_pushstring(
-      L,
-      to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`)
-    );
-    return 1;
+  let rawFile;
+  try {
+    rawFile = FileSystem.readFile(modulePath);
+  } catch {
+    try {
+      rawFile = BuiltinFiles.readFile(modulePath);
+    } catch (error) {
+      lua.lua_pushstring(
+        L,
+        to_luastring(`\n\tno file '${modulePath}' in virtual filesystem`)
+      );
+      return 1;
+    }
   }
 
   const loadStatus = lauxlib.luaL_loadbuffer(

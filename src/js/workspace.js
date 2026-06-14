@@ -1,26 +1,21 @@
 import Swal from "sweetalert2";
 
-import { FileSystem } from "./file-system.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
 
-import defaultSnakeLua from "../lua/snake.lua?raw";
+import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
+import luaMainTemplate from "../lua/templates/main.lua?raw";
 
-const TEXTISH_EXTENSIONS = [
-  "txt",
-  "lua",
-  "lson",
-  "md",
-  "xml",
-  "json",
-  "csv",
-  "tsv",
-];
-const LUA_EXTENSIONS = ["lua", "lson"];
-const DEFAULT_SCRIPT_PATH = "/main.lua";
+const DEFAULT_PROJECT_NAME = "My project";
+const TEXTISH_EXTENSIONS = ["txt", "lua", "md", "xml", "json", "csv", "tsv"];
 
-let currentOpenPath = DEFAULT_SCRIPT_PATH;
-let readOnly = false;
+let currentOpenPath = null;
+let isBuiltIn = false; // is the currently open file built-in ?
+let readOnly = false; // is the currently open file read-only ?
+
+const banner = document.getElementById("builtin-readonly-banner");
 
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
 let explorerReloadHandler = () => {};
@@ -36,21 +31,63 @@ export const Workspace = Object.freeze({
   },
 
   /**
+   * Wire the built-in read-only banner copy button. Call once at startup.
+   */
+  init() {
+    document
+      .getElementById("builtin-copy-btn")
+      .addEventListener("click", () =>
+        Workspace.copyBuiltinOpenFileToProject()
+      );
+
+    MonacoEditor.setText("", "plaintext", true);
+  },
+
+  /**
+   * Copy the currently open built-in file into the user project at the same path.
+   */
+  copyBuiltinOpenFileToProject() {
+    if (!isBuiltIn || currentOpenPath === null) {
+      return;
+    }
+
+    let rawFile;
+    try {
+      rawFile = BuiltinFiles.readFile(currentOpenPath);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not copy: ${error.message}`);
+      return;
+    }
+
+    try {
+      FileSystem.writeFile(currentOpenPath, rawFile);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not copy: ${error.message}`);
+      return;
+    }
+
+    Workspace.openFile(currentOpenPath);
+    explorerReloadHandler();
+  },
+
+  /**
    * Save the currently open file in the editor
    */
   saveCurrentFile() {
-    if (readOnly || currentOpenPath === null) {
-      return;
-    }
+    if (readOnly || isBuiltIn || !currentOpenPath) return;
 
     const text = MonacoEditor.getText();
     // Convert text to Uint8Array
     const encoded = new TextEncoder().encode(text);
+
     // Write file to FS
-    if (!FileSystem.writeFile(currentOpenPath, encoded)) {
-      Terminal.printLine(`[Error] Failed to save file ${currentOpenPath}`);
+    try {
+      FileSystem.writeFile(currentOpenPath, encoded);
+    } catch (error) {
+      Terminal.printLine(error.message);
       return;
     }
+
     explorerReloadHandler();
   },
 
@@ -59,55 +96,104 @@ export const Workspace = Object.freeze({
    * @param {string} path - The path of the file to open.
    */
   openFile(path) {
-    const rawFile = FileSystem.readFile(path);
-    if (rawFile === null) {
+    let rawFile;
+
+    try {
+      rawFile = FileSystem.readFile(path);
+      readOnly = false;
+      isBuiltIn = false;
+    } catch {
+      rawFile = BuiltinFiles.readFile(path);
+      readOnly = true;
+      isBuiltIn = true;
+    }
+
+    if (!rawFile) {
       console.error("Couldn't open file " + path);
       return;
     }
 
     currentOpenPath = path;
 
-    const extension = path.split(".").slice(-1)[0].toLowerCase();
+    const extension = path.toLowerCase().split(".").slice(-1)[0];
 
     if (TEXTISH_EXTENSIONS.includes(extension)) {
-      readOnly = false;
       // Plain text file: simply decode the bytes into text
       const decodedString = new TextDecoder().decode(rawFile);
 
-      let language = "plaintext";
-      if (LUA_EXTENSIONS.includes(extension)) {
-        language = "lua";
-      }
-
       // Load into monaco
-      MonacoEditor.setText(decodedString, language, readOnly);
+      MonacoEditor.setText(decodedString, extension, readOnly);
+      banner.hidden = !isBuiltIn;
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
       // Binary file: show file size
-      MonacoEditor.setText(
-        `Binary (${FileSystem.fileSizeAtPath(path)} bytes)`,
-        "plaintext",
-        readOnly
-      );
+      let size = 0;
+      try {
+        size = FileSystem.fileSizeAtPath(path);
+        banner.hidden = true;
+      } catch (e) {
+        size = BuiltinFiles.fileSizeAtPath(path);
+        banner.hidden = false;
+      }
+
+      MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
     }
   },
 
   /**
-   * Load the default script if it exists, otherwise create it.
-   *
-   * Design decision: there will always be a default script in the file system.
-   * If it doesn't exist, create it.
+   * Creates a minimal main.lua and manifest.lua
    */
-  maybeLoadDefaultScript() {
-    if (FileSystem.fileExists(DEFAULT_SCRIPT_PATH)) {
-      // Open the default file from the file system
-      this.openFile(DEFAULT_SCRIPT_PATH);
-    } else {
-      // Set default script
-      MonacoEditor.setText(defaultSnakeLua, "lua", false);
-      this.saveCurrentFile(); // Create the default file in the file system
+  async createEmptyProject() {
+    if (!FileSystem.isEmpty()) return;
+
+    const result = await Swal.fire({
+      input: "text",
+      inputValue: DEFAULT_PROJECT_NAME,
+      title: "Project name",
+      showCancelButton: true,
+    });
+
+    if (result.isDismissed) {
+      return;
     }
+
+    if (result.value.trim() === "") {
+      Terminal.printLine("[Filesystem] Invalid project name.");
+      return;
+    }
+
+    // Might as well enforce style now...
+    const projectName = result.value
+      .trim()
+      .toLowerCase()
+      .split(RegExp("\\s"))
+      .join("-");
+
+    // Entrypoint script
+    const mainPath = `/${projectName}/main.lua`;
+    const mainData = new TextEncoder().encode(luaMainTemplate);
+    const cleanMainPath = FileSystem.normalizePath(mainPath);
+    if (cleanMainPath === null) {
+      Terminal.printLine("[Filesystem] Invalid main path.");
+      return;
+    }
+    FileSystem.writeFile(cleanMainPath, mainData);
+
+    // Manifest file
+    const manifestPath = `/${projectName}/manifest.lua`;
+    // Replace placeholder
+    const manifest = luaManifestTemplate.replace("<game_name>", result.value);
+    const manifestData = new TextEncoder().encode(manifest);
+    const cleanManifestPath = FileSystem.normalizePath(manifestPath);
+    if (cleanManifestPath === null) {
+      Terminal.printLine("[Filesystem] Invalid manifest path.");
+      return;
+    }
+    FileSystem.writeFile(cleanManifestPath, manifestData);
+
+    Workspace.openFile(cleanMainPath);
+    explorerReloadHandler();
   },
 
   /**
@@ -116,6 +202,15 @@ export const Workspace = Object.freeze({
    */
   getCurrentOpenPath() {
     return currentOpenPath;
+  },
+
+  /**
+   * Check whether the currently open file is built-in or comes from the user files
+   *
+   * @returns {boolean} whether the currently open file is built in
+   */
+  isCurrentOpenPathBuiltIn() {
+    return isBuiltIn;
   },
 
   /**
@@ -128,8 +223,11 @@ export const Workspace = Object.freeze({
       return;
     }
 
-    // Open main if it exists, otherwise create the default script.
-    this.maybeLoadDefaultScript();
+    if (isBuiltIn) return;
+
+    // Empty editor and prevent saving
+    currentOpenPath = null;
+    MonacoEditor.setText("", "plaintext", true);
   },
 
   /**

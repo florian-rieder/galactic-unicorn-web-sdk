@@ -18,7 +18,7 @@ Developing directly on device is slow when every test requires another flash cyc
 - Console output panel for script logging and runtime errors
 - Virtual file system and file explorer
 - Export project as a zip file
-- Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers)
+- Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers and Firefox 151+)
 - Example Lua scripts in `src/lua/`
 
 ## Project status
@@ -28,9 +28,24 @@ The Lua API is still subject to breaking changes.
 
 ## Run locally
 
-The app is built with [Vite](https://vitejs.dev/). Use Node.js 18+.
+The app is built with [Vite 8](https://vitejs.dev/).
 
-### 1) Install dependencies
+### 1) Clone
+
+```bash
+git clone --recurse-submodules https://github.com/florian-rieder/galactic-unicorn-web-sdk.git
+cd galactic-unicorn-web-sdk
+```
+
+If you already cloned without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+`builtin-data/` tracks the [built-in data](https://github.com/florian-rieder/galactic-unicorn-data) repo (same content as firmware’s filesystem data partition).
+
+### 2) Install dependencies
 
 ```bash
 npm install
@@ -38,7 +53,7 @@ npm install
 
 **`esbuild`** is used both by `vite-plugin-monaco-editor` and by the `build:fengari` script that bundles Fengari for the browser (runs automatically before `dev` / `build`).
 
-### 2) Development server
+### 3) Development server
 
 ```bash
 npm run dev
@@ -46,11 +61,11 @@ npm run dev
 
 Open the URL Vite prints. The app is built with `base: '/galactic-unicorn-web-sdk/'` (GitHub Pages), so the dev entry is:
 
-`http://localhost:5173/galactic-unicorn-web-sdk/`
+[http://localhost:5173/galactic-unicorn-web-sdk/](http://localhost:5173/galactic-unicorn-web-sdk/)
 
 Use that path (with trailing slash) so relative links like `./assets/...` resolve correctly. Hot reload is enabled.
 
-### 3) Production build
+### 4) Production build
 
 ```bash
 npm run build
@@ -72,9 +87,9 @@ To test the production bundle locally, use `npm run preview` (serves `dist/` at 
 
 **Flash** writes the device’s LittleFS `/data` partition over USB. It does not flash the ESP firmware; the board must already run a compatible build.
 
-Use a **Chromium** browser (Chrome, Edge, Brave, etc.). Web Serial does not work in Firefox or Safari.
+Use a browser that supports Web Serial API: Chromium browsers (Chrome, Edge, Brave, etc.), or Firefox 151+.
 
-On flash, the SDK downloads the stock [data zip](https://github.com/florian-rieder/galactic-unicorn-data/), merges it with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full stock tree first.
+On flash, the SDK merges the [built-in data](https://github.com/florian-rieder/galactic-unicorn-data/) with your workspace (files in the explorer), and writes the result. **Your files win** if the same path exists in both. You can edit just your game and flash without importing the full built-in tree first.
 
 ## API documentation
 

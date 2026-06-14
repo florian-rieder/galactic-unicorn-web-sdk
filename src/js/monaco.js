@@ -1,7 +1,7 @@
 /**
  * Monaco editor bootstrap for the Lua SDK workspace.
  *
- * This file only creates the editor and wires up language helpers from `./monaco/`.
+ * This file only creates the editor and wires up language helpers from `./monaco/*`.
  * Each helper registers a Monaco "provider" (callback Monaco calls when the user
  * types, hovers, etc.). See the module files for what each provider does.
  */
@@ -21,7 +21,7 @@ const editorOptions = {
   insertSpaces: true, // Use spaces when Tab is pressed
   detectIndentation: false, // Keep explicit tabSize instead of auto-detecting
   minimap: { enabled: true }, // Show minimap (code overview)
-  scrollBeyondLastLine: false, // Disable scrolling beyond the last line
+  scrollBeyondLastLine: true, // Enable scrolling beyond the last line
   automaticLayout: true, // Enable resizing of the editor
 };
 
@@ -62,8 +62,10 @@ export const MonacoEditor = Object.freeze({
     // Create the editor
     editorOptions.value = defaultTextContent;
     editor = monaco.editor.create(container, editorOptions);
-    // Syntax error squiggles: Fengari compile-only.
+    // Syntax error squiggles using Fengari
     installLuaDiagnostics(editor, monaco);
+
+    // Galactic Unicorn Lua bindings highlights
     if (sdkApi) {
       installSdkNameHighlights(editor, sdkApi);
     }
@@ -75,17 +77,23 @@ export const MonacoEditor = Object.freeze({
   /**
    * Set a given string as the open buffer in the monaco editor
    * @param {String} text
+   * @param {String} language either "lua", or anything else will be "plaintext"
+   * @param {boolean} readOnly whether to set the editor as read-only
    */
   setText(text, language = "plaintext", readOnly = false) {
     if (!editor) return;
 
+    // Set text
+    editor.setValue(text);
+
+    // Set language
     const model = editor.getModel();
     if (model) {
       const langId = language === "lua" ? "lua" : "plaintext";
       monaco.editor.setModelLanguage(model, langId);
     }
 
-    editor.setValue(text);
+    // Set read-only mode
     // see https://github.com/microsoft/monaco-editor/issues/54
     editor.updateOptions({ readOnly: readOnly });
   },

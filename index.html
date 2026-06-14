@@ -10,28 +10,36 @@
 
   <body>
     <div id="toolbar">
-      <button id="run-btn" class="toolbar-btn" title="Run" disabled>
-        <img src="./assets/images/play-button.svg" alt="Run" />
+      <span class="tooltip-host">
+        <button id="run-btn" class="toolbar-btn" aria-label="Run" disabled>
+          <img src="./assets/images/play-button.svg" alt="" />
+        </button>
         <span class="tooltip">Run</span>
-      </button>
-      <button id="stop-btn" class="toolbar-btn" title="Stop">
-        <img src="./assets/images/stop-button.svg" alt="Stop" />
+      </span>
+      <span class="tooltip-host">
+        <button id="stop-btn" class="toolbar-btn" aria-label="Stop">
+          <img src="./assets/images/stop-button.svg" alt="" />
+        </button>
         <span class="tooltip">Stop</span>
-      </button>
-      <button id="flash-btn" class="toolbar-btn" title="Flash to device">
-        <img src="./assets/images/flash-button.svg" alt="Flash" />
+      </span>
+      <span class="tooltip-host">
+        <button id="flash-btn" class="toolbar-btn" aria-label="Flash to device">
+          <img src="./assets/images/flash-button.svg" alt="" />
+        </button>
         <span class="tooltip">Flash</span>
-      </button>
-      <a
-        href="./docs/api.html"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="toolbar-btn toolbar-btn-docs"
-        title="Open Lua API docs"
-      >
-        <img src="./assets/images/help.svg" alt="Help icon" />
-        <span class="tooltip">API docs</span>
-      </a>
+      </span>
+      <span class="tooltip-host tooltip-host--end">
+        <a
+          href="./docs/api.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="toolbar-btn toolbar-btn-docs"
+          aria-label="Open Lua API docs"
+        >
+          <img src="./assets/images/help.svg" alt="" />
+        </a>
+        <span class="tooltip tooltip--align-end">API docs</span>
+      </span>
     </div>
     <div id="container">
       <div id="app">
@@ -44,53 +52,97 @@
         </div>
       </div>
       <div class="resizer resizer-v" data-fixed="prev"></div>
-      <div id="monaco-container" aria-label="Text editor"></div>
+      <div id="monaco-pane" class="monaco-pane" aria-label="Text editor">
+        <div
+          id="builtin-readonly-banner"
+          class="builtin-readonly-banner"
+          role="status"
+          hidden
+        >
+          <p>Built-in file (read-only). Copy to your project to edit.</p>
+          <button type="button" id="builtin-copy-btn">Copy to project</button>
+        </div>
+        <div id="monaco-container"></div>
+      </div>
       <div class="resizer resizer-v" data-fixed="next"></div>
       <aside id="file-explorer-pane" aria-label="Project files">
         <div id="file-explorer-toolbar" aria-label="File actions">
-          <button
-            type="button"
-            id="file-new-btn"
-            class="explorer-btn"
-            title="New file"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            id="file-upload-btn"
-            class="explorer-btn"
-            title="Upload file"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            id="file-rename-btn"
-            class="explorer-btn"
-            title="Rename open file"
-          >
-            ✎
-          </button>
-          <button
-            type="button"
-            id="file-delete-btn"
-            class="explorer-btn"
-            title="Delete open file"
-          >
-            ×
-          </button>
-          <button
-            type="button"
-            id="export-btn"
-            class="explorer-btn"
-            title="Export project to ZIP"
-          >
-            ⤴
-          </button>
+          <span class="tooltip-host">
+            <button
+              type="button"
+              id="file-new-btn"
+              class="explorer-btn"
+              aria-label="New file"
+            >
+              +
+            </button>
+            <span class="tooltip">New file</span>
+          </span>
+          <span class="tooltip-host">
+            <button
+              type="button"
+              id="file-upload-btn"
+              class="explorer-btn"
+              aria-label="Upload file"
+            >
+              ↑
+            </button>
+            <span class="tooltip">Upload file</span>
+          </span>
+          <span class="tooltip-host">
+            <button
+              type="button"
+              id="file-rename-btn"
+              class="explorer-btn"
+              aria-label="Rename open file"
+            >
+              ✎
+            </button>
+            <span class="tooltip">Rename open file</span>
+          </span>
+          <span class="tooltip-host">
+            <button
+              type="button"
+              id="file-delete-btn"
+              class="explorer-btn"
+              aria-label="Delete open file"
+            >
+              ×
+            </button>
+            <span class="tooltip">Delete open file</span>
+          </span>
+          <span class="tooltip-host">
+            <button
+              type="button"
+              id="export-btn"
+              class="explorer-btn"
+              aria-label="Export project to ZIP"
+            >
+              ⤴
+            </button>
+            <span class="tooltip tooltip--align-end">Export project to ZIP</span>
+          </span>
           <input id="file-upload-input" type="file" multiple hidden />
         </div>
-        <div id="file-explorer"></div>
+        <div id="file-explorer-panels">
+          <section
+            id="user-files-panel"
+            class="file-explorer-panel"
+            aria-label="User files"
+          >
+            <h2>Your files</h2>
+            <div id="file-explorer" class="file-explorer-tree"></div>
+          </section>
+          <div class="resizer resizer-h" data-fixed="prev"></div>
+          <section
+            id="builtin-files-panel"
+            class="file-explorer-panel"
+            aria-label="Built-in files"
+          >
+            <h2>Built-in files</h2>
+            <div id="builtin-file-explorer" class="file-explorer-tree"></div>
+          </section>
+        </div>
       </aside>
     </div>
 

@@ -1,14 +1,15 @@
-import { zipSync, unzipSync } from "fflate";
 import { saveAs } from "file-saver";
 import Swal from "sweetalert2";
 
-import { FileSystem } from "./file-system.js";
-import { FileTree } from "./file-tree.js";
+import { FileSystem } from "./fs/file-system.js";
+import { BuiltinFiles } from "./fs/builtin-files.js";
+import { FileTree } from "./fs/file-tree.js";
+import { unzip, zip } from "./fs/zip.js";
 import { Workspace } from "./workspace.js";
 import { Terminal } from "./terminal.js";
 
 // File name when the user downloads the project as a zip file
-const PROJECT_EXPORT_ZIP_FILE_NAME = "project.zip";
+const PROJECT_EXPORT_ZIP_FILE_NAME = "project-export.zip";
 const DEFAULT_FILE_NAME = "script.lua";
 
 // Keep track of the open folder to avoid all folder collapsing when the file explorer
@@ -17,6 +18,7 @@ const openFolders = new Set();
 
 const fileInput = document.querySelector("#file-upload-input");
 const fileExplorer = document.querySelector("#file-explorer");
+const builtinFileExplorer = document.querySelector("#builtin-file-explorer");
 const fileNewBtn = document.querySelector("#file-new-btn");
 const fileUploadBtn = document.querySelector("#file-upload-btn");
 const fileRenameBtn = document.querySelector("#file-rename-btn");
@@ -30,24 +32,71 @@ fileDeleteBtn.addEventListener("click", () => FileExplorer.deleteOpenFile());
 fileUploadBtn.addEventListener("click", () => fileInput.click());
 exportBtn.addEventListener("click", () => FileExplorer.exportZip());
 
+let commonFileTree;
+
 /**
  * File explorer component, used to display the file system as a tree
  */
 export const FileExplorer = Object.freeze({
+  tree() {
+    return commonFileTree;
+  },
+
   /**
    * Reload the file explorer
    */
   reload() {
     fileExplorer.innerHTML = "";
-    // Build a tree datastructure from the flat stored files paths
-    const filePaths = FileSystem.listAllFiles();
-    const root = FileTree.build(filePaths, FileSystem.PATH_SEPARATOR);
 
-    // Render the tree as DOM elements recursively
-    const domTree = renderNode(root);
-    if (domTree) {
-      fileExplorer.appendChild(domTree);
+    // Enable/disable toolbar buttons
+    const openPath = Workspace.getCurrentOpenPath();
+    const isBuiltIn = Workspace.isCurrentOpenPathBuiltIn();
+    fileRenameBtn.disabled = isBuiltIn || !openPath;
+    fileDeleteBtn.disabled = isBuiltIn || !openPath;
+    exportBtn.disabled = FileSystem.isEmpty();
+
+    // Generate file explorer panels
+    const userFilePaths = FileSystem.listAllFiles();
+    const builtinFilePaths = BuiltinFiles.listAllFiles();
+
+    if (FileSystem.isEmpty()) {
+      // First time setup
+      // Display a "setup empty project" button in the user file explorer panel
+      const bootstrapBtn = document.createElement("button");
+      bootstrapBtn.innerHTML = "Setup empty project";
+      bootstrapBtn.classList.add("file-explorer-start-btn");
+      bootstrapBtn.addEventListener("click", Workspace.createEmptyProject);
+
+      fileExplorer.appendChild(bootstrapBtn);
+    } else {
+      // Otherwise, build the user files tree
+      // Build a tree datastructure from the flat stored files paths
+      const userFileTree = new FileTree(
+        userFilePaths,
+        FileSystem.PATH_SEPARATOR
+      );
+      // Render the tree as DOM elements recursively
+      const userDomTree = renderNode(userFileTree.root);
+      if (userDomTree) {
+        fileExplorer.appendChild(userDomTree);
+      }
     }
+
+    // Build the built-in files tree, separate from the user files tree
+    builtinFileExplorer.innerHTML = "";
+    const builtinFileTree = new FileTree(
+      builtinFilePaths,
+      FileSystem.PATH_SEPARATOR
+    );
+    // Render the tree as DOM elements recursively
+    const builtinDomTree = renderNode(builtinFileTree.root);
+    if (builtinDomTree) {
+      builtinFileExplorer.appendChild(builtinDomTree);
+    }
+
+    // Create a common file tree that can be used to list directories of the combined file system
+    const commonFiles = [...new Set([...userFilePaths, ...builtinFilePaths])]
+    commonFileTree = new FileTree(commonFiles, FileSystem.PATH_SEPARATOR);
   },
 
   /**
@@ -85,17 +134,28 @@ export const FileExplorer = Object.freeze({
 
           if (file.name.toLowerCase().endsWith(".zip")) {
             importZipBytes(view, file.name);
-          } else if (!FileSystem.writeFile("/" + file.name, view)) {
-            Terminal.printLine(
-              `[Filesystem] Failed to upload file ${file.name}`,
-            );
+          } else {
+            try {
+              const path = FileSystem.normalizePath(file.name);
+              if (path === null) {
+                Terminal.printLine(
+                  "[Filesystem] Invalid file name: " + file.name
+                );
+                return;
+              }
+              FileSystem.writeFile(path, view);
+            } catch (error) {
+              Terminal.printLine(
+                `[Filesystem] Failed to upload file: ${error.message}`
+              );
+            }
           }
 
           onFileDone();
         })
         .catch((error) => {
           Terminal.printLine(
-            `[Filesystem] Failed to upload file ${file.name}: ${error}`,
+            `[Filesystem] Failed to upload file ${file.name}: ${error}`
           );
           onFileDone();
         });
@@ -137,8 +197,12 @@ export const FileExplorer = Object.freeze({
 
     Workspace.saveCurrentFile();
 
-    if (!FileSystem.writeFile(path, new TextEncoder().encode(""))) {
-      Terminal.printLine(`[Filesystem] Failed to create file ${path}`);
+    try {
+      FileSystem.writeFile(path, new TextEncoder().encode(""));
+    } catch (error) {
+      Terminal.printLine(
+        `[Filesystem] Failed to create file: ${error.message}`
+      );
       return;
     }
 
@@ -152,6 +216,8 @@ export const FileExplorer = Object.freeze({
    * Rename the currently open file
    */
   async renameOpenFile() {
+    if (Workspace.isCurrentOpenPathBuiltIn()) return;
+
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;
@@ -191,8 +257,11 @@ export const FileExplorer = Object.freeze({
     }
 
     Workspace.saveCurrentFile();
-    if (!FileSystem.renameFile(currentPath, newPath)) {
-      Terminal.printLine("[Filesystem] Could not rename " + currentPath);
+
+    try {
+      FileSystem.renameFile(currentPath, newPath);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Could not rename: ${error.message}`);
       return;
     }
 
@@ -204,6 +273,8 @@ export const FileExplorer = Object.freeze({
    * Delete the currently open file
    */
   async deleteOpenFile() {
+    if (Workspace.isCurrentOpenPathBuiltIn()) return;
+
     const currentPath = Workspace.getCurrentOpenPath();
     if (currentPath === null) {
       return;
@@ -232,18 +303,11 @@ export const FileExplorer = Object.freeze({
     // Save the current file before exporting
     Workspace.saveCurrentFile();
 
-    // fflate expects raw Uint8Array as file data, which is perfect since it's
-    // exactly what our FileSystem outputs ! Bingo !
     const allFiles = FileSystem.getAllFiles();
+    if (Object.entries(allFiles).length == 0) return;
 
     // Zip the tree using fflate
-    const zipped = zipSync(allFiles, {
-      // These options are the defaults for all files, but file-specific
-      // options take precedence.
-      level: 1,
-      // Set last modified time to now
-      mtime: new Date(),
-    });
+    const zipped = zip(allFiles);
 
     // fflate produces a Uint8Array representing the zipped file
     // We need to convert it to a blob in order to make it downloadable using
@@ -359,108 +423,31 @@ function isAncestorFolder(folderPath, filePath) {
 }
 
 /**
- * Strip one leading path segment when every entry lives under the same folder
- * (e.g. Finder "Compress project/" -> project/main.lua -> /main.lua).
- *
- * @param {string[]} paths Normalized virtual paths.
- * @returns {string[]} Paths with the shared root removed, or unchanged.
- */
-function stripSingleZipRootPrefix(paths) {
-  if (paths.length === 0) {
-    return paths;
-  }
-
-  const partsList = paths.map((path) =>
-    path.split(FileSystem.PATH_SEPARATOR).filter((part) => part.length > 0),
-  );
-
-  const root = partsList[0][0];
-  if (!root) {
-    return paths;
-  }
-
-  const canStrip = partsList.every(
-    (parts) => parts.length >= 2 && parts[0] === root,
-  );
-  if (!canStrip) {
-    return paths;
-  }
-
-  return partsList.map(
-    (parts) =>
-      FileSystem.PATH_SEPARATOR +
-      parts.slice(1).join(FileSystem.PATH_SEPARATOR),
-  );
-}
-
-/**
- * @param {Record<string, Uint8Array>} filesToWrite
- * @returns {Record<string, Uint8Array>}
- */
-function applyStrippedZipRoot(filesToWrite) {
-  const paths = Object.keys(filesToWrite);
-  const strippedPaths = stripSingleZipRootPrefix(paths);
-  if (paths.every((path, index) => path === strippedPaths[index])) {
-    return filesToWrite;
-  }
-
-  const remapped = {};
-  for (let i = 0; i < paths.length; i++) {
-    remapped[strippedPaths[i]] = filesToWrite[paths[i]];
-  }
-  return remapped;
-}
-
-/**
  * @param {Uint8Array} bytes
- * @param {string} zipFileName
  */
 function importZipBytes(bytes, zipFileName) {
-  let entries;
-  try {
-    entries = unzipSync(bytes);
-  } catch (error) {
+  const filesToWrite = unzip(bytes);
+
+  if (Object.keys(filesToWrite).length === 0) {
     Terminal.printLine(
-      `[Filesystem] Failed to read ZIP ${zipFileName}: ${error instanceof Error ? error.message : error}`,
+      `[Filesystem] ${zipFileName} contains no importable files.`
     );
     return;
   }
-
-  const filesToImport = {};
-  for (const [entryName, data] of Object.entries(entries)) {
-    const name = entryName.replace(/\\/g, FileSystem.PATH_SEPARATOR).trim();
-    if (!name || name.endsWith(FileSystem.PATH_SEPARATOR)) {
-      continue;
-    }
-    // Ignore macOS zip junk
-    if (name.includes("__MACOSX") || name.includes(".DS_Store")) {
-      continue;
-    }
-    const path = FileSystem.normalizePath(name);
-    if (path === null) {
-      continue;
-    }
-
-    filesToImport[path] = data;
-  }
-
-  if (Object.keys(filesToImport).length === 0) {
-    Terminal.printLine(
-      `[Filesystem] ${zipFileName} contains no importable files.`,
-    );
-    return;
-  }
-
-  const filesToWrite = applyStrippedZipRoot(filesToImport);
 
   const failed = [];
   for (const [path, data] of Object.entries(filesToWrite)) {
-    if (!FileSystem.writeFile(path, data)) {
+    try {
+      FileSystem.writeFile(path, data);
+    } catch (error) {
+      Terminal.printLine(`[Filesystem] Failed to import: ${error.message}`);
       failed.push(path);
     }
   }
 
   if (failed.length > 0) {
-    Terminal.printLine(`[Filesystem] Failed to import: ${failed.join(", ")}`);
+    Terminal.printLine(
+      `[Filesystem] Failed to import files: ${failed.join(", ")}`
+    );
   }
 }

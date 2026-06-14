@@ -4,7 +4,7 @@
 
 import Swal from "sweetalert2";
 
-import { EspFlasher } from "./flasher.js";
+import { EspFlasher } from "./flash/flasher.js";
 import { Terminal } from "./terminal.js";
 
 const setStatus = (text) =>
@@ -47,42 +47,6 @@ export async function flashWithUi() {
             },
           });
         });
-      },
-
-      async onStockDownloadFailed(error) {
-        Swal.hideLoading();
-
-        const result = await Swal.fire({
-          icon: "warning",
-          title: "Stock files unavailable",
-          html: `<p>Could not download the stock data package</p>
-            <p>Flashing with only your project files may leave the device unable to boot until you flash again with a successful download</p>
-            <p>Error: ${error.message}</p>`,
-          showCancelButton: true,
-          confirmButtonText: "Flash anyway",
-          cancelButtonText: "Cancel",
-          allowOutsideClick: false,
-          heightAuto: false,
-        });
-
-        if (!result.isConfirmed) {
-          Swal.close();
-          return false;
-        }
-
-        Swal.fire({
-          title: "Flashing device",
-          html: `<p class="flash-status">Building filesystem image...</p>`,
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          heightAuto: false,
-          willOpen: () => {
-            Swal.showLoading();
-          },
-        });
-
-        return true;
       },
 
       onConnecting() {

@@ -1,0 +1,3 @@
+[submodule "builtin-data"]
+	path = builtin-data
+	url = https://github.com/florian-rieder/galactic-unicorn-data.git
