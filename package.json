@@ -8,9 +8,9 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "build:fengari": "sh ./scripts/build-fengari.sh",
-    "build:littlefs": "sh ./scripts/build-littlefs.sh",
-    "build:data": "sh ./scripts/build-data.sh",
+    "build:fengari": "bash ./scripts/build-fengari.sh",
+    "build:littlefs": "bash ./scripts/build-littlefs.sh",
+    "build:data": "bash ./scripts/build-data.sh",
     "build:vendor": "npm run build:fengari && npm run build:littlefs && npm run build:data",
     "predev": "npm run build:vendor",
     "prebuild": "npm run build:vendor",
