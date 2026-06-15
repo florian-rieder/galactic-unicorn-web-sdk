@@ -78,7 +78,7 @@ export const Display = Object.freeze({
             g,
             b,
             CELL, // Size
-            (brightness - BR_BASE), // 5-bit power value
+            brightness - BR_BASE // 5-bit power value
           );
         }
       }
@@ -302,46 +302,6 @@ export const Display = Object.freeze({
     for (let x = 0; x < SCREEN_W; x++) {
       for (let y = 0; y < SCREEN_H; y++) {
         this.setPixelBlend(x, y, r, g, b, alpha);
-      }
-    }
-  },
-
-  /**
-   * Draw a line in the buffer.
-   *
-   * @param {number} x0 - The x coordinate of the start of the line.
-   * @param {number} y0 - The y coordinate of the start of the line.
-   * @param {number} x1 - The x coordinate of the end of the line.
-   * @param {number} y1 - The y coordinate of the end of the line.
-   * @param {number} r - The red component of the color.
-   * @param {number} g - The green component of the color.
-   * @param {number} b - The blue component of the color.
-   */
-  drawLine(x0, y0, x1, y1, r, g, b) {
-    // Bresenham's line algorithm
-    let dx = Math.abs(x1 - x0);
-    let dy = Math.abs(y1 - y0);
-
-    let sx = x0 < x1 ? 1 : -1;
-    let sy = y0 < y1 ? 1 : -1;
-
-    let err = dx - dy;
-
-    while (true) {
-      this.setPixel(x0, y0, r, g, b);
-
-      if (x0 === x1 && y0 === y1) break;
-
-      let e2 = 2 * err;
-
-      if (e2 > -dy) {
-        err -= dy;
-        x0 += sx;
-      }
-
-      if (e2 < dx) {
-        err += dx;
-        y0 += sy;
       }
     }
   },

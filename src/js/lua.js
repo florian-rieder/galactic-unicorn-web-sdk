@@ -40,7 +40,6 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "rect_f", luaFunction: lua_rectF },
   { luaName: "fill", luaFunction: lua_fill },
   { luaName: "fill_blend", luaFunction: lua_fillBlend },
-  { luaName: "line", luaFunction: lua_line },
   { luaName: "is_pressed", luaFunction: lua_isPressed },
   { luaName: "get_time", luaFunction: lua_getTime },
   { luaName: "clear", luaFunction: lua_clear },
@@ -603,38 +602,6 @@ function lua_fillBlend(L) {
   const [r, g, b] = readRgbTableArg(L, 1);
   const alpha = lua.lua_tonumber(L, 2);
   Display.fillBlend(r, g, b, alpha);
-  return 0;
-}
-
-/**
- * Draw a line between two points.
- *
- * Useful for vectors, separators, debug overlays, and lightweight wireframe
- * style visuals.
- *
- * Lua API: `line(x0, y0, x1, y1, {r, g, b})`
- *
- * @luaName line
- * @luaKind function
- * @luaCategory display
- * @luaParams x0:number integer start x coordinate (0-based)
- * @luaParams y0:number integer start y coordinate (0-based)
- * @luaParams x1:number integer end x coordinate (0-based)
- * @luaParams y1:number integer end y coordinate (0-based)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
- * @luaReturns nil
- * @luaExample line(0, 0, SCREEN_W - 1, SCREEN_H - 1, rgb(255, 0, 0))
- *
- * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..5.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_line(L) {
-  const x0 = lua.lua_tointeger(L, 1);
-  const y0 = lua.lua_tointeger(L, 2);
-  const x1 = lua.lua_tointeger(L, 3);
-  const y1 = lua.lua_tointeger(L, 4);
-  const [r, g, b] = readRgbTableArg(L, 5);
-  Display.drawLine(x0, y0, x1, y1, r, g, b);
   return 0;
 }
 
