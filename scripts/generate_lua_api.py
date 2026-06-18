@@ -181,8 +181,8 @@ def parse_lua_doc_tags(js_name: str, doc_lines: list[str]) -> LuaFunctionDoc:
                 kind = stripped.removeprefix("@luaKind ").strip()
             elif stripped.startswith("@luaCategory "):
                 category = stripped.removeprefix("@luaCategory ").strip()
-            elif stripped.startswith("@luaParams "):
-                payload = stripped.removeprefix("@luaParams ").strip()
+            elif stripped.startswith("@luaParam "):
+                payload = stripped.removeprefix("@luaParam ").strip()
                 param_match = re.match(r"([A-Za-z_]\w*):([^\s]+)\s*(.*)", payload)
                 if param_match:
                     lua_params.append(

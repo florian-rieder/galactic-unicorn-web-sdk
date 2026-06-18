@@ -20,7 +20,7 @@ function hslDefaultsFromRgb(rgb) {
 }
 
 /**
- * Per-function snippet placeholders, aligned with each function's `@luaParams`.
+ * Per-function snippet placeholders, aligned with each function's `@luaParam`.
  *
  * @type {Record<string, number[]>}
  */

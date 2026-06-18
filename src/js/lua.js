@@ -173,7 +173,7 @@ function pushRgbTable(L, r, g, b) {
  * @luaName print
  * @luaKind function
  * @luaCategory console
- * @luaParams messages:variable Lua variables to print
+ * @luaParam messages:variable Lua variables to print
  * @luaReturns nil
  * @luaExample print("Hello, world!")       -- Output: Hello, world!
  * print("Hello", 1, true, nil) -- Output: Hello    1    true    nil
@@ -210,9 +210,9 @@ function lua_print(L) {
  * @luaName rgb
  * @luaKind function
  * @luaCategory color
- * @luaParams r:number red channel (0-255)
- * @luaParams g:number green channel (0-255)
- * @luaParams b:number blue channel (0-255)
+ * @luaParam r:number red channel (0-255)
+ * @luaParam g:number green channel (0-255)
+ * @luaParam b:number blue channel (0-255)
  * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local red = rgb(255, 0, 0)
  *
@@ -242,9 +242,9 @@ function lua_rgb(L) {
  * @luaName hsl
  * @luaKind function
  * @luaCategory color
- * @luaParams h:number hue in degrees (any number, wrapped mod 360)
- * @luaParams s:number saturation (0.0..1.0)
- * @luaParams l:number lightness (0.0..1.0)
+ * @luaParam h:number hue in degrees (any number, wrapped mod 360)
+ * @luaParam s:number saturation (0.0..1.0)
+ * @luaParam l:number lightness (0.0..1.0)
  * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample local cyan = hsl(180, 1.0, 0.5)
  *
@@ -271,16 +271,16 @@ function lua_hsl(L) {
  * @luaName get_pixel
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number integer pixel x coordinate (0-based)
- * @luaParams y:number integer pixel y coordinate (0-based)
+ * @luaParam x:number integer pixel x coordinate (0-based)
+ * @luaParam y:number integer pixel y coordinate (0-based)
  * @luaReturns `table` RGB color table `{r, g, b}`
  * @luaExample set_pixel(0, 0, rgb(42, 0, 134))
  *
  * local my_color = get_pixel(0, 0)
  *
- * print(my_color[1]) # 42
- * print(my_color[2]) # 0
- * print(my_color[3]) # 134
+ * print(my_color[1]) -- 42
+ * print(my_color[2]) -- 0
+ * print(my_color[3]) -- 134
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
  * @returns {number} Number of values returned to Lua (always 1).
@@ -308,9 +308,9 @@ function lua_getPixel(L) {
  * @luaName set_pixel
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number pixel x coordinate (0-based)
- * @luaParams y:number pixel y coordinate (0-based)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam x:number pixel x coordinate (0-based)
+ * @luaParam y:number pixel y coordinate (0-based)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
  * @luaExample set_pixel(3, 2, rgb(255, 0, 0))
  *
@@ -337,10 +337,10 @@ function lua_setPixel(L) {
  * @luaName set_pixel_blend
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number integer pixel x coordinate (0-based)
- * @luaParams y:number integer pixel y coordinate (0-based)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
- * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
+ * @luaParam x:number integer pixel x coordinate (0-based)
+ * @luaParam y:number integer pixel y coordinate (0-based)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
  * @luaExample set_pixel_blend(3, 2, rgb(255, 0, 0), 0.5)
  *
@@ -370,9 +370,9 @@ function lua_setPixelBlend(L) {
  * @luaName set_pixel_f
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number subpixel x coordinate (float, 0-based)
- * @luaParams y:number subpixel y coordinate (float, 0-based)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam x:number subpixel x coordinate (float, 0-based)
+ * @luaParam y:number subpixel y coordinate (float, 0-based)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
  * @luaExample set_pixel_f(3.25, 2.75, rgb(0, 255, 0))
  *
@@ -391,12 +391,11 @@ function lua_setPixelF(L) {
 /**
  * UNSAFE !!! Set the brightness of a pixel.
  *
- * Does nothing in the web version, but available on the hardware.
- *
- * This is useful for setting the brightness of a pixel to a value that different from
+ * This is useful for setting the brightness of a pixel to a value that is different from
  * the default brightness, for short-term effects like flashing.
+ * In the web SDK, shows a corona effect on the display to simulate the brightness effect.
  * If the total current exceeds the limit, an error checkerboard pattern will be
- * displayed.
+ * displayed (currently not supported in the web SDK).
  * Use with moderation.
  *
  * Lua API: `set_unsafe_pixel_brightness(x, y, brightness)`
@@ -404,9 +403,9 @@ function lua_setPixelF(L) {
  * @luaName set_unsafe_pixel_brightness
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number pixel x coordinate (0-based)
- * @luaParams y:number pixel y coordinate (0-based)
- * @luaParams brightness:number brightness value (0..9)
+ * @luaParam x:number pixel x coordinate (0-based)
+ * @luaParam y:number pixel y coordinate (0-based)
+ * @luaParam brightness:number brightness value (0..9)
  * @luaReturns nil
  * @luaExample set_unsafe_pixel_brightness(3, 2, 5)
  *
@@ -446,11 +445,11 @@ function lua_setUnsafePixelBrightness(L) {
  * @luaName rect_f
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number rectangle x coordinate (float, 0-based)
- * @luaParams y:number rectangle y coordinate (float, 0-based)
- * @luaParams w:number rectangle width (float)
- * @luaParams h:number rectangle height (float)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam x:number rectangle x coordinate (float, 0-based)
+ * @luaParam y:number rectangle y coordinate (float, 0-based)
+ * @luaParam w:number rectangle width (float)
+ * @luaParam h:number rectangle height (float)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
  * @luaExample rect_f(1.2, 1.2, 5.5, 3.5, rgb(0, 0, 255))
  *
@@ -480,11 +479,11 @@ function lua_rectF(L) {
  * @luaName rect
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number rectangle x coordinate (float accepted; floored)
- * @luaParams y:number rectangle y coordinate (float accepted; floored)
- * @luaParams w:number rectangle width (float accepted; floored)
- * @luaParams h:number rectangle height (float accepted; floored)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam x:number rectangle x coordinate (float accepted; floored)
+ * @luaParam y:number rectangle y coordinate (float accepted; floored)
+ * @luaParam w:number rectangle width (float accepted; floored)
+ * @luaParam h:number rectangle height (float accepted; floored)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
  * @luaExample rect(1, 1, 5, 3, rgb(255, 255, 255))
  *
@@ -511,12 +510,12 @@ function lua_rect(L) {
  * @luaName rect_blend
  * @luaKind function
  * @luaCategory display
- * @luaParams x:number rectangle x coordinate (float, 0-based)
- * @luaParams y:number rectangle y coordinate (float, 0-based)
- * @luaParams w:number rectangle width (float)
- * @luaParams h:number rectangle height (float)
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
- * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
+ * @luaParam x:number rectangle x coordinate (float, 0-based)
+ * @luaParam y:number rectangle y coordinate (float, 0-based)
+ * @luaParam w:number rectangle width (float)
+ * @luaParam h:number rectangle height (float)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
  * @luaExample rect_blend(0, 0, SCREEN_W, SCREEN_H, rgb(255, 0, 0), 0.5)
 
@@ -566,7 +565,7 @@ function lua_clear(L) {
  * @luaName fill
  * @luaKind function
  * @luaCategory display
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
  * @luaReturns nil
  * @luaExample fill(rgb(255, 0, 0))
  *
@@ -590,8 +589,8 @@ function lua_fill(L) {
  * @luaName fill_blend
  * @luaKind function
  * @luaCategory display
- * @luaParams rgb_color:table {r, g, b} color table with components in the range 0..255
- * @luaParams alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
+ * @luaParam rgb_color:table {r, g, b} color table with components in the range 0..255
+ * @luaParam alpha:number blend amount in range `0.0..1.0` (0=keep old, 1=replace)
  * @luaReturns nil
  * @luaExample fill_blend(rgb(255, 0, 0), 0.5)
  *
@@ -620,7 +619,7 @@ function lua_fillBlend(L) {
  * @luaName is_pressed
  * @luaKind function
  * @luaCategory input
- * @luaParams key:string Logical button name (host key map)
+ * @luaParam key:string Logical button name (host key map)
  * @luaReturns boolean `true` if pressed, otherwise `false`
  * @luaExample if is_pressed("L_UP") then ... end
  *
@@ -666,8 +665,8 @@ function lua_getTime(L) {
  * @luaName buzz
  * @luaKind function
  * @luaCategory sound
- * @luaParams frequency:number frequency in Hz
- * @luaParams duration:number duration in milliseconds (max 30s)
+ * @luaParam frequency:number frequency in Hz
+ * @luaParam duration:number duration in milliseconds (max 30s)
  * @luaReturns nil
  * @luaExample buzz(440, 1000) # Play a 440Hz tone for 1 second
  *
@@ -698,7 +697,7 @@ function lua_buzz(L) {
  * @luaName set_tempo
  * @luaKind function
  * @luaCategory sound
- * @luaParams bpm:number Tempo in beats per minute.
+ * @luaParam bpm:number Tempo in beats per minute.
  * @luaReturns nil
  * @luaExample set_tempo(120)
  *
@@ -725,7 +724,7 @@ function lua_setTempo(L) {
  * @luaName set_ticks_per_beat
  * @luaKind function
  * @luaCategory sound
- * @luaParams ticks_per_beat:number Number of ticks per beat.
+ * @luaParam ticks_per_beat:number Number of ticks per beat.
  * @luaReturns nil
  * @luaExample set_ticks_per_beat(4)
  *
@@ -756,7 +755,7 @@ function lua_setTicksPerBeat(L) {
  * @luaName load_music
  * @luaKind function
  * @luaCategory sound
- * @luaParams music_string:string Music string to load.
+ * @luaParam music_string:string Music string to load.
  * @luaReturns nil
  * @luaExample load_music("A4:4 0:1 C4:4")
  *
@@ -783,7 +782,7 @@ function lua_loadMusic(L) {
  * @luaName play_music
  * @luaKind function
  * @luaCategory sound
- * @luaParams loop:boolean If true, loop when the track ends.
+ * @luaParam loop:boolean If true, loop when the track ends.
  * @luaReturns nil
  * @luaExample play_music(true)
  *
@@ -905,7 +904,7 @@ function lua_isMusicPlaying(L) {
  * @luaName read_file
  * @luaKind function
  * @luaCategory file system
- * @luaParams path:string path to the file
+ * @luaParam path:string path to the file
  * @luaReturns string: binary string representing the file contents or errors if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
@@ -942,9 +941,9 @@ function lua_readFile(L) {
  * @luaName read_file_chunk
  * @luaKind function
  * @luaCategory file system
- * @luaParams path:string path to the file
- * @luaParams offset:int offset since the start of the file in bytes
- * @luaParams size:int size of the chunk to read in bytes
+ * @luaParam path:string path to the file
+ * @luaParam offset:int offset since the start of the file in bytes
+ * @luaParam size:int size of the chunk to read in bytes
  * @luaReturns string: binary string representing the file contents or nil if the file couldn't be found
  * @luaExample my_file = read_file("/file.bin")
  *
@@ -987,7 +986,7 @@ function lua_readFileChunk(L) {
  * @luaName file_size
  * @luaKind function
  * @luaCategory file system
- * @luaParams path:string path to the file
+ * @luaParam path:string path to the file
  * @luaReturns int: size of the file in bytes
  * @luaExample size = file_size("/file.bin")
  *
@@ -1024,7 +1023,7 @@ function lua_fileSize(L) {
  * @luaName list_directory
  * @luaKind function
  * @luaCategory file system
- * @luaParams path:string path to the file
+ * @luaParam path:string path to the file
  * @luaReturns table:<string,bool> a table with paths as keys, and a boolean representing if the path is a file (true) or a directory(false)
  * @luaExample size = list_directory("/my/directory/path")
  *
@@ -1088,7 +1087,7 @@ function lua_callback_setup() {}
  * @luaName update
  * @luaKind callback
  * @luaCategory lifecycle
- * @luaParams delta_time:number Seconds elapsed since the previous frame (float)
+ * @luaParam delta_time:number Seconds elapsed since the previous frame (float)
  * @luaReturns nil
  * @luaExample function update(delta_time)
  *   -- movement logic
@@ -1126,7 +1125,7 @@ function lua_callback_draw() {}
  * @luaName on_press
  * @luaKind callback
  * @luaCategory input
- * @luaParams button_name:string Host key map name (e.g. "L_UP")
+ * @luaParam button_name:string Host key map name (e.g. "L_UP")
  * @luaReturns nil
  * @luaExample function on_press(button_name)
  *   if button_name == "L_UP" then
@@ -1147,7 +1146,7 @@ function lua_callback_onPress(button_name) {}
  * @luaName on_release
  * @luaKind callback
  * @luaCategory input
- * @luaParams button_name:string Host key map name (e.g. "L_UP")
+ * @luaParam button_name:string Host key map name (e.g. "L_UP")
  * @luaReturns nil
  * @luaExample function on_release(button_name)
  *   if button_name == "L_UP" then
