@@ -40,7 +40,7 @@ export const Workspace = Object.freeze({
         Workspace.copyBuiltinOpenFileToProject()
       );
 
-    MonacoEditor.setText("", "plaintext", true);
+    MonacoEditor.closeBuffer();
   },
 
   /**
@@ -123,7 +123,7 @@ export const Workspace = Object.freeze({
       const decodedString = new TextDecoder().decode(rawFile);
 
       // Load into monaco
-      MonacoEditor.setText(decodedString, extension, readOnly);
+      MonacoEditor.openBuffer(path, decodedString, extension, readOnly);
       banner.hidden = !isBuiltIn;
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
@@ -138,7 +138,12 @@ export const Workspace = Object.freeze({
         banner.hidden = false;
       }
 
-      MonacoEditor.setText(`Binary (${size} bytes)`, "plaintext", readOnly);
+      MonacoEditor.openBuffer(
+        path,
+        `Binary (${size} bytes)`,
+        "plaintext",
+        readOnly
+      );
     }
   },
 
@@ -219,6 +224,8 @@ export const Workspace = Object.freeze({
    * @param {string} path - The path of the file that was removed.
    */
   onFileRemoved(path) {
+    MonacoEditor.forgetBufferPath(path);
+
     // If the currently opened file was removed
     if (currentOpenPath !== path) {
       return;
@@ -228,7 +235,7 @@ export const Workspace = Object.freeze({
 
     // Empty editor and prevent saving
     currentOpenPath = null;
-    MonacoEditor.setText("", "plaintext", true);
+    MonacoEditor.closeBuffer();
   },
 
   /**
@@ -237,6 +244,8 @@ export const Workspace = Object.freeze({
    * @param {string} newPath - The new path of the file.
    */
   onFileRenamed(oldPath, newPath) {
+    MonacoEditor.renameBufferPath(oldPath, newPath);
+
     // Update the currentOpenPath
     if (currentOpenPath === oldPath) {
       currentOpenPath = newPath;

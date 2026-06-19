@@ -30,11 +30,41 @@ const editorOptions = {
 
 let editor;
 
+// Path of the file currently shown in the editor, or null when empty.
+let activeBufferKey = null;
+
+// View state keyed by file path.
+const viewStatesByPath = new Map();
+
+/**
+ * @param {string} path
+ */
+function stashViewState(path) {
+  if (!editor) return;
+
+  const state = editor.saveViewState();
+  if (state !== null) {
+    viewStatesByPath.set(path, state);
+  }
+}
+
+/**
+ * @param {string} path
+ */
+function restoreViewStateForPath(path) {
+  if (!editor) return;
+
+  const state = viewStatesByPath.get(path);
+  if (state !== undefined) {
+    editor.restoreViewState(state);
+  }
+}
+
 export const MonacoEditor = Object.freeze({
   /**
    * Creates the Monaco editor and registers Lua SDK helpers. Call once at startup.
    *
-   * @param {String} defaultTextContent text content to load as the default buffer upon load
+   * @param {string} defaultTextContent text content to load as the default buffer upon load
    */
   async init(defaultTextContent = "") {
     let sdkApi = null;
@@ -83,15 +113,20 @@ export const MonacoEditor = Object.freeze({
   },
 
   /**
-   * Set a given string as the open buffer in the monaco editor
-   * @param {String} text
-   * @param {String} language either "lua", or anything else will be "plaintext"
+   * Open a file buffer, preserving per-path cursor/scroll when revisiting.
+   *
+   * @param {string} path filesystem path used as the view-state cache key
+   * @param {string} text
+   * @param {string} language either "lua", or anything else will be "plaintext"
    * @param {boolean} readOnly whether to set the editor as read-only
    */
-  setText(text, language = "plaintext", readOnly = false) {
+  openBuffer(path, text, language = "plaintext", readOnly = false) {
     if (!editor) return;
 
-    // Set text
+    if (activeBufferKey !== null) {
+      stashViewState(activeBufferKey);
+    }
+
     editor.setValue(text);
 
     // Set language
@@ -104,6 +139,51 @@ export const MonacoEditor = Object.freeze({
     // Set read-only mode
     // see https://github.com/microsoft/monaco-editor/issues/54
     editor.updateOptions({ readOnly: readOnly });
+
+    activeBufferKey = path;
+    restoreViewStateForPath(path);
+    editor.focus();
+  },
+
+  /**
+   * Clear the editor without stashing view state (empty / no file open).
+   */
+  closeBuffer() {
+    if (!editor) return;
+
+    activeBufferKey = null;
+    editor.setValue("");
+    editor.updateOptions({ readOnly: true });
+  },
+
+  /**
+   * Move cached view state when a file is renamed.
+   *
+   * @param {string} oldPath
+   * @param {string} newPath
+   */
+  renameBufferPath(oldPath, newPath) {
+    if (viewStatesByPath.has(oldPath)) {
+      viewStatesByPath.set(newPath, viewStatesByPath.get(oldPath));
+      viewStatesByPath.delete(oldPath);
+    }
+
+    if (activeBufferKey === oldPath) {
+      activeBufferKey = newPath;
+    }
+  },
+
+  /**
+   * Drop cached view state for a removed file.
+   *
+   * @param {string} path
+   */
+  forgetBufferPath(path) {
+    viewStatesByPath.delete(path);
+
+    if (activeBufferKey === path) {
+      activeBufferKey = null;
+    }
   },
 
   /**
@@ -130,7 +210,7 @@ export const MonacoEditor = Object.freeze({
 
   /**
    * Get the currently open buffer in the monaco editor
-   * @returns {String} the open buffer in the monaco editor
+   * @returns {string} the open buffer in the monaco editor
    */
   getText() {
     if (!editor) return "";
