@@ -62,6 +62,11 @@ export const MonacoEditor = Object.freeze({
     // Create the editor
     editorOptions.value = defaultTextContent;
     editor = monaco.editor.create(container, editorOptions);
+
+    // Set line endings to LF
+    const model = editor.getModel();
+    model.setEOL(monaco.editor.EndOfLineSequence.LF);
+
     // Syntax error squiggles using Fengari
     installLuaDiagnostics(editor, monaco);
 
@@ -96,6 +101,28 @@ export const MonacoEditor = Object.freeze({
     // Set read-only mode
     // see https://github.com/microsoft/monaco-editor/issues/54
     editor.updateOptions({ readOnly: readOnly });
+  },
+
+  /**
+   * Append a trailing newline in the buffer when missing, without resetting
+   * selection or scroll position (unlike setValue).
+   */
+  ensureFinalNewLine() {
+    if (!editor) return;
+
+    const model = editor.getModel();
+    if (!model || model.getValue().endsWith("\n")) {
+      return;
+    }
+
+    const lineCount = model.getLineCount();
+    const column = model.getLineMaxColumn(lineCount);
+    editor.executeEdits("ensureFinalNewLine", [
+      {
+        range: new monaco.Range(lineCount, column, lineCount, column),
+        text: "\n",
+      },
+    ]);
   },
 
   /**

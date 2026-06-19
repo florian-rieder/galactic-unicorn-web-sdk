@@ -76,6 +76,7 @@ export const Workspace = Object.freeze({
   saveCurrentFile() {
     if (readOnly || isBuiltIn || !currentOpenPath) return;
 
+    MonacoEditor.ensureFinalNewLine();
     const text = MonacoEditor.getText();
     // Convert text to Uint8Array
     const encoded = new TextEncoder().encode(text);
