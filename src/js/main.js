@@ -3,7 +3,7 @@ import { initResizers } from "./ui/resizer.js";
 import { Lua } from "./lua-runtime.js";
 import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
-import { MonacoEditor } from "./monaco.js";
+import { KeyCode, MonacoEditor } from "./monaco.js";
 import { Workspace } from "./workspace.js";
 import { Input } from "./input.js";
 import { flashWithUi } from "./flash-ui.js";
@@ -12,6 +12,10 @@ import { BuiltinFiles } from "./fs/builtin-files.js";
 // Initialize components and set up the initial state of the application.
 
 await Promise.all([BuiltinFiles.load(), MonacoEditor.init()]);
+// Register keyboard shortcuts for when monaco is in focus
+MonacoEditor.registerControlShortcut(KeyCode.KeyS, Workspace.saveCurrentFile);
+MonacoEditor.registerControlShortcut(KeyCode.Enter, startSession);
+MonacoEditor.registerControlShortcut(KeyCode.Escape, stopSession);
 Workspace.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
@@ -54,13 +58,18 @@ async function startFlash() {
  * @param {KeyboardEvent} event - The keyboard event.
  */
 window.addEventListener("keydown", (event) => {
-  // on CTRL+S or CMD+S
-  if (
-    (event.key === "s" && event.ctrlKey) ||
-    (event.key === "s" && event.metaKey)
-  ) {
+  // Save shortcut: CTRL+S or CMD+S
+  if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();
     Workspace.saveCurrentFile();
+  } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    // Run shortcut: CTRL+ENTER or CMD+ENTER
+    event.preventDefault();
+    startSession();
+  } else if (event.key === "Escape" && (event.ctrlKey || event.metaKey)) {
+    // Stop shortcut: CTRL+ESC or CMD+ESC
+    event.preventDefault();
+    stopSession();
   }
 });
 

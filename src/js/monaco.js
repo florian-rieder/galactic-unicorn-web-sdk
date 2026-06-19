@@ -14,6 +14,9 @@ import {
   registerLuaHoverProvider,
 } from "./monaco/lua-sdk-providers.js";
 
+// Re-export KeyCode so it can be used in other files
+export { KeyCode } from "./monaco/custom-monaco.js";
+
 const editorOptions = {
   language: "lua",
   theme: "vs-dark", // Theme (vs, vs-dark, hc-black)
@@ -133,5 +136,18 @@ export const MonacoEditor = Object.freeze({
     if (!editor) return "";
 
     return editor.getValue();
+  },
+
+  /**
+   * Register a shortcut on the editor for Cmd/Ctrl + key
+   *
+   * @param {number} keyCode - Monaco KeyCode value
+   * @param {() => void} handler
+   */
+  registerControlShortcut(keyCode, handler) {
+    if (!editor) return;
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | keyCode, handler);
+    editor.addCommand(monaco.KeyMod.WinCtrl | keyCode, handler);
   },
 });
