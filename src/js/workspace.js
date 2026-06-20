@@ -4,6 +4,7 @@ import { FileSystem } from "./fs/file-system.js";
 import { BuiltinFiles } from "./fs/builtin-files.js";
 import { MonacoEditor } from "./monaco.js";
 import { Terminal } from "./terminal.js";
+import { EditorHeader } from "./ui/editor-header.js";
 
 import luaManifestTemplate from "../lua/templates/manifest.lua?raw";
 import luaMainTemplate from "../lua/templates/main.lua?raw";
@@ -15,10 +16,20 @@ let currentOpenPath = null;
 let isBuiltIn = false; // is the currently open file built-in ?
 let readOnly = false; // is the currently open file read-only ?
 
-const banner = document.getElementById("builtin-readonly-banner");
-
 /** Called after a successful save so the file tree can refresh (wired from main.js). */
 let explorerReloadHandler = () => {};
+
+/**
+ * Sync the editor header with the current open file state.
+ */
+function refreshEditorHeader() {
+  if (currentOpenPath === null) {
+    EditorHeader.showEmpty();
+    return;
+  }
+
+  EditorHeader.showFile(currentOpenPath, { isBuiltIn });
+}
 
 export const Workspace = Object.freeze({
   /**
@@ -31,14 +42,10 @@ export const Workspace = Object.freeze({
   },
 
   /**
-   * Wire the built-in read-only banner copy button. Call once at startup.
+   * Wire editor header and empty buffer. Call once at startup.
    */
   init() {
-    document
-      .getElementById("builtin-copy-btn")
-      .addEventListener("click", () =>
-        Workspace.copyBuiltinOpenFileToProject()
-      );
+    EditorHeader.init(() => Workspace.copyBuiltinOpenFileToProject());
 
     MonacoEditor.closeBuffer();
   },
@@ -124,7 +131,6 @@ export const Workspace = Object.freeze({
 
       // Load into monaco
       MonacoEditor.openBuffer(path, decodedString, extension, readOnly);
-      banner.hidden = !isBuiltIn;
     } else {
       // If we "load" binary as description into the editor we need to NOT save it upon exit!
       readOnly = true;
@@ -132,10 +138,8 @@ export const Workspace = Object.freeze({
       let size = 0;
       try {
         size = FileSystem.fileSizeAtPath(path);
-        banner.hidden = true;
       } catch (e) {
         size = BuiltinFiles.fileSizeAtPath(path);
-        banner.hidden = false;
       }
 
       MonacoEditor.openBuffer(
@@ -145,6 +149,8 @@ export const Workspace = Object.freeze({
         readOnly
       );
     }
+
+    refreshEditorHeader();
   },
 
   /**
@@ -236,6 +242,7 @@ export const Workspace = Object.freeze({
     // Empty editor and prevent saving
     currentOpenPath = null;
     MonacoEditor.closeBuffer();
+    refreshEditorHeader();
   },
 
   /**
@@ -249,6 +256,7 @@ export const Workspace = Object.freeze({
     // Update the currentOpenPath
     if (currentOpenPath === oldPath) {
       currentOpenPath = newPath;
+      refreshEditorHeader();
     }
   },
 });

@@ -54,13 +54,28 @@
       <div class="resizer resizer-v" data-fixed="prev"></div>
       <div id="monaco-pane" class="monaco-pane" aria-label="Text editor">
         <div
-          id="builtin-readonly-banner"
-          class="builtin-readonly-banner"
+          id="editor-header"
+          class="editor-header editor-header--empty"
           role="status"
-          hidden
         >
-          <p>Built-in file (read-only). Copy to your project to edit.</p>
-          <button type="button" id="builtin-copy-btn">Copy to project</button>
+          <span
+            id="editor-header-path"
+            class="editor-header-path editor-header-path--muted"
+            >No file open</span
+          >
+          <div id="editor-header-actions" class="editor-header-actions" hidden>
+            <span id="editor-header-badge" class="editor-header-badge" hidden
+              >Built-in file (read-only)</span
+            >
+            <button
+              type="button"
+              id="editor-header-copy-btn"
+              title="Copy into your project to edit it"
+              hidden
+            >
+              Copy to project
+            </button>
+          </div>
         </div>
         <div id="monaco-container"></div>
       </div>

@@ -281,26 +281,58 @@ body.swal2-height-auto {
   min-height: 0;
 }
 
-.builtin-readonly-banner {
+.editor-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0px 24px;
+  gap: 12px;
+  min-height: 40px;
+  padding: 6px 16px;
   border-bottom: 1px solid var(--primary-border);
+  background: var(--primary-bg);
+  font-size: 13px;
+}
+
+.editor-header--builtin {
   background: var(--accent-bg);
-  font-size: 14px;
 }
 
-.builtin-readonly-banner[hidden] {
-  display: none;
+.editor-header-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
-#builtin-copy-btn {
+.editor-header-path--muted {
+  color: var(--muted-text);
+  font-family: inherit;
+}
+
+.editor-header-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editor-header-badge {
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0.92;
+}
+
+#editor-header-copy-btn {
   background-color: transparent;
   border: 1px solid var(--text-color);
   color: var(--text-color);
   padding: 5px 10px;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 #file-explorer-pane {
