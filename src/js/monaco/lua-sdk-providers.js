@@ -80,7 +80,16 @@ function buildSdkFunctionInsertText(item) {
   return `${item.lua_name}(${args.join(", ")})`;
 }
 
-function buildHoverMarkdown(item) {
+/**
+ * Build shared Markdown docs for a normalized Lua API function object.
+ *
+ * Used by SDK and stdlib hover/completion. Expects `lua_name`, `params`,
+ * `returns`, `summary`, `details`, and optional `example` fields.
+ *
+ * @param {object} item Normalized function entry from API JSON.
+ * @returns {string} Markdown for Monaco hover/completion documentation.
+ */
+export function buildHoverMarkdown(item) {
   // Monaco hover/completion docs accept Markdown, so we generate one shared
   // representation from the structured API JSON and reuse it everywhere.
   const lines = [];
@@ -97,7 +106,12 @@ function buildHoverMarkdown(item) {
     lines.push("");
     lines.push("**Parameters**");
     for (const param of item.params) {
-      lines.push(`- \`${param.name}\` (${param.type}): ${param.description}`);
+      const typeLabel = `\`${param.name}\` (${param.type})`;
+      if (param.description) {
+        lines.push(`- ${typeLabel}: ${param.description}`);
+      } else {
+        lines.push(`- ${typeLabel}`);
+      }
     }
   }
   if (item.returns) {

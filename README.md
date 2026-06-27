@@ -1,6 +1,6 @@
 # Galactic Unicorn Web SDK
 
-Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser editor, and serial-style console output so you can iterate without reflashing hardware on every change.
+Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: it combines an emulator, an in-browser Lua code editor, and serial-style console output so you can iterate without reflashing hardware on every change. When you're ready, it can also flash your scripts (and the latest builtin data from [galactic-unicorn-data](https://github.com/florian-rieder/galactic-unicorn-data)) directly to the device over USB, in the browser.
 
 [Try now](https://florian-rieder.github.io/galactic-unicorn-web-sdk/)
 
@@ -15,6 +15,7 @@ Developing directly on device is slow when every test requires another flash cyc
 - Lua runtime in the browser via [Fengari](https://github.com/fengari-lua/fengari)
 - Emulator for the project display/input model
 - Monaco-based (VS Code) in-browser Lua editor
+- Code completion and hover docs for the Galactic Unicorn API and Lua standard library
 - Console output panel for script logging and runtime errors
 - Virtual file system and file explorer
 - Export project as a zip file
@@ -28,7 +29,7 @@ The Lua API is still subject to breaking changes.
 
 ## Run locally
 
-The app is built with [Vite 8](https://vitejs.dev/).
+The app is built with [Vite 8](https://vitejs.dev/) and [Node.js 24](https://nodejs.org/en).
 
 ### 1) Clone
 
@@ -59,7 +60,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints. The app is built with `base: '/galactic-unicorn-web-sdk/'` (GitHub Pages), so the dev entry is:
+Open the URL Vite prints. The app is built with `base: '/galactic-unicorn-web-sdk/'` (GitHub Pages), so the dev entry should be:
 
 [http://localhost:5173/galactic-unicorn-web-sdk/](http://localhost:5173/galactic-unicorn-web-sdk/)
 
@@ -67,15 +68,19 @@ Use that path (with trailing slash) so relative links like `./assets/...` resolv
 
 ### 4) Production build
 
+Preview the production build using these commands:
+
 ```bash
 npm run build
 npm run preview
 ```
 
-Static output goes to `dist/` for deployment. GitHub Pages serves this repo at  
-`https://florian-rieder.github.io/galactic-unicorn-web-sdk/`, the Vite `base` option matches that path.
+Static output goes to `dist/` for deployment. GitHub Pages serves the contents of `dist/` at  
+`https://florian-rieder.github.io/galactic-unicorn-web-sdk/`
 
-To test the production bundle locally, use `npm run preview` (serves `dist/` at the correct base).
+To test the production bundle locally, use `npm run preview` and open the URL Vite prints.
+
+Production build and release is done automatically on pushes to `main` using [Github Actions](/.github/workflows/pages.yaml).
 
 ### Notes
 
@@ -111,6 +116,14 @@ This writes (all under the gitignored `public/docs/` so Vite serves them):
 - `public/docs/lua-api.json` (consumed by Monaco completions/hover)
 
 Without manual generation or a successful dev-time run, Monaco completions stay empty and the toolbar API docs link 404s until `public/docs/` exists. For production, this generation step is done in CI.
+
+## Contributing
+
+TBD
+
+## License
+
+TBD
 
 ## References
 

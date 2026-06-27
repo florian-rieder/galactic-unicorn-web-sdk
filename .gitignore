@@ -8,3 +8,9 @@ public/data/
 .vscode/
 .vite/
 .venv/
+__pycache__/
+scripts/lua-stdlib/.tools/
+scripts/lua-stdlib/doc.json
+scripts/lua-stdlib/doc.md
+scripts/lua-stdlib/log/
+scripts/lua-stdlib/.luarc.json
