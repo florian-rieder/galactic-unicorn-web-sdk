@@ -301,19 +301,27 @@ function getMemberCompletionContext(model, position) {
 /**
  * Register completion for Lua standard library globals and namespace members.
  *
- * Triggered on `.` for member completion (`math.floor`). Otherwise contributes
- * top-level globals (`pairs`, `type`, ...) filtered by the word at the cursor.
+ * Triggered on `.` for member completion (`math.floor`); returns nothing when
+ * the prefix is not a known stdlib namespace (avoids polluting `foo.` completions).
+ * Otherwise contributes top-level globals (`pairs`, `type`, ...) filtered by
+ * the word at the cursor.
  */
 export function registerLuaStdlibCompletionProvider() {
   monaco.languages.registerCompletionItemProvider("lua", {
     triggerCharacters: ["."],
-    provideCompletionItems(model, position) {
+    provideCompletionItems(model, position, context) {
       const memberContext = getMemberCompletionContext(model, position);
       if (memberContext) {
         const { namespace, prefix, replaceRange } = memberContext;
         return {
           suggestions: memberCompletionItems(namespace, prefix, replaceRange),
         };
+      }
+
+      // Dot-triggered but not a stdlib namespace: suppress globals entirely so
+      // we don't pollute completions after e.g. `foo.`.
+      if (context.triggerCharacter === ".") {
+        return { suggestions: [] };
       }
 
       const replaceRange = getCompletionReplaceRange(model, position);
