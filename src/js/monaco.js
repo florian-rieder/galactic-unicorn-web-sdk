@@ -13,6 +13,10 @@ import {
   registerLuaCompletionProvider,
   registerLuaHoverProvider,
 } from "./monaco/lua-sdk-providers.js";
+import {
+  registerLuaStdlibCompletionProvider,
+  registerLuaStdlibHoverProvider,
+} from "./monaco/lua-stdlib-providers.js";
 
 // Re-export KeyCode so it can be used in other files
 export { KeyCode } from "./monaco/custom-monaco.js";
@@ -73,6 +77,8 @@ export const MonacoEditor = Object.freeze({
     // all future Lua models. Color + completion are registered early so they work
     // even if lua-api.json fails to load.
     registerLuaColorProvider();
+    registerLuaStdlibCompletionProvider();
+    registerLuaStdlibHoverProvider();
     // getApi is a closure: sdkApi starts null, then points at JSON after fetch below.
     // Completion merges in-file symbols immediately and SDK items once api is loaded.
     registerLuaCompletionProvider(() => sdkApi);

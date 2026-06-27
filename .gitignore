@@ -8,3 +8,8 @@ public/data/
 .vscode/
 .vite/
 .venv/
+scripts/lua-stdlib/.tools/
+scripts/lua-stdlib/doc.json
+scripts/lua-stdlib/doc.md
+scripts/lua-stdlib/log/
+scripts/lua-stdlib/.luarc.json
