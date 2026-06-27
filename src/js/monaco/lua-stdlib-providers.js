@@ -16,6 +16,15 @@ import stdlibData from "./data/lua-stdlib.json";
 /** `detail` string on completion items for top-level stdlib globals (e.g. `pairs`). */
 const GLOBAL_STDLIB_DETAIL = "[Lua standard library]";
 
+/** `detail` string on completion items for stdlib package tables (e.g. `math`). */
+const PACKAGE_STDLIB_DETAIL = "[Lua standard library] package";
+
+/** Top-level stdlib completion items (globals + packages tables). */
+const TOP_LEVEL_STDLIB_DETAILS = new Set([
+  GLOBAL_STDLIB_DETAIL,
+  PACKAGE_STDLIB_DETAIL,
+]);
+
 /**
  * Matches text before the cursor when completing a namespace member.
  * Group 1: namespace (`math`), group 2: partial member name (`flo` in `math.flo`).
@@ -71,6 +80,27 @@ function buildConstantHoverMarkdown(constant) {
 }
 
 /**
+ * Build hover Markdown for a stdlib package table (e.g. `math`).
+ *
+ * @param {string} namespace Package name.
+ * @param {object} group Namespace payload from `lua-stdlib.json`.
+ * @returns {string} Markdown shown in Monaco hover/completion docs.
+ */
+function buildNamespaceHoverMarkdown(namespace, group) {
+  const fnCount = (group.functions || []).length;
+  const constCount = (group.constants || []).length;
+  const parts = [];
+  if (fnCount > 0) {
+    parts.push(`${fnCount} function${fnCount === 1 ? "" : "s"}`);
+  }
+  if (constCount > 0) {
+    parts.push(`${constCount} constant${constCount === 1 ? "" : "s"}`);
+  }
+  const summary = parts.length > 0 ? parts.join(", ") : "members";
+  return `Lua standard library \`${namespace}\` (${summary}).`;
+}
+
+/**
  * Build a lookup map from symbol keys to hover Markdown.
  *
  * Keys include bare globals (`pairs`), qualified names (`math.floor`), and
@@ -88,6 +118,8 @@ function buildStdlibHoverMap(stdlib) {
   }
 
   for (const [namespace, group] of Object.entries(stdlib.namespaces || {})) {
+    hoverMap.set(namespace, buildNamespaceHoverMarkdown(namespace, group));
+
     for (const fn of group.functions || []) {
       hoverMap.set(fn.lua_name, buildHoverMarkdown(fn));
       hoverMap.set(`${namespace}.${fn.name}`, buildHoverMarkdown(fn));
@@ -127,6 +159,15 @@ function buildStdlibCompletionTemplates(stdlib) {
   }
 
   for (const [namespace, group] of Object.entries(stdlib.namespaces || {})) {
+    templates.push({
+      label: namespace,
+      kind: monaco.languages.CompletionItemKind.Module,
+      insertText: namespace,
+      detail: PACKAGE_STDLIB_DETAIL,
+      sortText: `2_${namespace}`,
+      documentation: buildNamespaceHoverMarkdown(namespace, group),
+    });
+
     for (const fn of group.functions || []) {
       templates.push({
         label: fn.name,
@@ -140,6 +181,7 @@ function buildStdlibCompletionTemplates(stdlib) {
         documentation: buildHoverMarkdown(fn),
       });
     }
+
     for (const constant of group.constants || []) {
       templates.push({
         label: constant.name,
@@ -303,8 +345,8 @@ function getMemberCompletionContext(model, position) {
  *
  * Triggered on `.` for member completion (`math.floor`); returns nothing when
  * the prefix is not a known stdlib namespace (avoids polluting `foo.` completions).
- * Otherwise contributes top-level globals (`pairs`, `type`, ...) filtered by
- * the word at the cursor.
+ * Otherwise contributes top-level globals (`pairs`, `type`, ...) and namespace
+ * tables (`math`, `string`, ...) filtered by the word at the cursor.
  */
 export function registerLuaStdlibCompletionProvider() {
   monaco.languages.registerCompletionItemProvider("lua", {
@@ -339,9 +381,9 @@ export function registerLuaStdlibCompletionProvider() {
           })
         : templates;
 
-      // Only contribute top-level globals when not completing a member.
+      // Top-level globals and namespace tables only (not dotted member aliases).
       const globalSuggestions = filtered
-        .filter((item) => item.detail === GLOBAL_STDLIB_DETAIL)
+        .filter((item) => TOP_LEVEL_STDLIB_DETAILS.has(item.detail))
         .map((item) => ({ ...item, range: replaceRange }));
 
       return { suggestions: globalSuggestions };
