@@ -1,0 +1,1405 @@
+{
+  "globals": [
+    {
+      "lua_name": "assert",
+      "name": "assert",
+      "summary": "Raises an error if the value of its argument v is false (i.e., `nil` or `false`); otherwise, returns all its arguments. In case of error, `message` is the error object; when absent, it defaults to `\"assertion failed!\"`",
+      "details": [],
+      "params": [
+        {
+          "name": "v",
+          "type": "T",
+          "description": ""
+        },
+        {
+          "name": "message",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "T, any ...",
+      "example": ""
+    },
+    {
+      "lua_name": "error",
+      "name": "error",
+      "summary": "Terminates the last protected function called and returns message as the error object. Usually, `error` adds some information about the error position at the beginning of the message, if the message is a string.",
+      "details": [],
+      "params": [
+        {
+          "name": "message",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "level",
+          "type": "integer",
+          "description": ""
+        }
+      ],
+      "returns": "",
+      "example": ""
+    },
+    {
+      "lua_name": "getmetatable",
+      "name": "getmetatable",
+      "summary": "If object does not have a metatable, returns nil. Otherwise, if the object's metatable has a __metatable field, returns the associated value. Otherwise, returns the metatable of the given object.",
+      "details": [],
+      "params": [
+        {
+          "name": "object",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "table metatable",
+      "example": ""
+    },
+    {
+      "lua_name": "ipairs",
+      "name": "ipairs",
+      "summary": "Returns three values (an iterator function, the table `t`, and `0`) so that the construction ```lua for i,v in ipairs(t) do body end ``` will iterate over the key\u2013value pairs `(1,t[1]), (2,t[2]), ...`, up to the first absent index.",
+      "details": [],
+      "params": [
+        {
+          "name": "t",
+          "type": "T",
+          "description": ""
+        }
+      ],
+      "returns": "T, integer i",
+      "example": ""
+    },
+    {
+      "lua_name": "next",
+      "name": "next",
+      "summary": "Allows a program to traverse all fields of a table. Its first argument is a table and its second argument is an index in this table. A call to `next` returns the next index of the table and its associated value. When called with `nil` as its second argument, `next` returns an initial index and its associated value. When called with the last index, or with `nil` in an empty table, `next` returns `nil`. If the second argument is absent, then it is interpreted as `nil`. In particular, you can use `next(t)` to check whether a table is empty. The order in which the indices are enumerated is not specified, *even for numeric indices*. (To traverse a table in numerical order, use a numerical `for`.) The behavior of `next` is undefined if, during the traversal, you assign any value to a non-existent field in the table. You may however modify existing fields. In particular, you may set existing fields to nil.",
+      "details": [],
+      "params": [
+        {
+          "name": "table",
+          "type": "table<K, V>",
+          "description": ""
+        },
+        {
+          "name": "index",
+          "type": "K",
+          "description": ""
+        }
+      ],
+      "returns": "K?, V?",
+      "example": ""
+    },
+    {
+      "lua_name": "pairs",
+      "name": "pairs",
+      "summary": "If `t` has a metamethod `__pairs`, calls it with t as argument and returns the first three results from the call. Otherwise, returns three values: the [next](command:extension.lua.doc?[\"en-us/53/manual.html/pdf-next\"]) function, the table `t`, and `nil`, so that the construction ```lua for k,v in pairs(t) do body end ``` will iterate over all key\u2013value pairs of table `t`. See function [next](command:extension.lua.doc?[\"en-us/53/manual.html/pdf-next\"]) for the caveats of modifying the table during its traversal.",
+      "details": [],
+      "params": [
+        {
+          "name": "t",
+          "type": "T",
+          "description": ""
+        }
+      ],
+      "returns": "T",
+      "example": ""
+    },
+    {
+      "lua_name": "pcall",
+      "name": "pcall",
+      "summary": "Calls the function `f` with the given arguments in *protected mode*. This means that any error inside `f` is not propagated; instead, `pcall` catches the error and returns a status code. Its first result is the status code (a boolean), which is true if the call succeeds without errors. In such case, `pcall` also returns all results from the call, after this first result. In case of any error, `pcall` returns `false` plus the error object.",
+      "details": [],
+      "params": [
+        {
+          "name": "f",
+          "type": "async fun(...):...",
+          "description": ""
+        },
+        {
+          "name": "arg1",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "boolean success, any result, any ...",
+      "example": ""
+    },
+    {
+      "lua_name": "rawequal",
+      "name": "rawequal",
+      "summary": "Checks whether v1 is equal to v2, without invoking the `__eq` metamethod.",
+      "details": [],
+      "params": [
+        {
+          "name": "v1",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "v2",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "boolean",
+      "example": ""
+    },
+    {
+      "lua_name": "rawget",
+      "name": "rawget",
+      "summary": "Gets the real value of `table[index]`, without invoking the `__index` metamethod.",
+      "details": [],
+      "params": [
+        {
+          "name": "table",
+          "type": "table",
+          "description": ""
+        },
+        {
+          "name": "index",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "any",
+      "example": ""
+    },
+    {
+      "lua_name": "rawlen",
+      "name": "rawlen",
+      "summary": "Returns the length of the object `v`, without invoking the `__len` metamethod.",
+      "details": [],
+      "params": [
+        {
+          "name": "v",
+          "type": "table|string",
+          "description": ""
+        }
+      ],
+      "returns": "integer len",
+      "example": ""
+    },
+    {
+      "lua_name": "rawset",
+      "name": "rawset",
+      "summary": "Sets the real value of `table[index]` to `value`, without using the `__newindex` metavalue. `table` must be a table, `index` any value different from `nil` and `NaN`, and `value` any Lua value. This function returns `table`.",
+      "details": [],
+      "params": [
+        {
+          "name": "table",
+          "type": "table",
+          "description": ""
+        },
+        {
+          "name": "index",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "value",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "table",
+      "example": ""
+    },
+    {
+      "lua_name": "select",
+      "name": "select",
+      "summary": "If `index` is a number, returns all arguments after argument number `index`; a negative number indexes from the end (`-1` is the last argument). Otherwise, `index` must be the string `\"#\"`, and `select` returns the total number of extra arguments it received.",
+      "details": [],
+      "params": [
+        {
+          "name": "index",
+          "type": "integer|\"#\"",
+          "description": ""
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "any",
+      "example": ""
+    },
+    {
+      "lua_name": "setmetatable",
+      "name": "setmetatable",
+      "summary": "Sets the metatable for the given table. If `metatable` is `nil`, removes the metatable of the given table. If the original metatable has a `__metatable` field, raises an error. This function returns `table`. To change the metatable of other types from Lua code, you must use the debug library ([\u00a76.10](command:extension.lua.doc?[\"en-us/53/manual.html/6.10\"])).",
+      "details": [],
+      "params": [
+        {
+          "name": "table",
+          "type": "table",
+          "description": ""
+        },
+        {
+          "name": "metatable",
+          "type": "metatable|table",
+          "description": ""
+        }
+      ],
+      "returns": "table",
+      "example": ""
+    },
+    {
+      "lua_name": "tonumber",
+      "name": "tonumber",
+      "summary": "When called with no `base`, `tonumber` tries to convert its argument to a number. If the argument is already a number or a string convertible to a number, then `tonumber` returns this number; otherwise, it returns `fail`. The conversion of strings can result in integers or floats, according to the lexical conventions of Lua (see [\u00a73.1](command:extension.lua.doc?[\"en-us/53/manual.html/3.1\"])). The string may have leading and trailing spaces and a sign.",
+      "details": [
+        "- Overload: `tonumber(e: string, base: integer)`"
+      ],
+      "params": [
+        {
+          "name": "e",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "number?",
+      "example": ""
+    },
+    {
+      "lua_name": "tostring",
+      "name": "tostring",
+      "summary": "Receives a value of any type and converts it to a string in a human-readable format. If the metatable of `v` has a `__tostring` field, then `tostring` calls the corresponding value with `v` as argument, and uses the result of the call as its result. Otherwise, if the metatable of `v` has a `__name` field with a string value, `tostring` may use that string in its final result. For complete control of how numbers are converted, use [string.format](command:extension.lua.doc?[\"en-us/53/manual.html/pdf-string.format\"]).",
+      "details": [],
+      "params": [
+        {
+          "name": "v",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "string",
+      "example": ""
+    },
+    {
+      "lua_name": "type",
+      "name": "type",
+      "summary": "| \"nil\" | \"number\" | \"string\" | \"boolean\" | \"table\" | \"function\" | \"thread\" | \"userdata\" Returns the type of its only argument, coded as a string. The possible results of this function are `\"nil\"` (a string, not the value `nil`), `\"number\"`, `\"string\"`, `\"boolean\"`, `\"table\"`, `\"function\"`, `\"thread\"`, and `\"userdata\"`.",
+      "details": [],
+      "params": [
+        {
+          "name": "v",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "type type",
+      "example": ""
+    },
+    {
+      "lua_name": "xpcall",
+      "name": "xpcall",
+      "summary": "Calls function `f` with the given arguments in protected mode with a new message handler.",
+      "details": [],
+      "params": [
+        {
+          "name": "f",
+          "type": "async fun(...):...",
+          "description": ""
+        },
+        {
+          "name": "msgh",
+          "type": "function",
+          "description": ""
+        },
+        {
+          "name": "arg1",
+          "type": "any",
+          "description": ""
+        },
+        {
+          "name": "...",
+          "type": "any",
+          "description": ""
+        }
+      ],
+      "returns": "boolean success, any result, any ...",
+      "example": ""
+    }
+  ],
+  "namespaces": {
+    "math": {
+      "functions": [
+        {
+          "lua_name": "math.abs",
+          "name": "abs",
+          "summary": "Returns the absolute value of `x`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "Number",
+              "description": ""
+            }
+          ],
+          "returns": "Number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.acos",
+          "name": "acos",
+          "summary": "Returns the arc cosine of `x` (in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.asin",
+          "name": "asin",
+          "summary": "Returns the arc sine of `x` (in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.atan",
+          "name": "atan",
+          "summary": "Returns the arc tangent of `y/x` (in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "y",
+              "type": "number",
+              "description": ""
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.ceil",
+          "name": "ceil",
+          "summary": "Returns the smallest integral value larger than or equal to `x`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "integer",
+          "example": ""
+        },
+        {
+          "lua_name": "math.cos",
+          "name": "cos",
+          "summary": "Returns the cosine of `x` (assumed to be in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.deg",
+          "name": "deg",
+          "summary": "Converts the angle `x` from radians to degrees.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.exp",
+          "name": "exp",
+          "summary": "Returns the value `e^x` (where `e` is the base of natural logarithms).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.floor",
+          "name": "floor",
+          "summary": "Returns the largest integral value smaller than or equal to `x`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "integer",
+          "example": ""
+        },
+        {
+          "lua_name": "math.fmod",
+          "name": "fmod",
+          "summary": "Returns the remainder of the division of `x` by `y` that rounds the quotient towards zero.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.log",
+          "name": "log",
+          "summary": "Returns the logarithm of `x` in the given base.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            },
+            {
+              "name": "base",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.max",
+          "name": "max",
+          "summary": "Returns the argument with the maximum value, according to the Lua operator `<`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "Number",
+              "description": ""
+            },
+            {
+              "name": "...",
+              "type": "Number",
+              "description": ""
+            }
+          ],
+          "returns": "Number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.min",
+          "name": "min",
+          "summary": "Returns the argument with the minimum value, according to the Lua operator `<`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "Number",
+              "description": ""
+            },
+            {
+              "name": "...",
+              "type": "Number",
+              "description": ""
+            }
+          ],
+          "returns": "Number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.modf",
+          "name": "modf",
+          "summary": "Returns the integral part of `x` and the fractional part of `x`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "integer, number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.rad",
+          "name": "rad",
+          "summary": "Converts the angle `x` from degrees to radians.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.random",
+          "name": "random",
+          "summary": "* `math.random()`: Returns a float in the range [0,1). * `math.random(n)`: Returns a integer in the range [1, n]. * `math.random(m, n)`: Returns a integer in the range [m, n].",
+          "details": [
+            "- Overload: `math.random()`",
+            "- Overload: `math.random(m: integer)`"
+          ],
+          "params": [
+            {
+              "name": "m",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "n",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "integer",
+          "example": ""
+        },
+        {
+          "lua_name": "math.randomseed",
+          "name": "randomseed",
+          "summary": "Sets `x` as the \"seed\" for the pseudo-random generator.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "math.sin",
+          "name": "sin",
+          "summary": "Returns the sine of `x` (assumed to be in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.sqrt",
+          "name": "sqrt",
+          "summary": "Returns the square root of `x`.",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        },
+        {
+          "lua_name": "math.tan",
+          "name": "tan",
+          "summary": "Returns the tangent of `x` (assumed to be in radians).",
+          "details": [],
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": ""
+            }
+          ],
+          "returns": "number",
+          "example": ""
+        }
+      ],
+      "constants": [
+        {
+          "name": "huge",
+          "type": "number",
+          "description": "A value larger than any other numeric value."
+        },
+        {
+          "name": "maxinteger",
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "mininteger",
+          "type": "integer",
+          "description": ""
+        },
+        {
+          "name": "pi",
+          "type": "number",
+          "description": "The value of *\u03c0*."
+        }
+      ]
+    },
+    "string": {
+      "functions": [
+        {
+          "lua_name": "string.byte",
+          "name": "byte",
+          "summary": "Returns the internal numeric codes of the characters `s[i], s[i+1], ..., s[j]`.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "integer ...",
+          "example": ""
+        },
+        {
+          "lua_name": "string.char",
+          "name": "char",
+          "summary": "Returns a string with length equal to the number of arguments, in which each character has the internal numeric code equal to its corresponding argument.",
+          "details": [],
+          "params": [
+            {
+              "name": "byte",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "...",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.dump",
+          "name": "dump",
+          "summary": "Returns a string containing a binary representation (a *binary chunk*) of the given function.",
+          "details": [],
+          "params": [
+            {
+              "name": "f",
+              "type": "async fun(...):...",
+              "description": ""
+            },
+            {
+              "name": "strip",
+              "type": "boolean",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.find",
+          "name": "find",
+          "summary": "Looks for the first match of `pattern` (see [\u00a76.4.1](command:extension.lua.doc?[\"en-us/53/manual.html/6.4.1\"])) in the string.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "pattern",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "init",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "plain",
+              "type": "boolean",
+              "description": ""
+            }
+          ],
+          "returns": "integer|nil start, integer|nil end, any|nil ... captured",
+          "example": ""
+        },
+        {
+          "lua_name": "string.format",
+          "name": "format",
+          "summary": "Returns a formatted version of its variable number of arguments following the description given in its first argument.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "...",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.gmatch",
+          "name": "gmatch",
+          "summary": "Returns an iterator function. Each call to that iterator continues matching `pattern` (see [\u00a76.4.1](command:extension.lua.doc?[\"en-us/53/manual.html/6.4.1\"])) over s and returns all captures. The following example iterates over all words in string s, printing one per line: ```lua s = \"hello world from Lua\" for w in string.gmatch(s, \"%a+\") do print(w) end ```",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "pattern",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "string.gsub",
+          "name": "gsub",
+          "summary": "Returns a copy of s where all occurrences of `pattern` (or the first n occurrences if n is given) are replaced by repl (see [\u00a76.4.1](command:extension.lua.doc?[\"en-us/53/manual.html/6.4.1\"])).",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "pattern",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "repl",
+              "type": "string|number|table|function",
+              "description": ""
+            },
+            {
+              "name": "n",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "string, integer count",
+          "example": ""
+        },
+        {
+          "lua_name": "string.len",
+          "name": "len",
+          "summary": "Returns its length.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "integer",
+          "example": ""
+        },
+        {
+          "lua_name": "string.lower",
+          "name": "lower",
+          "summary": "Returns a copy of this string with all uppercase letters changed to lowercase.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.match",
+          "name": "match",
+          "summary": "Looks for the first match of `pattern` (see [\u00a76.4.1](command:extension.lua.doc?[\"en-us/53/manual.html/6.4.1\"])) in the string. If it finds one, `match` returns the captures; otherwise it returns nil.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "pattern",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "init",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "any ...",
+          "example": ""
+        },
+        {
+          "lua_name": "string.rep",
+          "name": "rep",
+          "summary": "Returns a string that is the concatenation of `n` copies of the string `s` separated by the string `sep`.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "n",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "sep",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.reverse",
+          "name": "reverse",
+          "summary": "Returns a string that is the string `s` reversed.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.sub",
+          "name": "sub",
+          "summary": "Returns the substring of the string that starts at `i` and continues until `j`.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "string.upper",
+          "name": "upper",
+          "summary": "Returns a copy of this string with all lowercase letters changed to uppercase.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string|number",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        }
+      ],
+      "constants": []
+    },
+    "table": {
+      "functions": [
+        {
+          "lua_name": "table.concat",
+          "name": "concat",
+          "summary": "Given a list where all elements are strings or numbers, returns the string `list[i]..sep..list[i+1] \u00b7\u00b7\u00b7 sep..list[j]`.",
+          "details": [],
+          "params": [
+            {
+              "name": "list",
+              "type": "table",
+              "description": ""
+            },
+            {
+              "name": "sep",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "table.insert",
+          "name": "insert",
+          "summary": "Inserts element `value` at position `pos` in `list`.",
+          "details": [
+            "- Overload: `table.insert(list: table, value: any)`"
+          ],
+          "params": [
+            {
+              "name": "list",
+              "type": "table",
+              "description": ""
+            },
+            {
+              "name": "pos",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "value",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "table.pack",
+          "name": "pack",
+          "summary": "Returns a new table with all arguments stored into keys `1`, `2`, etc. and with a field `\"n\"` with the total number of arguments.",
+          "details": [],
+          "params": [],
+          "returns": "table",
+          "example": ""
+        },
+        {
+          "lua_name": "table.remove",
+          "name": "remove",
+          "summary": "Removes from `list` the element at position `pos`, returning the value of the removed element.",
+          "details": [],
+          "params": [
+            {
+              "name": "list",
+              "type": "table",
+              "description": ""
+            },
+            {
+              "name": "pos",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "any",
+          "example": ""
+        },
+        {
+          "lua_name": "table.sort",
+          "name": "sort",
+          "summary": "Sorts list elements in a given order, *in-place*, from `list[1]` to `list[#list]`.",
+          "details": [],
+          "params": [
+            {
+              "name": "list",
+              "type": "T[]",
+              "description": ""
+            },
+            {
+              "name": "comp",
+              "type": "fun(a: T, b: T):boolean",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "table.unpack",
+          "name": "unpack",
+          "summary": "Returns the elements from the given list. This function is equivalent to ```lua return list[i], list[i+1], \u00b7\u00b7\u00b7, list[j] ``` By default, `i` is `1` and `j` is `#list`. [1]?: T1, [2]?: T2, [3]?: T3, [4]?: T4, [5]?: T5, [6]?: T6, [7]?: T7, [8]?: T8, [9]?: T9, [10]?: T10, }",
+          "details": [],
+          "params": [
+            {
+              "name": "list",
+              "type": "{",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "T1, T2, T3, T4, T5, T6, T7, T8, T9, T10",
+          "example": ""
+        }
+      ],
+      "constants": []
+    },
+    "coroutine": {
+      "functions": [
+        {
+          "lua_name": "coroutine.create",
+          "name": "create",
+          "summary": "Creates a new coroutine, with body `f`. `f` must be a function. Returns this new coroutine, an object with type `\"thread\"`.",
+          "details": [],
+          "params": [
+            {
+              "name": "f",
+              "type": "async fun(...):...",
+              "description": ""
+            }
+          ],
+          "returns": "thread",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.isyieldable",
+          "name": "isyieldable",
+          "summary": "Returns true when the running coroutine can yield.",
+          "details": [],
+          "params": [],
+          "returns": "boolean",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.resume",
+          "name": "resume",
+          "summary": "Starts or continues the execution of coroutine `co`.",
+          "details": [],
+          "params": [
+            {
+              "name": "co",
+              "type": "thread",
+              "description": ""
+            },
+            {
+              "name": "val1",
+              "type": "any",
+              "description": ""
+            }
+          ],
+          "returns": "boolean success, any ...",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.running",
+          "name": "running",
+          "summary": "Returns the running coroutine plus a boolean, true when the running coroutine is the main one.",
+          "details": [],
+          "params": [],
+          "returns": "thread running, boolean ismain",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.status",
+          "name": "status",
+          "summary": "Returns the status of coroutine `co`. | '\"running\"'   # Is running. | '\"suspended\"' # Is suspended or not started. | '\"normal\"'    # Is active but not running. | '\"dead\"'      # Has finished or stopped with an error.",
+          "details": [],
+          "params": [
+            {
+              "name": "co",
+              "type": "thread",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.wrap",
+          "name": "wrap",
+          "summary": "Creates a new coroutine, with body `f`; `f` must be a function. Returns a function that resumes the coroutine each time it is called.",
+          "details": [],
+          "params": [
+            {
+              "name": "f",
+              "type": "async fun(...):...",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "coroutine.yield",
+          "name": "yield",
+          "summary": "Suspends the execution of the calling coroutine.",
+          "details": [],
+          "params": [],
+          "returns": "any ...",
+          "example": ""
+        }
+      ],
+      "constants": []
+    },
+    "utf8": {
+      "functions": [
+        {
+          "lua_name": "utf8.char",
+          "name": "char",
+          "summary": "Receives zero or more integers, converts each one to its corresponding UTF-8 byte sequence and returns a string with the concatenation of all these sequences.",
+          "details": [],
+          "params": [
+            {
+              "name": "code",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "...",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "string",
+          "example": ""
+        },
+        {
+          "lua_name": "utf8.codepoint",
+          "name": "codepoint",
+          "summary": "Returns the codepoints (as integers) from all characters in `s` that start between byte position `i` and `j` (both included).",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "integer code, integer ...",
+          "example": ""
+        },
+        {
+          "lua_name": "utf8.codes",
+          "name": "codes",
+          "summary": "Returns values so that the construction ```lua for p, c in utf8.codes(s) do body end ``` will iterate over all UTF-8 characters in string s, with p being the position (in bytes) and c the code point of each character. It raises an error if it meets any invalid byte sequence.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string",
+              "description": ""
+            }
+          ],
+          "returns": "",
+          "example": ""
+        },
+        {
+          "lua_name": "utf8.len",
+          "name": "len",
+          "summary": "Returns the number of UTF-8 characters in string `s` that start between positions `i` and `j` (both inclusive).",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "j",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "integer?, integer? errpos",
+          "example": ""
+        },
+        {
+          "lua_name": "utf8.offset",
+          "name": "offset",
+          "summary": "Returns the position (in bytes) where the encoding of the `n`-th character of `s` (counting from position `i`) starts.",
+          "details": [],
+          "params": [
+            {
+              "name": "s",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "n",
+              "type": "integer",
+              "description": ""
+            },
+            {
+              "name": "i",
+              "type": "integer",
+              "description": ""
+            }
+          ],
+          "returns": "integer p",
+          "example": ""
+        }
+      ],
+      "constants": []
+    },
+    "package": {
+      "functions": [
+        {
+          "lua_name": "package.loadlib",
+          "name": "loadlib",
+          "summary": "Dynamically links the host program with the C library `libname`.",
+          "details": [],
+          "params": [
+            {
+              "name": "libname",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "funcname",
+              "type": "string",
+              "description": ""
+            }
+          ],
+          "returns": "any",
+          "example": ""
+        },
+        {
+          "lua_name": "package.searchpath",
+          "name": "searchpath",
+          "summary": "Searches for the given `name` in the given `path`.",
+          "details": [],
+          "params": [
+            {
+              "name": "name",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "path",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "sep",
+              "type": "string",
+              "description": ""
+            },
+            {
+              "name": "rep",
+              "type": "string",
+              "description": ""
+            }
+          ],
+          "returns": "string? filename, string? errmsg",
+          "example": ""
+        }
+      ],
+      "constants": []
+    }
+  }
+}
