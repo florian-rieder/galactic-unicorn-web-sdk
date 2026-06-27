@@ -119,7 +119,7 @@ Without manual generation or a successful dev-time run, Monaco completions stay 
 
 ## Contributing
 
-TBD
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
