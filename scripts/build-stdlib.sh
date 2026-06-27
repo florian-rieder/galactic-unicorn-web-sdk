@@ -2,7 +2,7 @@
 # Download LuaLS (if needed), materialize stdlib meta stubs, and regenerate
 # src/js/monaco/data/lua-stdlib.json.
 #
-# See scripts/lua-stdlib/PROVENANCE.md for background.
+# See scripts/lua-stdlib/README.md for background.
 
 set -euo pipefail
 

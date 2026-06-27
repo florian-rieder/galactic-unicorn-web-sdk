@@ -68,7 +68,6 @@ class LuaParam:
 class LuaFunctionDoc:
     """Normalized Lua function documentation."""
 
-    lua_name: str
     name: str
     summary: str = ""
     details: list[str] = field(default_factory=list)
@@ -234,18 +233,16 @@ def parse_function_block(
     if namespace is None:
         if short_name in EXCLUDED_GLOBALS:
             return None
-        lua_name = short_name
     else:
         if not qualified_name.startswith(f"{namespace}."):
             return None
-        lua_name = qualified_name
 
     overloads = parse_overloads(annotation_lines)
+    overload_label = qualified_name if namespace else short_name
     return LuaFunctionDoc(
-        lua_name=lua_name,
         name=short_name,
         summary=" ".join(summary_lines).strip(),
-        details=[f"- Overload: `{lua_name}{sig}`" for sig in overloads],
+        details=[f"- Overload: `{overload_label}{sig}`" for sig in overloads],
         params=parse_params(annotation_lines),
         returns=parse_returns(annotation_lines),
         example="",
@@ -313,9 +310,9 @@ def build_model(meta_dir: Path, target: tuple[int, int]) -> dict[str, Any]:
 
         if namespace is None:
             for fn in functions:
-                globals_by_name[fn.lua_name] = fn
+                globals_by_name[fn.name] = fn
         else:
-            # Dedupe namespace functions by short name.
+            # Dedupe namespace functions by call name.
             by_name = {fn.name: fn for fn in functions}
             namespaces[namespace] = {
                 "functions": sorted(
@@ -333,11 +330,11 @@ def build_model(meta_dir: Path, target: tuple[int, int]) -> dict[str, Any]:
         raise FileNotFoundError(f"Missing LuaLS meta stub: {package_path}")
     package_functions, _ = parse_meta_file(package_path, None, target)
     for fn in package_functions:
-        if fn.lua_name == "require":
-            globals_by_name[fn.lua_name] = fn
+        if fn.name == "require":
+            globals_by_name[fn.name] = fn
             break
 
-    globals_list = sorted(globals_by_name.values(), key=lambda fn: fn.lua_name)
+    globals_list = sorted(globals_by_name.values(), key=lambda fn: fn.name)
     return {
         "globals": [asdict(fn) for fn in globals_list],
         "namespaces": namespaces,

@@ -32,18 +32,18 @@ const TOP_LEVEL_STDLIB_DETAILS = new Set([
 const MEMBER_PREFIX_REGEX = /([A-Za-z_]\w*)\.(\w*)$/;
 
 /**
- * Build Monaco snippet insert text for a fully qualified stdlib function.
+ * Build Monaco snippet insert text for a stdlib function call.
  *
- * Uses the item's `lua_name` (e.g. `math.floor` or `pairs`). String-typed
- * parameters are wrapped in quotes so the user can type immediately.
+ * Uses `fn.name` (e.g. `pairs`, `floor`). String-typed parameters are
+ * wrapped in quotes so the user can type immediately.
  *
- * @param {object} item Normalized stdlib function from `lua-stdlib.json`.
+ * @param {object} fn Normalized stdlib function from `lua-stdlib.json`.
  * @returns {string} Monaco snippet text.
  */
-function buildStdlibFunctionInsertText(item) {
-  const params = item.params || [];
+function buildStdlibFunctionInsertText(fn) {
+  const params = fn.params || [];
   if (params.length === 0) {
-    return `${item.lua_name}($0)`;
+    return `${fn.name}($0)`;
   }
 
   let tabIndex = 1;
@@ -58,7 +58,32 @@ function buildStdlibFunctionInsertText(item) {
     }
     return placeholder;
   });
-  return `${item.lua_name}(${args.join(", ")})`;
+  return `${fn.name}(${args.join(", ")})`;
+}
+
+/**
+ * Fully qualified stdlib call name for hover signatures and lookup keys.
+ *
+ * @param {object} fn Normalized stdlib function from `lua-stdlib.json`.
+ * @param {string | undefined} namespace Parent package when the symbol is a member.
+ * @returns {string}
+ */
+function stdlibQualifiedCallName(fn, namespace) {
+  return namespace ? `${namespace}.${fn.name}` : fn.name;
+}
+
+/**
+ * Build hover Markdown for a stdlib function.
+ *
+ * @param {object} fn Normalized stdlib function from `lua-stdlib.json`.
+ * @param {string | undefined} namespace Parent package when the symbol is a member.
+ * @returns {string}
+ */
+function buildStdlibHoverMarkdown(fn, namespace) {
+  return buildHoverMarkdown({
+    ...fn,
+    lua_name: stdlibQualifiedCallName(fn, namespace),
+  });
 }
 
 /**
@@ -104,8 +129,7 @@ function buildNamespaceHoverMarkdown(namespace, group) {
  * Build a lookup map from symbol keys to hover Markdown.
  *
  * Keys include bare globals (`pairs`), qualified names (`math.floor`), and
- * dotted member aliases (`math.floor` via `namespace.name`) so hover works
- * whether the user is on `floor` after `math.` or on a fully qualified name.
+ * dotted member aliases derived from `namespace.name`.
  *
  * @param {object} stdlib Parsed `lua-stdlib.json` payload.
  * @returns {Map<string, string>} Symbol key to Markdown.
@@ -114,15 +138,15 @@ function buildStdlibHoverMap(stdlib) {
   const hoverMap = new Map();
 
   for (const item of stdlib.globals || []) {
-    hoverMap.set(item.lua_name, buildHoverMarkdown(item));
+    hoverMap.set(item.name, buildStdlibHoverMarkdown(item));
   }
 
   for (const [namespace, group] of Object.entries(stdlib.namespaces || {})) {
     hoverMap.set(namespace, buildNamespaceHoverMarkdown(namespace, group));
 
     for (const fn of group.functions || []) {
-      hoverMap.set(fn.lua_name, buildHoverMarkdown(fn));
-      hoverMap.set(`${namespace}.${fn.name}`, buildHoverMarkdown(fn));
+      const qualified = stdlibQualifiedCallName(fn, namespace);
+      hoverMap.set(qualified, buildStdlibHoverMarkdown(fn, namespace));
     }
     for (const constant of group.constants || []) {
       const key = `${namespace}.${constant.name}`;
@@ -147,14 +171,14 @@ function buildStdlibCompletionTemplates(stdlib) {
 
   for (const item of stdlib.globals || []) {
     templates.push({
-      label: item.lua_name,
+      label: item.name,
       kind: monaco.languages.CompletionItemKind.Function,
       insertText: buildStdlibFunctionInsertText(item),
       insertTextRules:
         monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       detail: GLOBAL_STDLIB_DETAIL,
-      sortText: `2_${item.lua_name}`,
-      documentation: buildHoverMarkdown(item),
+      sortText: `2_${item.name}`,
+      documentation: buildStdlibHoverMarkdown(item),
     });
   }
 
@@ -177,8 +201,8 @@ function buildStdlibCompletionTemplates(stdlib) {
           monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
         detail: GLOBAL_STDLIB_DETAIL + ` ${namespace}`,
         sortText: `2_${namespace}_${fn.name}`,
-        filterText: `${namespace}.${fn.name}`,
-        documentation: buildHoverMarkdown(fn),
+        filterText: stdlibQualifiedCallName(fn, namespace),
+        documentation: buildStdlibHoverMarkdown(fn, namespace),
       });
     }
 
@@ -222,35 +246,6 @@ function completionItemLabel(item) {
 }
 
 /**
- * Build snippet insert text for a namespace member (short name only).
- *
- * Used after `math.` so accepting `floor` inserts `floor(x)` not `math.floor(x)`.
- *
- * @param {object} fn Normalized namespace function; uses `fn.name`, not `lua_name`.
- * @returns {string} Monaco snippet text.
- */
-function buildStdlibMemberFunctionInsertText(fn) {
-  const params = fn.params || [];
-  if (params.length === 0) {
-    return `${fn.name}($0)`;
-  }
-
-  let tabIndex = 1;
-  const args = params.map((param) => {
-    if (param.name === "...") {
-      return "...";
-    }
-    const placeholder = "${" + tabIndex + ":" + param.name + "}";
-    tabIndex += 1;
-    if (param.type === "string" || param.type.startsWith("string")) {
-      return `"${placeholder}"`;
-    }
-    return placeholder;
-  });
-  return `${fn.name}(${args.join(", ")})`;
-}
-
-/**
  * Build completion items for one stdlib namespace after a dot trigger.
  *
  * @param {string} namespace Namespace table name (`math`, `string`, ...).
@@ -273,12 +268,12 @@ function memberCompletionItems(namespace, prefix, replaceRange) {
     suggestions.push({
       label: fn.name,
       kind: monaco.languages.CompletionItemKind.Function,
-      insertText: buildStdlibMemberFunctionInsertText(fn),
+      insertText: buildStdlibFunctionInsertText(fn),
       insertTextRules:
         monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       detail: GLOBAL_STDLIB_DETAIL + ` ${namespace}`,
       sortText: `2_${namespace}_${fn.name}`,
-      documentation: buildHoverMarkdown(fn),
+      documentation: buildStdlibHoverMarkdown(fn, namespace),
       range: replaceRange,
     });
   }
