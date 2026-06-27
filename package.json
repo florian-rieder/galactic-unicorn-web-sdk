@@ -23,8 +23,8 @@
     "url": "git+https://github.com/florian-rieder/galactic-unicorn-web-sdk.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "",
+  "author": "Florian Rieder",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/florian-rieder/galactic-unicorn-web-sdk/issues"
   },
