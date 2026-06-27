@@ -301,7 +301,7 @@ def parse_meta_file(
 
 def build_model(meta_dir: Path, target: tuple[int, int]) -> dict[str, Any]:
     """Build the normalized stdlib JSON model from a LuaLS meta directory."""
-    globals_list: list[LuaFunctionDoc] = []
+    globals_by_name: dict[str, LuaFunctionDoc] = {}
     namespaces: dict[str, dict[str, Any]] = {}
 
     for file_name, namespace in ALLOWED_NAMESPACE_FILES.items():
@@ -312,9 +312,8 @@ def build_model(meta_dir: Path, target: tuple[int, int]) -> dict[str, Any]:
         functions, constants = parse_meta_file(path, namespace, target)
 
         if namespace is None:
-            # Dedupe: later block wins if the same name appears twice.
-            by_name = {fn.lua_name: fn for fn in functions}
-            globals_list.extend(by_name.values())
+            for fn in functions:
+                globals_by_name[fn.lua_name] = fn
         else:
             # Dedupe namespace functions by short name.
             by_name = {fn.name: fn for fn in functions}
@@ -328,7 +327,17 @@ def build_model(meta_dir: Path, target: tuple[int, int]) -> dict[str, Any]:
                 ),
             }
 
-    globals_list.sort(key=lambda fn: fn.lua_name)
+    # require is a global LuaLS function documented in package.lua.
+    package_path = meta_dir / "package.lua"
+    if not package_path.is_file():
+        raise FileNotFoundError(f"Missing LuaLS meta stub: {package_path}")
+    package_functions, _ = parse_meta_file(package_path, None, target)
+    for fn in package_functions:
+        if fn.lua_name == "require":
+            globals_by_name[fn.lua_name] = fn
+            break
+
+    globals_list = sorted(globals_by_name.values(), key=lambda fn: fn.lua_name)
     return {
         "globals": [asdict(fn) for fn in globals_list],
         "namespaces": namespaces,

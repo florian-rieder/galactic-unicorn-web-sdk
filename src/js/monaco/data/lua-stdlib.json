@@ -216,6 +216,21 @@
       "example": ""
     },
     {
+      "lua_name": "require",
+      "name": "require",
+      "summary": "Loads the given module, returns any value returned by the given module(`true` when `nil`).",
+      "details": [],
+      "params": [
+        {
+          "name": "modname",
+          "type": "string",
+          "description": ""
+        }
+      ],
+      "returns": "unknown",
+      "example": ""
+    },
+    {
       "lua_name": "select",
       "name": "select",
       "summary": "If `index` is a number, returns all arguments after argument number `index`; a negative number indexes from the end (`-1` is the last argument). Otherwise, `index` must be the string `\"#\"`, and `select` returns the total number of extra arguments it received.",
