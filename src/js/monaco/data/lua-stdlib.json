@@ -1345,61 +1345,6 @@
         }
       ],
       "constants": []
-    },
-    "package": {
-      "functions": [
-        {
-          "lua_name": "package.loadlib",
-          "name": "loadlib",
-          "summary": "Dynamically links the host program with the C library `libname`.",
-          "details": [],
-          "params": [
-            {
-              "name": "libname",
-              "type": "string",
-              "description": ""
-            },
-            {
-              "name": "funcname",
-              "type": "string",
-              "description": ""
-            }
-          ],
-          "returns": "any",
-          "example": ""
-        },
-        {
-          "lua_name": "package.searchpath",
-          "name": "searchpath",
-          "summary": "Searches for the given `name` in the given `path`.",
-          "details": [],
-          "params": [
-            {
-              "name": "name",
-              "type": "string",
-              "description": ""
-            },
-            {
-              "name": "path",
-              "type": "string",
-              "description": ""
-            },
-            {
-              "name": "sep",
-              "type": "string",
-              "description": ""
-            },
-            {
-              "name": "rep",
-              "type": "string",
-              "description": ""
-            }
-          ],
-          "returns": "string? filename, string? errmsg",
-          "example": ""
-        }
-      ],
-      "constants": []
     }
   }
 }

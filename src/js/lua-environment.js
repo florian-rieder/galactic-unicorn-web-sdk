@@ -162,6 +162,13 @@ function registerVirtualFsPackageSearchers(L) {
   lua.lua_rawseti(L, -2, 1);
   // Set the searchers table as the value of the "searchers" field in the package table.
   lua.lua_setfield(L, -2, "searchers");
+
+  // Sandboxing: Remove loadlib and searchpath from the package table.
+  lua.lua_pushnil(L);
+  lua.lua_setfield(L, -2, "loadlib");
+  lua.lua_pushnil(L);
+  lua.lua_setfield(L, -2, "searchpath");
+
   // Pop the package table from the stack.
   lua.lua_pop(L, 1);
 }

@@ -38,7 +38,6 @@ ALLOWED_NAMESPACE_FILES: dict[str, str | None] = {
     "table.lua": "table",
     "coroutine.lua": "coroutine",
     "utf8.lua": "utf8",
-    "package.lua": "package",
 }
 
 # Globals stripped at runtime in lua-environment.js; omit from IntelliSense.
