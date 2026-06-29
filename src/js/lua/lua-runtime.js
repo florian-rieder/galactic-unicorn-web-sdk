@@ -5,11 +5,11 @@
  * to init, run scripts, invoke lifecycle callbacks, and tear down sessions.
  */
 
-import fengari from "./vendor/fengari.js";
+import fengari from "../vendor/fengari.js";
 const { lua, lauxlib, to_luastring } = fengari;
 
-import { Display } from "./display.js";
-import { Terminal } from "./terminal.js";
+import { Display } from "../display.js";
+import { Terminal } from "../terminal.js";
 import { openLuaVM } from "./lua-environment.js";
 
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
@@ -69,7 +69,7 @@ export const Lua = Object.freeze({
 
     // Call the function
     const callStatus = luaRunWithExecutionBudget(L, () =>
-      lua.lua_pcall(L, args.length, 0, 0),
+      lua.lua_pcall(L, args.length, 0, 0)
     );
     if (callStatus != lua.LUA_OK) {
       const errorMessage = lua.lua_tojsstring(L, -1);
@@ -102,7 +102,7 @@ export const Lua = Object.freeze({
         g_luaState,
         to_luastring(code),
         code.length,
-        to_luastring(`@${entryPath}`),
+        to_luastring(`@${entryPath}`)
       );
       // Run the code
       return lua.lua_pcall(g_luaState, 0, 0, 0);
@@ -149,8 +149,8 @@ function luaRunWithExecutionBudget(L, fn) {
       lua.lua_pushstring(
         L,
         to_luastring(
-          `Execution timed out after ${LUA_EXECUTION_BUDGET_MS}ms budget`,
-        ),
+          `Execution timed out after ${LUA_EXECUTION_BUDGET_MS}ms budget`
+        )
       );
       lua.lua_error(L);
       return 0;

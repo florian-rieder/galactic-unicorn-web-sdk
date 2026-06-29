@@ -17,7 +17,7 @@ except ImportError as exc:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parent.parent
-LUA_JS_PATH = ROOT / "src/js/lua.js"
+LUA_JS_PATH = ROOT / "src/js/lua/lua.js"
 INTRO_MD_PATH = ROOT / "docs/API.intro.md"
 TEMPLATE_PATH = ROOT / "docs/templates/api.template.html"
 

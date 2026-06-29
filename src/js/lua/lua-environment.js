@@ -6,11 +6,11 @@
  * functions/constants registered from `lua.js`.
  */
 
-import fengari from "./vendor/fengari.js";
+import fengari from "../vendor/fengari.js";
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 
-import { FileSystem } from "./fs/file-system.js";
-import { BuiltinFiles } from "./fs/builtin-files.js";
+import { FileSystem } from "../fs/file-system.js";
+import { BuiltinFiles } from "../fs/builtin-files.js";
 
 import { LUA_API_FUNCTIONS, LUA_API_CONSTANTS } from "./lua.js";
 
