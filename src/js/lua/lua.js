@@ -9,8 +9,11 @@
 import fengari from "../vendor/fengari.js";
 const { lua, lauxlib, to_luastring } = fengari;
 
+/** Helpers */
 import { readRgbTableArg, pushRgbTable } from "./lua-utils.js";
+import { hslToRgb } from "../color.js";
 
+/** Hardware emulation */
 import { Display } from "../display.js";
 import { Input } from "../input.js";
 import { Music } from "../music.js";
@@ -18,7 +21,6 @@ import { FileSystem } from "../fs/file-system.js";
 import { BuiltinFiles } from "../fs/builtin-files.js";
 import { Terminal } from "../terminal.js";
 import { Buzzer } from "../buzzer.js";
-import { hslToRgb } from "../color.js";
 import { FileExplorer } from "../file-explorer.js";
 
 /**
@@ -869,7 +871,7 @@ function lua_readFile(L) {
 }
 
 /**
- * Read a chunk of data from the file at the given path, offset and size
+ * Read a chunk of data from the file at the given path, offset and size. If the size at the given offset exceeds the file size, only the remaining bytes will be returned.
  *
  * Lua API: `read_file_chunk(path)`
  *
