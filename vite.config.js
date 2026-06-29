@@ -14,7 +14,7 @@ const monacoEditorPlugin =
 const LUA_API_WATCH_DEBOUNCE_MS = 200;
 
 const LUA_API_WATCH_FILES = [
-  resolve(rootDir, "src/js/lua.js"),
+  resolve(rootDir, "src/js/lua/lua.js"),
   resolve(rootDir, "docs/API.intro.md"),
   resolve(rootDir, "docs/templates/api.template.html"),
 ];
@@ -47,7 +47,7 @@ function regenLuaApiPlugin() {
       spawnErrored = true;
       if (err.code === "ENOENT") {
         console.warn(
-          "[lua-api] `python` not found on PATH; skipping generate_lua_api.py",
+          "[lua-api] `python` not found on PATH; skipping generate_lua_api.py"
         );
       } else {
         console.warn("[lua-api]", err.message);
@@ -59,7 +59,7 @@ function regenLuaApiPlugin() {
       if (code !== 0 && code !== null) {
         console.warn(
           `[lua-api] generate_lua_api.py exited with code ${code}`,
-          stderr.trim() ? `\n${stderr.trim()}` : "",
+          stderr.trim() ? `\n${stderr.trim()}` : ""
         );
         return;
       }
@@ -76,7 +76,7 @@ function regenLuaApiPlugin() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(
       () => runGenerate(server),
-      LUA_API_WATCH_DEBOUNCE_MS,
+      LUA_API_WATCH_DEBOUNCE_MS
     );
   }
 
