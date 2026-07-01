@@ -25,11 +25,10 @@ Display.render(); // Render the initial state of the display
 const TARGET_FPS = 60;
 const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
 
-let lastTime = null;
-let deltaTime = null;
+let lastProcessTime = null;
+let lastFrameTime = null;
 let now = null;
 let frameId = null;
-let timeoutId = null;
 let isRunning = false;
 
 // Toolbar control buttons
@@ -126,7 +125,7 @@ window.addEventListener("keyup", (event) => {
  */
 function startSession() {
   // If a loop is already running, stop it.
-  if (frameId != null || timeoutId != null) {
+  if (frameId != null) {
     stopSession();
   }
 
@@ -166,11 +165,14 @@ function stopSession() {
   Lua.close();
   Music.stop();
   cancelAnimationFrame(frameId);
-  clearTimeout(timeoutId);
-  lastTime = null;
+  lastFrameTime = null;
   frameId = null;
-  timeoutId = null;
   isRunning = false;
+}
+
+function waitForNextFrame() {
+  const currentTime = performance.now();
+  return currentTime - lastFrameTime < TARGET_DELTA_TIME;
 }
 
 /**
@@ -178,12 +180,26 @@ function stopSession() {
  */
 function mainLoop() {
   now = performance.now();
-  if (lastTime == null) {
-    deltaTime = 0;
-  } else {
-    deltaTime = now - lastTime;
+
+  let processDeltaTime = 0;
+  if (lastProcessTime != null) {
+    processDeltaTime = now - lastProcessTime;
   }
-  lastTime = now;
+  lastProcessTime = now;
+
+  Lua.callIfExists("process", processDeltaTime / 1000.0);
+
+  if (waitForNextFrame()) {
+    frameId = requestAnimationFrame(mainLoop);
+    return;
+  }
+
+  let deltaTime = 0;
+
+  if (lastFrameTime != null) {
+    deltaTime = now - lastFrameTime;
+  }
+  lastFrameTime = now;
 
   // Run update then draw from the lua script.
   // Missing callbacks are allowed; runtime errors stop the loop.
@@ -202,13 +218,5 @@ function mainLoop() {
   // Render the display buffer to the canvas.
   Display.render();
 
-  // Time management: aim for a TARGET_FPS update rate.
-  const timeToWait = TARGET_DELTA_TIME - deltaTime;
-  if (timeToWait > 0) {
-    timeoutId = setTimeout(() => {
-      frameId = requestAnimationFrame(mainLoop);
-    }, timeToWait);
-  } else {
-    frameId = requestAnimationFrame(mainLoop);
-  }
+  frameId = requestAnimationFrame(mainLoop);
 }

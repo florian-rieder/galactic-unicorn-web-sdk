@@ -16,7 +16,6 @@ import { hslToRgb } from "../color.js";
 /** Hardware emulation */
 import { Display } from "../display.js";
 import { Input } from "../input.js";
-import { Music } from "../music.js";
 import { FileSystem } from "../fs/file-system.js";
 import { BuiltinFiles } from "../fs/builtin-files.js";
 import { Terminal } from "../terminal.js";
@@ -48,14 +47,6 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "get_time", luaFunction: lua_getTime },
   { luaName: "clear", luaFunction: lua_clear },
   { luaName: "buzz", luaFunction: lua_buzz },
-  { luaName: "set_tempo", luaFunction: lua_setTempo },
-  { luaName: "set_ticks_per_beat", luaFunction: lua_setTicksPerBeat },
-  { luaName: "load_music", luaFunction: lua_loadMusic },
-  { luaName: "play_music", luaFunction: lua_playMusic },
-  { luaName: "pause_music", luaFunction: lua_pauseMusic },
-  { luaName: "resume_music", luaFunction: lua_resumeMusic },
-  { luaName: "stop_music", luaFunction: lua_stopMusic },
-  { luaName: "is_music_playing", luaFunction: lua_isMusicPlaying },
   { luaName: "read_file", luaFunction: lua_readFile },
   { luaName: "read_file_chunk", luaFunction: lua_readFileChunk },
   { luaName: "file_size", luaFunction: lua_fileSize },
@@ -91,6 +82,7 @@ const LUA_API_CALLBACKS = [
   { luaName: "setup", luaFunction: lua_callback_setup },
   { luaName: "update", luaFunction: lua_callback_update },
   { luaName: "draw", luaFunction: lua_callback_draw },
+  { luaName: "process", luaFunction: lua_callback_process },
   { luaName: "on_press", luaFunction: lua_callback_onPress },
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
 ];
@@ -627,213 +619,6 @@ function lua_buzz(L) {
 }
 
 /**
- * Set the tempo of the music.
- *
- * Lua API: `set_tempo(bpm)`
- *
- * @luaName set_tempo
- * @luaKind function
- * @luaCategory sound
- * @luaParam bpm:number Tempo in beats per minute.
- * @luaReturns nil
- * @luaExample set_tempo(120)
- *
- * @param {LuaState} L - Fengari Lua state; bpm is read from stack index 1.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_setTempo(L) {
-  const bpm = lua.lua_tointeger(L, 1);
-  try {
-    Music.setTempo(bpm);
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in set_tempo: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Set the number of ticks per beat.
- *
- * Lua API: `set_ticks_per_beat(ticks_per_beat)`
- *
- * @luaName set_ticks_per_beat
- * @luaKind function
- * @luaCategory sound
- * @luaParam ticks_per_beat:number Number of ticks per beat.
- * @luaReturns nil
- * @luaExample set_ticks_per_beat(4)
- *
- * @param {LuaState} L - Fengari Lua state; ticks_per_beat is read from stack index 1.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_setTicksPerBeat(L) {
-  const ticks_per_beat = lua.lua_tointeger(L, 1);
-  try {
-    Music.setTicksPerBeat(ticks_per_beat);
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in set_ticks_per_beat: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Load a music string into memory. Must be called before playing music.
- * Music strings are defined in the format "note:duration", where note is a note name
- * and duration is the number of ticks (1/4 note is 1 tick by default).
- * Spaces are used to separate notes.
- * The note "0" is used to represent a rest (silence note).
- *
- * Lua API: `load_music(music_string)`
- *
- * @luaName load_music
- * @luaKind function
- * @luaCategory sound
- * @luaParam music_string:string Music string to load.
- * @luaReturns nil
- * @luaExample load_music("A4:4 0:1 C4:4")
- *
- * @param {LuaState} L - Fengari Lua state; name is read from stack index 1.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_loadMusic(L) {
-  const music_string = lua.lua_tojsstring(L, 1);
-  try {
-    Music.load(music_string);
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in load_music: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Start or restart playback of the loaded music.
- *
- * Lua API: `play_music(loop)`
- *
- * @luaName play_music
- * @luaKind function
- * @luaCategory sound
- * @luaParam loop:boolean If true, loop when the track ends.
- * @luaReturns nil
- * @luaExample play_music(true)
- *
- * @param {LuaState} L - Fengari Lua state; `loop` is read from stack index 1.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_playMusic(L) {
-  const loop = lua.lua_toboolean(L, 1) || false;
-  try {
-    Music.play(loop);
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in play_music: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Pause music playback (can be resumed).
- *
- * Lua API: `pause_music()`
- *
- * @luaName pause_music
- * @luaKind function
- * @luaCategory sound
- * @luaReturns nil
- * @luaExample pause_music()
- *
- * @param {LuaState} L - Fengari Lua state.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_pauseMusic(L) {
-  try {
-    Music.pause();
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in pause_music: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Resume music after `pause_music()`.
- *
- * Lua API: `resume_music()`
- *
- * @luaName resume_music
- * @luaKind function
- * @luaCategory sound
- * @luaReturns nil
- * @luaExample resume_music()
- *
- * @param {LuaState} L - Fengari Lua state.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_resumeMusic(L) {
-  try {
-    Music.resume();
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in resume_music: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Stop music and reset playback state.
- *
- * Lua API: `stop_music()`
- *
- * @luaName stop_music
- * @luaKind function
- * @luaCategory sound
- * @luaReturns nil
- * @luaExample stop_music()
- *
- * @param {LuaState} L - Fengari Lua state.
- * @returns {number} Number of values returned to Lua (always 0).
- */
-function lua_stopMusic(L) {
-  try {
-    Music.stop();
-  } catch (e) {
-    lua.lua_pushstring(L, to_luastring("in stop_music: " + e));
-    lua.lua_error(L);
-    return 0;
-  }
-  return 0;
-}
-
-/**
- * Check if music is currently playing.
- *
- * Lua API: `is_music_playing()`
- *
- * @luaName is_music_playing
- * @luaKind function
- * @luaCategory sound
- * @luaReturns boolean: `true` if music is playing, otherwise `false`
- * @luaExample if is_music_playing() then ... end
- *
- * @param {LuaState} L - Fengari Lua state.
- * @returns {number} Number of values returned to Lua (always 1).
- */
-function lua_isMusicPlaying(L) {
-  const isPlaying = Music.isPlaying();
-  lua.lua_pushboolean(L, isPlaying);
-  return 1;
-}
-
-/**
  * Read a complete file at the given path
  *
  * Lua API: `read_file(path)`
@@ -1050,6 +835,25 @@ function lua_callback_update(delta_time) {}
  * end
  */
 function lua_callback_draw() {}
+
+/**
+ * Called on every main loop tick (faster than framerate)
+ *
+ * Use this for specific things which need a higher resolution than the framerate, like for example
+ * a music sequencer.
+ *
+ * Lua API: `process(delta_time)` where `delta_time` is seconds since last frame.
+ *
+ * @luaName process
+ * @luaKind callback
+ * @luaCategory lifecycle
+ * @luaParam delta_time:number Seconds elapsed since the previous tick (float)
+ * @luaReturns nil
+ * @luaExample function process(delta_time)
+ *   -- stuff
+ * end
+ */
+function lua_callback_process() {}
 
 /**
  * Called when a mapped button transitions from up to down (key press edge).
