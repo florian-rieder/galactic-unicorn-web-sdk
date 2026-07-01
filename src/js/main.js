@@ -164,11 +164,16 @@ function stopSession() {
   Lua.close();
   cancelAnimationFrame(frameId);
   lastFrameTime = null;
+  lastProcessTime = null;
   frameId = null;
   isRunning = false;
 }
 
 function waitForNextFrame() {
+  if (lastFrameTime == null) {
+    return false;
+  }
+
   const currentTime = performance.now();
   return currentTime - lastFrameTime < TARGET_DELTA_TIME;
 }
@@ -185,7 +190,11 @@ function mainLoop() {
   }
   lastProcessTime = now;
 
-  Lua.callIfExists("process", processDeltaTime / 1000.0);
+  const processStatus = Lua.callIfExists("process", processDeltaTime / 1000.0);
+  if (processStatus === "error") {
+    stopSession();
+    return;
+  }
 
   if (waitForNextFrame()) {
     frameId = requestAnimationFrame(mainLoop);

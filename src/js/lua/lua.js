@@ -842,7 +842,6 @@ function lua_callback_draw() {}
  * Use this for specific things which need a higher resolution than the framerate, like for example
  * a music sequencer.
  *
- * Lua API: `process(delta_time)` where `delta_time` is seconds since last frame.
  *
  * @luaName process
  * @luaKind callback
