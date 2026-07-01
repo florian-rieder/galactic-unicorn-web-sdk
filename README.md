@@ -20,7 +20,7 @@ Developing directly on device is slow when every test requires another flash cyc
 - Virtual file system and file explorer
 - Export project as a zip file
 - Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers and Firefox 151+)
-- Example Lua scripts in `src/lua/`
+- Built-in cartridges and common Lua libraries
 
 ## Project status
 
