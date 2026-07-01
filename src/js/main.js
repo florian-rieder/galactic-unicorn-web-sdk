@@ -3,7 +3,6 @@ import { Lua } from "./lua/lua-runtime.js";
 import { BuiltinFiles } from "./fs/builtin-files.js";
 import { Display } from "./display.js";
 import { initResizers } from "./ui/resizer.js";
-import { Music } from "./music.js";
 import { FileExplorer } from "./file-explorer.js";
 import { Workspace } from "./workspace.js";
 import { Input } from "./input.js";
@@ -163,7 +162,6 @@ function startSession() {
  */
 function stopSession() {
   Lua.close();
-  Music.stop();
   cancelAnimationFrame(frameId);
   lastFrameTime = null;
   frameId = null;
