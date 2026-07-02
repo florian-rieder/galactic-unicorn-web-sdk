@@ -36,9 +36,9 @@ export const Lua = Object.freeze({
   /**
    * Call a Lua global function if it exists.
    *
-   * @param {string} name - The name of the function to call.
-   * @param {...any} args - The arguments to pass to the function.
-   * @returns {string} - "ok" if a function existed and ran successfully, "missing" if the global is not a function, "error" if the function exists but raised an error.
+   * @param {string} functionName - The name of the function to call.
+   * @param {...any} args - The arguments to pass to the function (any type is allowed) .
+   * @returns {"ok"|"missing"|"missing_state"|"error"} `ok` if a function existed and ran successfully, `missing` if the global is not a function, `missing_state` if there is no Lua state, `error` if the function exists but raised an error.
    */
   callIfExists(functionName, ...args) {
     if (g_luaState == null) {
@@ -68,7 +68,7 @@ export const Lua = Object.freeze({
     }
 
     // Call the function
-    const callStatus = luaRunWithExecutionBudget(L, () =>
+    const callStatus = runWithExecutionBudget(L, () =>
       lua.lua_pcall(L, args.length, 0, 0)
     );
     if (callStatus != lua.LUA_OK) {
@@ -82,7 +82,7 @@ export const Lua = Object.freeze({
   },
 
   /**
-   * Load and run some Lua code.
+   * Start a fresh Lua state to load and run some Lua code in.
    *
    * @param {string} code - The code to run.
    * @param {string} entryPath - The path to the entrypoint file.
@@ -95,7 +95,7 @@ export const Lua = Object.freeze({
     }
 
     // Run the code
-    const runStatus = luaRunWithExecutionBudget(g_luaState, () => {
+    const runStatus = runWithExecutionBudget(g_luaState, () => {
       // Load the code as a buffer so Lua can consider it as a file with a name.
       // (For better error messages)
       lauxlib.luaL_loadbuffer(
@@ -131,6 +131,36 @@ export const Lua = Object.freeze({
     Display.clear(); // Clear the display buffer
     Display.render(); // Render the display
   },
+
+  /**
+   * Evaluate a Lua expression in the current Lua state.
+   *
+   * @param {string} expression - The expression to evaluate.
+   * @returns {string|null} The result of the evaluation or null if the expression failed to evaluate.
+   */
+  eval(expression) {
+    if (g_luaState === null) {
+      throw new Error(
+        "No Lua session to evaluate code in. Call Lua.init() first."
+      );
+    }
+
+    return runWithExecutionBudget(g_luaState, () => {
+      // Wrap the expression in a return statement so it returns a value.
+      const statement = "return " + expression;
+      const status = lauxlib.luaL_dostring(g_luaState, to_luastring(statement));
+      if (status != lua.LUA_OK) {
+        const errorMessage = lua.lua_tojsstring(g_luaState, -1);
+        Terminal.printLine(`[Error] ${errorMessage}`);
+        lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
+        return null; // Failed to evaluate the expression.
+      }
+      // Return the result as a string.
+      const result = lua.lua_tojsstring(g_luaState, -1);
+      lua.lua_pop(g_luaState, 1); // Pop the result from the stack
+      return result;
+    });
+  },
 });
 
 /**
@@ -141,7 +171,7 @@ export const Lua = Object.freeze({
  * @param {Function} fn - The function to run.
  * @returns {any} - The result of the function.
  */
-function luaRunWithExecutionBudget(L, fn) {
+function runWithExecutionBudget(L, fn) {
   const startTime = performance.now();
 
   const hook = () => {
