@@ -24,7 +24,7 @@ local y = 4
 
 function update(delta_time)
   x = x + 6 * delta_time
-  if x > SCREEN_W - 1 then
+  if x > SCREEN_W then
     x = 0
   end
 end
@@ -39,10 +39,12 @@ What you should see: one bright pixel moving left-to-right, then restarting.
 
 ## Input basics
 
-Use `is_pressed(button)` for actions that should happen while a key is held.
-Use `on_press(button)` for one-time actions when a key is first pressed.
+- `on_press(button)`: runs once when the button goes down.
+- `on_release(button)`: runs once when the button goes up.
+- `on_repeat(button)`: runs while held, after a short delay, then at a fixed interval. Does **not** fire on the initial press; use `on_press` for that.
+- `is_pressed(button)`: true every frame while the button is held.
 
-Minimal pattern:
+**Smooth movement** (slide while held): poll `is_pressed` in `update`:
 
 ```lua
 local x = 10
@@ -57,6 +59,18 @@ function update(dt)
 end
 ```
 
+**Stepped movement** (one tile per repeat, e.g. grid cursor): `on_press` for the first step, `on_repeat` for held repeats:
+
+```lua
+function on_press(button)
+  move_cursor(button)
+end
+
+function on_repeat(button)
+  move_cursor(button)
+end
+```
+
 ## Coordinates and screen model
 
 - Coordinates are `0`-based.
@@ -67,7 +81,7 @@ end
 ## Input key map
 
 These are the default keyboard keys and button names used by `is_pressed`,
-`on_press`, and `on_release`.
+`on_press`, `on_repeat`, and `on_release`.
 
 | Logical button | Keyboard key |
 | -------------- | ------------ |
@@ -129,8 +143,6 @@ return M
 ```lua
 local colors = require("mygame.lib.colors")
 
-local player_position = Vector2.ZERO
-
 function draw()
   clear()
   set_pixel(10, 4, colors.player())
@@ -141,10 +153,26 @@ Create both files in the explorer, open `/main.lua` and press Run.
 
 ### What is _not_ available
 
-For sandboxing, only **`require`** can load other Lua files. These are **not** available in scripts:
+For sandboxing, only **`require`** can load other Lua files. The following are **not** available in scripts:
 
 - `dofile`
 - `loadfile`
-- `load` / `loadstring`
+- `load`
+- `loadstring`
 
 Use the editor + Run for your entry script, and `require("path.to.luafile")` for any other lua script file you might need. To read other kinds of data files, use `read_file()`.
+
+## Common libraries
+
+Common libraries are available in the built-in files, under the `lib` folder. This directory contains many useful shared libraries, such as:
+
+- Vector2 / Vector3
+- Set
+- Enum
+- Tween
+- Text
+- Math utils
+- Music sequencer
+- Line / Anti-aliased line
+
+These libraries are currently not documented; explore the Lua scripts and examples to understand how they work !
