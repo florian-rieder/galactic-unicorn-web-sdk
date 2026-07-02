@@ -19,9 +19,8 @@ export const FileSystem = Object.freeze({
 
   /**
    * Writes raw bytes to file storage at the given path
-   * @param {String} path
-   * @param {Uint8Array} data - raw bytes
-   * @returns {boolean} whether the write succeeded
+   * @param {string} path
+   * @param {Uint8Array} data raw bytes
    */
   writeFile(path, data) {
     // Encode raw bytes to base64 for storage
@@ -39,8 +38,8 @@ export const FileSystem = Object.freeze({
    * const decodedString = new TextDecoder().decode(raw_bytes);
    * ```
    *
-   * @param {String} path
-   * @returns {Uint8Array} raw bytes read from the file at path or null if it failed to read a file
+   * @param {string} path
+   * @returns {Uint8Array} raw bytes read from the file at path
    */
   readFile(path) {
     if (cache[path]) return cache[path];
@@ -61,10 +60,10 @@ export const FileSystem = Object.freeze({
 
   /**
    * Read a specific chunk of a file in the virtual file system
-   * @param {String} path path of the file in the virtual file system
-   * @param {int} offset start position of the chunk in bytes
-   * @param {int} size size of the chunk in bytes
-   * @returns {Uint8Array|null} raw byte array representing the chunk of data from the file
+   * @param {string} path path of the file in the virtual file system
+   * @param {number} offset start position of the chunk in bytes
+   * @param {number} size size of the chunk in bytes
+   * @returns {Uint8Array} raw byte array representing the chunk of data from the file
    */
   readFileChunk(path, offset, size) {
     // Inefficient emulation of chunked reading. We can't really read only a chunk
@@ -76,8 +75,8 @@ export const FileSystem = Object.freeze({
   /**
    * Get the size of a file in the virtual file system
    *
-   * @param {String} path
-   * @returns {int} size of the file in bytes
+   * @param {string} path
+   * @returns {number} size of the file in bytes
    */
   fileSizeAtPath(path) {
     // This is inefficient. We could probably store the file size in the
@@ -93,8 +92,8 @@ export const FileSystem = Object.freeze({
   /**
    * Check if a file exists in the virtual file system
    *
-   * @param {String} path
-   * @returns {bool} whether the file exists
+   * @param {string} path
+   * @returns {boolean} whether the file exists
    */
   fileExists(path) {
     return localStorage.getItem(path) !== null;
@@ -102,7 +101,7 @@ export const FileSystem = Object.freeze({
 
   /**
    * Remove a file from the virtual file system
-   * @param {String} path
+   * @param {string} path
    */
   deleteFile(path) {
     localStorage.removeItem(path);
@@ -114,8 +113,8 @@ export const FileSystem = Object.freeze({
   /**
    * Move file data to a new path in the virtual file system
    *
-   * @param {String} oldPath
-   * @param {String} newPath
+   * @param {string} oldPath
+   * @param {string} newPath
    */
   renameFile(oldPath, newPath) {
     if (oldPath === newPath) return;

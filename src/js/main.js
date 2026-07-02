@@ -43,6 +43,7 @@ flashButton.addEventListener("click", startFlash);
 
 /**
  * Flash project files to the connected ESP device.
+ * @returns {Promise<void>}
  */
 async function startFlash() {
   Workspace.saveCurrentFile();
@@ -54,10 +55,6 @@ async function startFlash() {
   }
 }
 
-/**
- * Save the currently open file when CTRL+S or CMD+S is pressed.
- * @param {KeyboardEvent} event - The keyboard event.
- */
 window.addEventListener("keydown", (event) => {
   // Save shortcut: CTRL+S or CMD+S
   if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
@@ -74,17 +71,11 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-/**
- * Clear the set of pressed keys when the window loses focus.
- */
+// Clear the set of pressed keys when the window loses focus.
 window.addEventListener("blur", () => {
   Input.clearPressedKeys();
 });
 
-/**
- * Handle the event of a key being pressed.
- * @param {KeyboardEvent} event - The keyboard event.
- */
 window.addEventListener("keydown", (event) => {
   // If a script is running
   if (!isRunning) return;

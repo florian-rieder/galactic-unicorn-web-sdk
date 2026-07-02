@@ -10,7 +10,7 @@ const { lua, lauxlib } = fengari;
  *
  * @param {LuaState} L - Fengari Lua state
  * @param {number} colorArgIndex - Index of the color table on the Lua stack.
- * @returns {Array<number>} Array of [r, g, b] values.
+ * @returns {[number, number, number]} [r, g, b] values.
  */
 export function readRgbTableArg(L, colorArgIndex) {
   lauxlib.luaL_checktype(L, colorArgIndex, lua.LUA_TTABLE);
@@ -56,7 +56,6 @@ export function readRgbTableArg(L, colorArgIndex) {
  * @param {number} r - Red value
  * @param {number} g - Green value
  * @param {number} b - Blue value
- * @returns {number} Number of values returned to Lua (always 1).
  */
 export function pushRgbTable(L, r, g, b) {
   lua.lua_createtable(L, 3, 0);

@@ -11,7 +11,7 @@ export class FileTree {
   /**
    * Build FSNode tree from a flat array of file paths
    *
-   * @param {[string]} flatFilepathsList flat array of file paths to build a tree from
+   * @param {Array<string>} flatFilepathsList flat array of file paths to build a tree from
    * @param {string} pathSeparator defaults to "/"
    */
   constructor(flatFilepathsList, pathSeparator = "/") {
@@ -51,7 +51,7 @@ export class FileTree {
    * List all files and directories in a directory (therefore needs to return FSNodes, because
    * directories don't really exist as path keys in localStorage)
    *
-   * @param {FSNode} root
+   * @param {string} path - The path to list the directory of.
    * @returns {FSNode[]} list of file system nodes
    */
   listDirectory(path) {

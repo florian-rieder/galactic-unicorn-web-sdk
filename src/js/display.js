@@ -98,7 +98,7 @@ export const Display = Object.freeze({
    *
    * @param {number} x - The x coordinate of the pixel.
    * @param {number} y - The y coordinate of the pixel.
-   * @returns {Array<number>} The color of the pixel as an array of [r, g, b].
+   * @returns {[number, number, number]|undefined} [r, g, b] values or undefined if the pixel is out of bounds
    */
   getPixel(x, y) {
     const px = Math.floor(x);

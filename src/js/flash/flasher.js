@@ -71,10 +71,11 @@ export const EspFlasher = Object.freeze({
   /**
    * Flash the connected device with an image of the current project's file system.
    *
-   * @param {Object} [callbacks]
-   * @param {Function} [callbacks.onPortSelected] Invoked after the user picks a serial port (awaited).
-   * @param {Function} [callbacks.onConnecting] Invoked just before connecting to the chip.
-   * @param {Function} [callbacks.onProgress] Invoked during writeFlash with (fileIndex, written, total).
+   * @param {{
+   *  onPortSelected: () => void | Promise<void>,
+   *  onConnecting: () => void | Promise<void>,
+   *  onProgress: (fileIndex: number, written: number, total: number) => void,
+   * }} [callbacks] - The callbacks to invoke during the flash process.
    * @returns {Promise<number|null>} Elapsed ms on success, or null if cancelled or aborted.
    */
   async flash({ onPortSelected, onConnecting, onProgress } = {}) {

@@ -331,11 +331,12 @@ function treeIcon(kind) {
 }
 
 /**
- * Render a node of the file tree
- * @param {FSNode} node
- * @returns {HTMLElement}
+ * Render a node of the file tree as a DOM element (recursively)
+ * @param {FSNode} node - The node to render.
+ * @returns {HTMLElement|null} The DOM element representing the node or null if the node is a root node with no children.
  */
 function renderNode(node) {
+  // If the node is a root node, render it as a list of its children
   if (node.name === "root") {
     if (node.children.size === 0) {
       return null;
@@ -349,6 +350,7 @@ function renderNode(node) {
     return ul;
   }
 
+  // Otherwise, render it as a list item with a button to open the file
   const li = document.createElement("li");
 
   if (node.isFile) {
@@ -364,6 +366,7 @@ function renderNode(node) {
     return li;
   }
 
+  // If the node is a folder, render it as a details element with a summary and a list of its children
   const details = document.createElement("details");
   details.addEventListener("toggle", () => {
     if (details.open) {
@@ -423,10 +426,12 @@ function isAncestorFolder(folderPath, filePath) {
 }
 
 /**
- * @param {Uint8Array} bytes
+ * Import a zip file into the file system
+ * @param {Uint8Array} zipBytes - The bytes of the zip file.
+ * @param {string} zipFileName - The name of the zip file.
  */
-function importZipBytes(bytes, zipFileName) {
-  const filesToWrite = unzip(bytes);
+function importZipBytes(zipBytes, zipFileName) {
+  const filesToWrite = unzip(zipBytes);
 
   if (Object.keys(filesToWrite).length === 0) {
     Terminal.printLine(

@@ -105,7 +105,7 @@ export const Input = Object.freeze({
   /**
    * Get the Galactic Unicorn name of a key from an event key.
    * @param {string} eventKey - The key to get the name of.
-   * @returns {string} The name of the key.
+   * @returns {string|undefined} The name of the key or undefined if the key is not mapped.
    */
   getKeyName(eventKey) {
     return KEY_MAP[eventKey];

@@ -39,7 +39,7 @@ export const BuiltinFiles = Object.freeze({
    * const decodedString = new TextDecoder().decode(raw_bytes);
    * ```
    *
-   * @param {String} path
+   * @param {string} path
    * @returns {Uint8Array} raw bytes read from the file at path or errors if it failed to read a file
    */
   readFile(path) {
@@ -52,9 +52,9 @@ export const BuiltinFiles = Object.freeze({
   /**
    * Read a specific chunk of a file in the built-in files
    *
-   * @param {String} path path of the file in the virtual file system
-   * @param {int} offset start position of the chunk in bytes
-   * @param {int} size size of the chunk in bytes
+   * @param {string} path path of the file in the virtual file system
+   * @param {number} offset start position of the chunk in bytes
+   * @param {number} size size of the chunk in bytes
    * @returns {Uint8Array|null} raw byte array representing the chunk of data from the file
    */
   readFileChunk(path, offset, size) {
@@ -67,8 +67,8 @@ export const BuiltinFiles = Object.freeze({
   /**
    * Get the size of a file in the built-in files
    *
-   * @param {String} path
-   * @returns {int} size of the file in bytes
+   * @param {string} path
+   * @returns {number} size of the file in bytes
    */
   fileSizeAtPath(path) {
     const data = cache[path];

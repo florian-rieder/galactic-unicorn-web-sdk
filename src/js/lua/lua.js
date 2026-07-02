@@ -24,7 +24,7 @@ import { FileExplorer } from "../file-explorer.js";
 
 /**
  * List of Lua API functions.
- * @type {Array<{luaName: string, luaFunction: function}>}
+ * @type {Array<{luaName: string, luaFunction: {(L: LuaState) => number}}>}
  */
 export const LUA_API_FUNCTIONS = [
   { luaName: "print", luaFunction: lua_print },

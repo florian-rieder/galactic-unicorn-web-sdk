@@ -28,7 +28,7 @@ export class FSNode {
   /**
    * Get a child node of this node by its name
    *
-   * @param {String} childName
+   * @param {string} childName
    * @returns {FSNode|null}
    */
   getChildByName(childName) {
@@ -38,7 +38,6 @@ export class FSNode {
   /**
    * Return a sorted array of the child nodes of this node, sorted by type and name alphabetical
    *
-   * @param {FSNode} node
    * @returns {FSNode[]}
    */
   getSortedChildren() {

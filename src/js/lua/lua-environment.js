@@ -176,7 +176,7 @@ function registerVirtualFsPackageSearchers(L) {
 /**
  * Open a new Lua state with safe standard libraries and overwritten package.searchers
  *
- * @returns {LuaState} L - Fengari Lua state
+ * @returns {LuaState} Fengari Lua state
  */
 export function openLuaVM() {
   // Create a new Lua state

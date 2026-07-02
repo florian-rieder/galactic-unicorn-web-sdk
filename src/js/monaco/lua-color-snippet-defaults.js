@@ -11,8 +11,8 @@ import { rgbToHsl } from "../color.js";
 export const DEFAULT_SNIPPET_RGB = [255, 0, 0];
 
 /**
- * @param {[number, number, number]} rgb
- * @returns {[number, number, number]}
+ * @param {[number, number, number]} rgb - The RGB values to convert to HSL.
+ * @returns {[number, number, number]} [h, s, l] values.
  */
 function hslDefaultsFromRgb(rgb) {
   const { h, s, l } = rgbToHsl(rgb[0], rgb[1], rgb[2]);
@@ -22,7 +22,7 @@ function hslDefaultsFromRgb(rgb) {
 /**
  * Per-function snippet placeholders, aligned with each function's `@luaParam`.
  *
- * @type {Record<string, number[]>}
+ * @type {Record<string, [number, number, number]>}
  */
 export const COLOR_SNIPPET_DEFAULTS = {
   rgb: [...DEFAULT_SNIPPET_RGB],

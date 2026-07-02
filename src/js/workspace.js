@@ -210,7 +210,7 @@ export const Workspace = Object.freeze({
 
   /**
    * Get the path of the currently open file.
-   * @returns {string} The path of the currently open file.
+   * @returns {string|null} The path of the currently open file or null if no file is open.
    */
   getCurrentOpenPath() {
     return currentOpenPath;
