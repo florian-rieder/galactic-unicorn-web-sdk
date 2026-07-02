@@ -8,8 +8,20 @@ import { Workspace } from "./workspace.js";
 import { Input } from "./input.js";
 import { flashWithUi } from "./flash-ui.js";
 
-// Initialize components and set up the initial state of the application.
+// Constants
+const TARGET_FPS = 60;
+const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
+const DEFAULT_INPUT_REPEAT_DELAY = 0.25;
+const DEFAULT_INPUT_REPEAT_INTERVAL = 0.1;
 
+// State
+let lastProcessTime = null;
+let lastFrameTime = null;
+let now = null;
+let frameId = null;
+let isRunning = false;
+
+// Initialize components and set up the initial state of the application.
 await Promise.all([BuiltinFiles.load(), MonacoEditor.init()]);
 // Register keyboard shortcuts for when monaco is in focus
 MonacoEditor.registerControlShortcut(KeyCode.KeyS, Workspace.saveCurrentFile);
@@ -20,15 +32,6 @@ Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
 FileExplorer.reload();
 Display.render(); // Render the initial state of the display
-
-const TARGET_FPS = 60;
-const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
-
-let lastProcessTime = null;
-let lastFrameTime = null;
-let now = null;
-let frameId = null;
-let isRunning = false;
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-btn");
@@ -130,6 +133,9 @@ function startSession() {
 
   // Clear any held keys from the previous session.
   Input.clearPressedKeys();
+  // Set/reset default repeat delay and interval
+  Input.setRepeatDelay(DEFAULT_INPUT_REPEAT_DELAY);
+  Input.setRepeatInterval(DEFAULT_INPUT_REPEAT_INTERVAL);
 
   // Initialize the Lua session.
   Lua.init();

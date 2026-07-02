@@ -23,9 +23,9 @@ const KEY_MAP = {
   2: "ESC",
 };
 
-// Cursor input move repeat
-const REPEAT_INITIAL_DELAY = 0.25;
-const REPEAT_INTERVAL = 0.1;
+// Input repeat
+let repeatDelay = 0.25;
+let repeatInterval = 0.1;
 
 export const Input = Object.freeze({
   /**
@@ -72,18 +72,34 @@ export const Input = Object.freeze({
       const now = performance.now();
       if (!val.lastRepeat) {
         // First repeat
-        if (now - val.firstPressed >= REPEAT_INITIAL_DELAY * 1000) {
+        if (now - val.firstPressed >= repeatDelay * 1000) {
           val.lastRepeat = now;
           callback(key);
         }
       } else {
         // Repeat repeats
-        if (now - val.lastRepeat >= REPEAT_INTERVAL * 1000) {
+        if (now - val.lastRepeat >= repeatInterval * 1000) {
           val.lastRepeat = now;
           callback(key);
         }
       }
     }
+  },
+
+  /**
+   * Set the repeat delay
+   * @param {number} delay in seconds
+   */
+  setRepeatDelay(delay) {
+    repeatDelay = delay;
+  },
+
+  /**
+   * Set the repeat interval
+   * @param {number} interval in seconds
+   */
+  setRepeatInterval(interval) {
+    repeatInterval = interval;
   },
 
   /**

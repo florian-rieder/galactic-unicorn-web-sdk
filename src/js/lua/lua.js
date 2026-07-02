@@ -51,6 +51,8 @@ export const LUA_API_FUNCTIONS = [
   { luaName: "read_file_chunk", luaFunction: lua_readFileChunk },
   { luaName: "file_size", luaFunction: lua_fileSize },
   { luaName: "list_directory", luaFunction: lua_listDirectory },
+  { luaName: "set_repeat_delay", luaFunction: lua_setRepeatDelay },
+  { luaName: "set_repeat_interval", luaFunction: lua_setRepeatInterval },
 ];
 
 /**
@@ -778,6 +780,66 @@ function lua_listDirectory(L) {
 }
 
 /**
+ * Set the repeat delay which is used to configure the behavior of `on_repeat`
+ *
+ * Lua API: `set_repeat_delay(delay)`
+ *
+ * @luaName set_repeat_delay
+ * @luaKind function
+ * @luaCategory input
+ * @luaParam delay:number delay in seconds before triggering on_repeat when a key is held
+ * @luaReturns nil
+ * @luaExample set_repeat_delay(0.5)
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 0).
+ */
+function lua_setRepeatDelay(L) {
+  const delay = lua.lua_tonumber(L, 1);
+
+  if (delay <= 0) {
+    return lauxlib.luaL_error(
+      L,
+      to_luastring("repeat delay must be greater than 0")
+    );
+  }
+
+  Input.setRepeatDelay(delay);
+
+  return 0;
+}
+
+/**
+ * Set the repeat interval which is used to configure the behavior of `on_repeat`
+ *
+ * Lua API: `set_repeat_interval(interval)`
+ *
+ * @luaName set_repeat_interval
+ * @luaKind function
+ * @luaCategory input
+ * @luaParam interval:number interval in seconds between on_repeat triggers when a key is held
+ * @luaReturns nil
+ * @luaExample set_repeat_interval(0.5)
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @returns {number} Number of values returned to Lua (always 0).
+ */
+function lua_setRepeatInterval(L) {
+  const interval = lua.lua_tonumber(L, 1);
+
+  if (interval <= 0) {
+    return lauxlib.luaL_error(
+      L,
+      to_luastring("repeat interval must be greater than 0")
+    );
+  }
+
+  Input.setRepeatInterval(interval);
+
+  return 0;
+}
+
+/**
  * Lua callback definitions (only stubs, for documentation generation purposes)
  */
 
@@ -904,6 +966,8 @@ function lua_callback_onRelease(button_name) {}
  *
  * Does not fire on the initial press; use `on_press` for the first action when the
  * button goes down. Use this for stepped input (grid cursors, menus), not smooth motion.
+ *
+ * Repeat delay and interval can be configured using `set_repeat_delay()` and `set_repeat_interval()`
  *
  * Lua API: `on_repeat(button_name)` where `button_name` matches the host key map.
  *
