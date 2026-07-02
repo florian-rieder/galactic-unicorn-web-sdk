@@ -85,6 +85,7 @@ const LUA_API_CALLBACKS = [
   { luaName: "process", luaFunction: lua_callback_process },
   { luaName: "on_press", luaFunction: lua_callback_onPress },
   { luaName: "on_release", luaFunction: lua_callback_onRelease },
+  { luaName: "on_repeat", luaFunction: lua_callback_onRepeat },
 ];
 
 /**
@@ -842,6 +843,7 @@ function lua_callback_draw() {}
  * Use this for specific things which need a higher resolution than the framerate, like for example
  * a music sequencer.
  *
+ * Lua API: `process(delta_time)` where `delta_time` is seconds since last process tick.
  *
  * @luaName process
  * @luaKind callback
@@ -857,8 +859,9 @@ function lua_callback_process() {}
 /**
  * Called when a mapped button transitions from up to down (key press edge).
  *
- * Use this for one-shot actions like firing, toggling, or menu navigation.
- * For "while held" behavior, prefer polling `is_pressed()` inside `update()`.
+ * Use this for one-shot actions like firing, toggling, or the first step of movement.
+ * For smooth hold (e.g. sliding), poll `is_pressed()` in `update()`. For stepped
+ * autorepeat while held, also define `on_repeat`.
  *
  * Lua API: `on_press(button_name)` where `button_name` matches the host key map.
  *
@@ -895,3 +898,22 @@ function lua_callback_onPress(button_name) {}
  * end
  */
 function lua_callback_onRelease(button_name) {}
+
+/**
+ * Called while a mapped button is held, after an initial delay, then at a fixed interval.
+ *
+ * Does not fire on the initial press; use `on_press` for the first action when the
+ * button goes down. Use this for stepped input (grid cursors, menus), not smooth motion.
+ *
+ * Lua API: `on_repeat(button_name)` where `button_name` matches the host key map.
+ *
+ * @luaName on_repeat
+ * @luaKind callback
+ * @luaCategory input
+ * @luaParam button_name:string Host key map name (e.g. "L_UP")
+ * @luaReturns nil
+ * @luaExample function on_repeat(button_name)
+ *   move_cursor(button_name)
+ * end
+ */
+function lua_callback_onRepeat(button_name) {}

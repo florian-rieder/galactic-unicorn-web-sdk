@@ -179,38 +179,40 @@ function waitForNextFrame() {
 }
 
 /**
- * Run the main loop of the Lua program (update/draw)
+ * Run the main loop of the Lua program (process/update/draw)
  */
 function mainLoop() {
   now = performance.now();
 
   let processDeltaTime = 0;
   if (lastProcessTime != null) {
-    processDeltaTime = now - lastProcessTime;
+    processDeltaTime = (now - lastProcessTime) / 1000.0; // Convert milliseconds to seconds
   }
   lastProcessTime = now;
 
-  const processStatus = Lua.callIfExists("process", processDeltaTime / 1000.0);
+  const processStatus = Lua.callIfExists("process", processDeltaTime);
   if (processStatus === "error") {
     stopSession();
     return;
   }
+
+  // For each held key, process repeat signal
+  Input.processRepeat((key) => Lua.callIfExists("on_repeat", key));
 
   if (waitForNextFrame()) {
     frameId = requestAnimationFrame(mainLoop);
     return;
   }
 
-  let deltaTime = 0;
-
+  let updateDeltaTime = 0;
   if (lastFrameTime != null) {
-    deltaTime = now - lastFrameTime;
+    updateDeltaTime = (now - lastFrameTime) / 1000.0;
   }
   lastFrameTime = now;
 
   // Run update then draw from the lua script.
   // Missing callbacks are allowed; runtime errors stop the loop.
-  const updateStatus = Lua.callIfExists("update", deltaTime / 1000.0); // Convert milliseconds to seconds
+  const updateStatus = Lua.callIfExists("update", updateDeltaTime);
   if (updateStatus === "error") {
     stopSession();
     return;

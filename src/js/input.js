@@ -2,7 +2,7 @@
  * Input
  */
 
-const keysPressed = new Set();
+const keysPressed = new Map();
 
 /**
  * Map of keyboard events to button names.
@@ -23,6 +23,10 @@ const KEY_MAP = {
   2: "ESC",
 };
 
+// Cursor input move repeat
+const REPEAT_INITIAL_DELAY = 0.25;
+const REPEAT_INTERVAL = 0.1;
+
 export const Input = Object.freeze({
   /**
    * Drop all held keys (call when starting a run so missed keyup cannot stick input).
@@ -36,7 +40,10 @@ export const Input = Object.freeze({
    * @param {string} key - The name of the button to mark as pressed.
    */
   markPressed(key) {
-    keysPressed.add(key);
+    keysPressed.set(key, {
+      firstPressed: performance.now(),
+      lastRepeat: null,
+    });
   },
 
   /**
@@ -53,7 +60,30 @@ export const Input = Object.freeze({
    * @returns {boolean} True if the button is pressed, false otherwise.
    */
   isPressed(key) {
-    return keysPressed.has(key);
+    return keysPressed.get(key) !== undefined;
+  },
+
+  /**
+   * Process repeat keys
+   * @param {Function} callback
+   */
+  processRepeat(callback) {
+    for (const [key, val] of keysPressed) {
+      const now = performance.now();
+      if (!val.lastRepeat) {
+        // First repeat
+        if (now - val.firstPressed >= REPEAT_INITIAL_DELAY * 1000) {
+          val.lastRepeat = now;
+          callback(key);
+        }
+      } else {
+        // Repeat repeats
+        if (now - val.lastRepeat >= REPEAT_INTERVAL * 1000) {
+          val.lastRepeat = now;
+          callback(key);
+        }
+      }
+    }
   },
 
   /**
