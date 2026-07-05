@@ -18,9 +18,9 @@ import { Display } from "../display.js";
 import { Input } from "../input.js";
 import { FileSystem } from "../fs/file-system.js";
 import { BuiltinFiles } from "../fs/builtin-files.js";
+import { FileTree } from "../fs/file-tree.js";
 import { Terminal } from "../terminal.js";
 import { Buzzer } from "../buzzer.js";
-import { FileExplorer } from "../file-explorer.js";
 
 /**
  * List of Lua API functions.
@@ -760,7 +760,11 @@ function lua_listDirectory(L) {
 
   let contents = [];
   try {
-    contents = FileExplorer.tree().listDirectory(path);
+    const userFilePaths = FileSystem.listAllFiles();
+    const builtinFilePaths = BuiltinFiles.listAllFiles();
+    const commonFiles = [...new Set([...userFilePaths, ...builtinFilePaths])];
+    const tree = new FileTree(commonFiles, FileSystem.PATH_SEPARATOR);
+    contents = tree.listDirectory(path);
   } catch (error) {
     return lauxlib.luaL_error(
       L,

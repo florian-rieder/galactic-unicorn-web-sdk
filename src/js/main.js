@@ -2,6 +2,7 @@ import { KeyCode, MonacoEditor } from "./monaco.js";
 import { Lua } from "./lua/lua-runtime.js";
 import { BuiltinFiles } from "./fs/builtin-files.js";
 import { Display } from "./display.js";
+import { Terminal } from "./terminal.js";
 import { initResizers } from "./ui/resizer.js";
 import { FileExplorer } from "./file-explorer.js";
 import { Workspace } from "./workspace.js";
@@ -31,7 +32,8 @@ Workspace.init();
 Workspace.setExplorerReloadHandler(() => FileExplorer.reload());
 initResizers();
 FileExplorer.reload();
-Display.render(); // Render the initial state of the display
+Terminal.init();
+Display.init();
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-btn");

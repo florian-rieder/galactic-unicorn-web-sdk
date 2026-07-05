@@ -1,20 +1,42 @@
-const output = document.getElementById("console-output");
-const container = document.getElementById("console");
+let output = null;
+let container = null;
+let buffer = "";
 
 function scrollToBottom() {
-  container.scrollTop = container.scrollHeight;
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function reloadDom() {
+  if (output) {
+    output.textContent = buffer;
+    scrollToBottom();
+  }
 }
 
 export const Terminal = Object.freeze({
+  /**
+   * Bind console DOM elements. Safe to skip in tests; output stays in the in-memory buffer.
+   */
+  init() {
+    output = document.getElementById("console-output");
+    container = document.getElementById("console");
+    reloadDom();
+  },
+
   print(message) {
-    output.textContent += message;
-    scrollToBottom();
+    buffer += message;
+    reloadDom();
   },
+
   printLine(message) {
-    output.textContent += message + "\n";
-    scrollToBottom();
+    buffer += message + "\n";
+    reloadDom();
   },
+
   clear() {
-    output.textContent = "";
+    buffer = "";
+    reloadDom();
   },
 });

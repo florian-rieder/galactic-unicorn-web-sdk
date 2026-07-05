@@ -1,16 +1,16 @@
 import * as corona from "./corona.js";
 
-const canvas = document.getElementById("display");
-const ctx = canvas.getContext("2d");
-
 const SCREEN_W = 20;
 const SCREEN_H = 10;
 const CELL = 20;
 const GAP = 4;
 const PAD = Math.floor(GAP / 2);
-
+// 2*PAD + N*CELL + (N-1)*GAP gives a nice ratio of 2:1 when PAD = GAP/2, which is exactly the display ratio.
+const CANVAS_WIDTH = 2 * PAD + SCREEN_W * CELL + (SCREEN_W - 1) * GAP; // 480
+const CANVAS_HEIGHT = 2 * PAD + SCREEN_H * CELL + (SCREEN_H - 1) * GAP; // 240
 // 0-31 5-bit default brightness value
 const BR_BASE = 224; // 0b11100000, the base value for brightness (0-31) in the 8-bit brightness byte
+
 const defaultBrightnessValue = BR_BASE + 1; // This should less than 9 !
 const maxBrightnessValue = BR_BASE + 11;
 
@@ -18,18 +18,17 @@ const maxBrightnessValue = BR_BASE + 11;
 // The canvas is then rendered at once at the end of the frame from the buffer
 const buffer = new Uint8Array(SCREEN_W * SCREEN_H * 4).fill(0); // 4 bytes per pixel: RGB + brightness
 
-// 2*PAD + N*CELL + (N-1)*GAP gives a nice ratio of 2:1 when PAD = GAP/2, which is exactly the display ratio.
-canvas.width = 2 * PAD + SCREEN_W * CELL + (SCREEN_W - 1) * GAP; // 480
-canvas.height = 2 * PAD + SCREEN_H * CELL + (SCREEN_H - 1) * GAP; // 240
-
-// Fit the canvas to the display wrapper
-const displayWrapper = document.getElementById("display-wrapper");
-const displayRatio = canvas.width / canvas.height;
+let canvas = null;
+let ctx = null;
+let displayWrapper = null;
 
 /**
  * Fit the canvas to the display wrapper.
  */
 function fitCanvas() {
+  if (!canvas || !displayWrapper) return;
+
+  const displayRatio = CANVAS_WIDTH / CANVAS_HEIGHT;
   const ww = displayWrapper.clientWidth;
   const wh = displayWrapper.clientHeight;
   if (ww / wh > displayRatio) {
@@ -41,13 +40,30 @@ function fitCanvas() {
   }
 }
 
-new ResizeObserver(fitCanvas).observe(displayWrapper);
-
 export const Display = Object.freeze({
+  /**
+   * Bind canvas DOM elements and start layout observation. Safe to skip in tests;
+   * buffer operations work without calling this.
+   */
+  init() {
+    canvas = document.getElementById("display");
+    ctx = canvas.getContext("2d");
+    displayWrapper = document.getElementById("display-wrapper");
+
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    new ResizeObserver(fitCanvas).observe(displayWrapper);
+    fitCanvas();
+    this.render(); // Render the initial state of the display
+  },
+
   /**
    * Flush the buffer to the canvas.
    */
   render() {
+    if (!ctx || !canvas) return;
+
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = "#111111";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
