@@ -3,6 +3,8 @@ import { Lua, g_luaState } from "./lua/lua-runtime";
 let output = null;
 let input = null;
 let buffer = "";
+let inputHistory = [];
+let historyIndex = -1;
 
 function scrollToBottom() {
   if (output) {
@@ -27,15 +29,30 @@ export const Terminal = Object.freeze({
 
     if (input) {
       input.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
+        if (event.key == "Enter") {
+          event.preventDefault();
 
-        event.preventDefault();
+          const statement = input.value.trim();
+          if (statement === "") return;
 
-        const statement = input.value.trim();
-        if (statement === "") return;
+          inputHistory.push(statement);
 
-        input.value = "";
-        this.readEvalPrint(statement);
+          input.value = "";
+          this.readEvalPrint(statement);
+          historyIndex = -1;
+        } else if (event.key == "ArrowUp") {
+          event.preventDefault();
+
+          if (inputHistory.length == 0) return;
+
+          if (historyIndex <= 0) {
+            historyIndex = inputHistory.length;
+          }
+          historyIndex--;
+
+          const statement = inputHistory[historyIndex];
+          input.value = statement;
+        }
       });
     }
 
