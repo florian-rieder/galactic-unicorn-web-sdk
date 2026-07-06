@@ -11,9 +11,9 @@ import { flashWithUi } from "./flash-ui.js";
 
 // Constants
 const TARGET_FPS = 60;
-const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
-const DEFAULT_INPUT_REPEAT_DELAY = 0.25;
-const DEFAULT_INPUT_REPEAT_INTERVAL = 0.1;
+const TARGET_DELTA_TIME_MS = 1000 / TARGET_FPS;
+const DEFAULT_INPUT_REPEAT_DELAY_S = 0.25;
+const DEFAULT_INPUT_REPEAT_INTERVAL_S = 0.1;
 
 // State
 let lastProcessTime = null;
@@ -21,6 +21,7 @@ let lastFrameTime = null;
 let now = null;
 let frameId = null;
 let isRunning = false;
+let isPaused = false;
 
 // Initialize components and set up the initial state of the application.
 await Promise.all([BuiltinFiles.load(), MonacoEditor.init()]);
@@ -37,9 +38,13 @@ Display.init();
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-btn");
+const pauseButton = document.getElementById("pause-btn");
+const stepButton = document.getElementById("step-btn");
 const stopButton = document.getElementById("stop-btn");
 const flashButton = document.getElementById("flash-btn");
 runButton.addEventListener("click", startSession);
+pauseButton.addEventListener("click", togglePauseSession);
+stepButton.addEventListener("click", stepSession);
 stopButton.addEventListener("click", stopSession);
 flashButton.addEventListener("click", startFlash);
 
@@ -127,8 +132,8 @@ function startSession() {
   // Clear any held keys from the previous session.
   Input.clearPressedKeys();
   // Set/reset default repeat delay and interval
-  Input.setRepeatDelay(DEFAULT_INPUT_REPEAT_DELAY);
-  Input.setRepeatInterval(DEFAULT_INPUT_REPEAT_INTERVAL);
+  Input.setRepeatDelay(DEFAULT_INPUT_REPEAT_DELAY_S);
+  Input.setRepeatInterval(DEFAULT_INPUT_REPEAT_INTERVAL_S);
 
   // Initialize the Lua session.
   Lua.init();
@@ -152,6 +157,7 @@ function startSession() {
   }
 
   isRunning = true;
+  isPaused = false;
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
@@ -166,6 +172,31 @@ function stopSession() {
   lastProcessTime = null;
   frameId = null;
   isRunning = false;
+  isPaused = false;
+}
+
+function togglePauseSession() {
+  if (isPaused) {
+    // Unpause
+    isPaused = false;
+    lastFrameTime = null;
+    lastProcessTime = null;
+    // Restart the main loop
+    frameId = requestAnimationFrame(mainLoop);
+  } else {
+    // Pause
+    isPaused = true;
+    cancelAnimationFrame(frameId);
+  }
+}
+
+function stepSession() {
+  if (!isPaused) return;
+
+  Lua.callIfExists("update", TARGET_DELTA_TIME_MS / 1000.0);
+  Lua.callIfExists("draw");
+
+  Display.render();
 }
 
 function waitForNextFrame() {
@@ -174,7 +205,7 @@ function waitForNextFrame() {
   }
 
   const currentTime = performance.now();
-  return currentTime - lastFrameTime < TARGET_DELTA_TIME;
+  return currentTime - lastFrameTime < TARGET_DELTA_TIME_MS;
 }
 
 /**
