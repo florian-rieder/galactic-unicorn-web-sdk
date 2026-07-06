@@ -15,7 +15,7 @@ import { openLuaVM } from "./lua-environment.js";
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 
-let g_luaState = null;
+export let g_luaState = null;
 
 export const Lua = Object.freeze({
   /**
@@ -157,7 +157,7 @@ export const Lua = Object.freeze({
       }
       // Return the result as a string.
       const result = lua.lua_tojsstring(g_luaState, -1);
-      lua.lua_pop(g_luaState, 1); // Pop the result from the stack
+      lua.lua_pop(g_luaState, -1); // Pop the result from the stack
       return result;
     });
   },

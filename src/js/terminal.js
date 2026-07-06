@@ -1,10 +1,12 @@
+import { Lua, g_luaState } from "./lua/lua-runtime";
+
 let output = null;
-let container = null;
+let input = null;
 let buffer = "";
 
 function scrollToBottom() {
-  if (container) {
-    container.scrollTop = container.scrollHeight;
+  if (output) {
+    output.scrollTop = output.scrollHeight;
   }
 }
 
@@ -21,7 +23,22 @@ export const Terminal = Object.freeze({
    */
   init() {
     output = document.getElementById("console-output");
-    container = document.getElementById("console");
+    input = document.getElementById("console-input");
+
+    if (input) {
+      input.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+
+        event.preventDefault();
+
+        const statement = input.value.trim();
+        if (statement === "") return;
+
+        input.value = "";
+        this.readEvalPrint(statement);
+      });
+    }
+
     reloadDom();
   },
 
@@ -38,5 +55,22 @@ export const Terminal = Object.freeze({
   clear() {
     buffer = "";
     reloadDom();
+  },
+
+  readEvalPrint(statement) {
+    if (g_luaState == null) {
+      this.printLine(
+        "Lua is not running. Press 'Run' to launch Lua with the script open in the editor."
+      );
+      return;
+    }
+
+    this.printLine(`> ${statement}`);
+
+    const result = Lua.eval(statement);
+
+    if (result != null) {
+      this.printLine(result);
+    }
   },
 });
