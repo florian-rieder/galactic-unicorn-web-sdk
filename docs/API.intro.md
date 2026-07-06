@@ -176,3 +176,5 @@ Common libraries are available in the built-in files, under the `lib` folder. Th
 - Line / Anti-aliased line
 
 These libraries are currently not documented; explore the Lua scripts and examples to understand how they work !
+
+# API reference
