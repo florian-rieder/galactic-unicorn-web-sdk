@@ -48,6 +48,17 @@ stepButton.addEventListener("click", stepSession);
 stopButton.addEventListener("click", stopSession);
 flashButton.addEventListener("click", startFlash);
 
+updateSessionButtons();
+
+/**
+ * Sync the enabled/disabled state of the session control buttons with the current session state.
+ */
+function updateSessionButtons() {
+  pauseButton.disabled = !isRunning;
+  stepButton.disabled = !isPaused;
+  stopButton.disabled = !isRunning;
+}
+
 /**
  * Flash project files to the connected ESP device.
  * @returns {Promise<void>}
@@ -158,6 +169,7 @@ function startSession() {
 
   isRunning = true;
   isPaused = false;
+  updateSessionButtons();
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
@@ -173,6 +185,7 @@ function stopSession() {
   frameId = null;
   isRunning = false;
   isPaused = false;
+  updateSessionButtons();
 }
 
 function togglePauseSession() {
@@ -188,6 +201,7 @@ function togglePauseSession() {
     isPaused = true;
     cancelAnimationFrame(frameId);
   }
+  updateSessionButtons();
 }
 
 function stepSession() {
