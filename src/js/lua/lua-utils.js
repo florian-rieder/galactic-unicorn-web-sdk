@@ -3,7 +3,29 @@
  */
 
 import fengari from "../vendor/fengari.js";
-const { lua, lauxlib } = fengari;
+const { lua, lauxlib, to_luastring } = fengari;
+
+/**
+ * Format a Lua stack value to a string through its `tostring()` implementation
+ *
+ * @param {LuaState} L - Fengari Lua state.
+ * @param {number} index - Stack index of the value to format.
+ * @returns {string} Formatted value.
+ */
+export function formatLuaValue(L, index) {
+  lua.lua_getglobal(L, to_luastring("tostring"));
+  lua.lua_pushvalue(L, index);
+
+  if (lua.lua_pcall(L, 1, 1, 0) === lua.LUA_OK) {
+    const formatted = lua.lua_tojsstring(L, -1);
+    lua.lua_pop(L, 1); // Pop tostring from the stack
+    return formatted;
+  }
+
+  const errorMessage = lua.lua_tojsstring(L, -1);
+  lua.lua_pop(L, 1);
+  return `<error: ${errorMessage}>`;
+}
 
 /**
  * Reads a color table from the Lua stack and returns an array of [r, g, b] values.

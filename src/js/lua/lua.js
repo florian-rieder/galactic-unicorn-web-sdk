@@ -10,7 +10,7 @@ import fengari from "../vendor/fengari.js";
 const { lua, lauxlib, to_luastring } = fengari;
 
 /** Helpers */
-import { readRgbTableArg, pushRgbTable } from "./lua-utils.js";
+import { formatLuaValue, readRgbTableArg, pushRgbTable } from "./lua-utils.js";
 import { hslToRgb } from "../color.js";
 
 /** Hardware emulation */
@@ -118,16 +118,7 @@ function lua_print(L) {
   const parts = [];
 
   for (let i = 1; i <= nargs; i++) {
-    lua.lua_getglobal(L, "tostring"); // Call lua tostring() on the argument
-    lua.lua_pushvalue(L, i);
-
-    if (lua.lua_pcall(L, 1, 1, 0) === 0) {
-      parts.push(lua.lua_tojsstring(L, -1));
-    } else {
-      // tostring() failed, get the error message
-      parts.push(`<error: ${lua.lua_tojsstring(L, -1)}>`);
-    }
-    lua.lua_pop(L, 1);
+    parts.push(formatLuaValue(L, i));
   }
 
   Terminal.printLine(parts.join("\t"));

@@ -5,6 +5,7 @@ let input = null;
 let buffer = "";
 let inputHistory = [];
 let historyIndex = -1;
+const ASSIGNMENT_PATTERN = new RegExp("(?<![=~^><])=(?!=)"); // https://regex101.com/r/eVIUzS/1
 
 function scrollToBottom() {
   if (output) {
@@ -84,9 +85,22 @@ export const Terminal = Object.freeze({
 
     this.printLine(`> ${statement}`);
 
-    const result = Lua.eval(statement);
+    let editedStatement = statement;
 
-    if (result != null) {
+    if (statement.startsWith("--")) return;
+
+    if (!statement.match(ASSIGNMENT_PATTERN)) {
+      if (!statement.startsWith("return")) {
+        // Wrap the expression in a return statement so it returns a value we can print
+        editedStatement = `return ${statement}`;
+      }
+    }
+
+    const results = Lua.eval(editedStatement);
+
+    if (results == null) return;
+
+    for (const result of results) {
       this.printLine(result);
     }
   },

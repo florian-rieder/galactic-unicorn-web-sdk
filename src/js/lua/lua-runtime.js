@@ -11,6 +11,7 @@ const { lua, lauxlib, to_luastring } = fengari;
 import { Display } from "../display.js";
 import { Terminal } from "../terminal.js";
 import { openLuaVM } from "./lua-environment.js";
+import { formatLuaValue } from "./lua-utils.js";
 
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
@@ -146,19 +147,28 @@ export const Lua = Object.freeze({
     }
 
     return runWithExecutionBudget(g_luaState, () => {
-      // Wrap the expression in a return statement so it returns a value.
-      const statement = "return " + expression;
-      const status = lauxlib.luaL_dostring(g_luaState, to_luastring(statement));
+      const status = lauxlib.luaL_dostring(
+        g_luaState,
+        to_luastring(expression)
+      );
       if (status != lua.LUA_OK) {
         const errorMessage = lua.lua_tojsstring(g_luaState, -1);
         Terminal.printLine(`[Error] ${errorMessage}`);
         lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
         return null; // Failed to evaluate the expression.
       }
-      // Return the result as a string.
-      const result = lua.lua_tojsstring(g_luaState, -1);
-      lua.lua_pop(g_luaState, -1); // Pop the result from the stack
-      return result;
+
+      const results = new Array();
+      const nresults = lua.lua_gettop(g_luaState); // How many results were returned (most of the time 0 or 1)
+
+      for (let i = 1; i <= nresults; i++) {
+        results.push(formatLuaValue(g_luaState, i));
+        lua.lua_pop(g_luaState, 1);
+      }
+
+      Display.render(); // Render any changes to the buffer
+
+      return results;
     });
   },
 });
