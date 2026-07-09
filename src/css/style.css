@@ -107,7 +107,6 @@ body.swal2-height-auto {
   flex-direction: column;
   background-color: var(--primary-bg);
   border-top: 1px solid var(--primary-border);
-  padding: 10px;
   font-family: monospace;
   font-size: 12px;
   overflow: hidden;
@@ -121,13 +120,15 @@ body.swal2-height-auto {
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  padding: 10px;
 }
 
 #console-input {
   flex-shrink: 0;
   margin-top: 8px;
-  padding: 4px 6px;
-  border: 1px solid var(--primary-border);
+  padding: 16px;
+  border: none;
+  border-top: 2px solid var(--primary-border);
   background-color: var(--primary-bg);
   color: var(--text-color);
   font-family: inherit;
@@ -138,7 +139,6 @@ body.swal2-height-auto {
 
 #console-input:focus {
   outline: none;
-  border-color: var(--accent-border);
 }
 
 #container {
