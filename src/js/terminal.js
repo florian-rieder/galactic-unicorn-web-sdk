@@ -1,11 +1,13 @@
 import { Lua, g_luaState } from "./lua/lua-runtime";
 
+const HISTORY_MAX_LENGTH = 25;
+const ASSIGNMENT_PATTERN = new RegExp("(?<![=~^><])=(?!=)"); // https://regex101.com/r/eVIUzS/1
+
 let output = null;
 let input = null;
 let buffer = "";
 let inputHistory = [];
 let historyIndex = -1;
-const ASSIGNMENT_PATTERN = new RegExp("(?<![=~^><])=(?!=)"); // https://regex101.com/r/eVIUzS/1
 
 function scrollToBottom() {
   if (output) {
@@ -36,23 +38,39 @@ export const Terminal = Object.freeze({
           const statement = input.value.trim();
           if (statement === "") return;
 
+          if (inputHistory.length >= HISTORY_MAX_LENGTH) {
+            inputHistory.shift();
+          }
+
           inputHistory.push(statement);
 
-          input.value = "";
           this.readEvalPrint(statement);
+
           historyIndex = -1;
+          input.value = "";
         } else if (event.key == "ArrowUp") {
           event.preventDefault();
 
           if (inputHistory.length == 0) return;
 
           if (historyIndex <= 0) {
-            historyIndex = inputHistory.length;
+            historyIndex = inputHistory.length; // Loop around
           }
           historyIndex--;
-
           const statement = inputHistory[historyIndex];
           input.value = statement;
+        } else if (event.key == "ArrowDown") {
+          event.preventDefault();
+
+          if (inputHistory.length == 0) return;
+
+          if (historyIndex >= inputHistory.length || historyIndex < 0) {
+            input.value = "";
+            return;
+          }
+          const statement = inputHistory[historyIndex];
+          input.value = statement;
+          historyIndex++;
         }
       });
     }
