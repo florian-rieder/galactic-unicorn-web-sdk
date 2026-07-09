@@ -591,7 +591,7 @@ function lua_getTime(L) {
  * @luaParam frequency:number frequency in Hz
  * @luaParam duration:number duration in milliseconds (max 30s)
  * @luaReturns nil
- * @luaExample buzz(440, 1000) # Play a 440Hz tone for 1 second
+ * @luaExample buzz(440, 1000) -- Play a 440Hz tone for 1 second
  *
  * @param {LuaState} L - Fengari Lua state; args are read from stack indexes 1..2.
  * @returns {number} Number of values returned to Lua (always 0).
