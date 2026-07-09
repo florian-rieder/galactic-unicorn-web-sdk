@@ -137,7 +137,7 @@ export const Lua = Object.freeze({
    * Evaluate a Lua expression in the current Lua state.
    *
    * @param {string} expression - The expression to evaluate.
-   * @returns {string|null} The result of the evaluation or null if the expression failed to evaluate.
+   * @returns {Array<string>|null} The result of the evaluation or null if the expression failed to evaluate.
    */
   eval(expression) {
     if (g_luaState === null) {
