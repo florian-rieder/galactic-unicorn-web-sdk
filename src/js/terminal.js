@@ -108,12 +108,18 @@ export const Terminal = Object.freeze({
     // Comments
     if (expression.startsWith("--")) return;
 
+    if (expression.startsWith("local ")) {
+      this.printLine(
+        "warning: locals do not survive across lines in interactive mode"
+      );
+    }
+
     // Wrap the expression the start of the statement in a return statement so it returns a value we
     // can print,
     // if the expression doesn't already start with a return statement and
     // if there isn't an assignment in the expression (`x = y`)
     if (!expression.match(ASSIGNMENT_PATTERN)) {
-      if (!expression.startsWith("return")) {
+      if (!expression.startsWith("return ")) {
         processedExpression = `return ${expression}`;
       }
     }
