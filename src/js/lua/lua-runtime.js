@@ -147,10 +147,36 @@ export const Lua = Object.freeze({
     }
 
     return runWithExecutionBudget(g_luaState, () => {
-      const status = lauxlib.luaL_dostring(
+      // First, try preprending a return statement to the expression, so it returns values to us
+      const expressionWithReturnBuffer = to_luastring(`return ${expression}`);
+      const statusWithReturn = lauxlib.luaL_loadbuffer(
         g_luaState,
-        to_luastring(expression)
+        expressionWithReturnBuffer,
+        expressionWithReturnBuffer.length,
+        to_luastring("=REPL")
       );
+
+      if (statusWithReturn != lua.LUA_OK) {
+        lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
+
+        // Load failed, let's retry without the return
+        const expressionBuffer = to_luastring(expression);
+        const statusWithoutReturn = lauxlib.luaL_loadbuffer(
+          g_luaState,
+          expressionBuffer,
+          expressionBuffer.length,
+          to_luastring("=REPL")
+        );
+        if (statusWithoutReturn != lua.LUA_OK) {
+          const errorMessage = lua.lua_tojsstring(g_luaState, -1);
+          Terminal.printLine(`[Error] ${errorMessage}`);
+          lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
+          return null; // Failed to evaluate the expression.
+        }
+      }
+
+      // Call the loaded buffer
+      const status = lua.lua_pcall(g_luaState, 0, lua.LUA_MULTRET, 0);
       if (status != lua.LUA_OK) {
         const errorMessage = lua.lua_tojsstring(g_luaState, -1);
         Terminal.printLine(`[Error] ${errorMessage}`);

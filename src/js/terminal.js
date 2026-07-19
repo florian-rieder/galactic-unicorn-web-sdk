@@ -103,8 +103,6 @@ export const Terminal = Object.freeze({
 
     this.printLine(`> ${expression}`);
 
-    let processedExpression = expression;
-
     // Comments
     if (expression.startsWith("--")) return;
 
@@ -114,18 +112,8 @@ export const Terminal = Object.freeze({
       );
     }
 
-    // Wrap the expression the start of the statement in a return statement so it returns a value we
-    // can print,
-    // if the expression doesn't already start with a return statement and
-    // if there isn't an assignment in the expression (`x = y`)
-    if (!expression.match(ASSIGNMENT_PATTERN)) {
-      if (!expression.startsWith("return ")) {
-        processedExpression = `return ${expression}`;
-      }
-    }
-
     // `results` is the return value(s) of the processed expression
-    const results = Lua.eval(processedExpression);
+    const results = Lua.eval(expression);
 
     if (results == null) return;
     if (results.length == 0) return;
