@@ -1,4 +1,4 @@
-import { Lua, g_luaState } from "./lua/lua-runtime";
+import { Lua, g_luaState } from "./lua/lua-runtime.js";
 
 const HISTORY_MAX_LENGTH = 25;
 const ASSIGNMENT_PATTERN = new RegExp("(?<![=~^><])=(?!=)"); // https://regex101.com/r/eVIUzS/1
@@ -38,11 +38,13 @@ export const Terminal = Object.freeze({
           const statement = input.value.trim();
           if (statement === "") return;
 
+          // Shift the history if we reached its max length (forget oldest)
           if (inputHistory.length >= HISTORY_MAX_LENGTH) {
             inputHistory.shift();
           }
 
           inputHistory.push(statement);
+          historyIndex = inputHistory.length - 1; // Place cursor at latest history item
 
           this.readEvalPrint(statement);
 
@@ -54,9 +56,11 @@ export const Terminal = Object.freeze({
           if (inputHistory.length == 0) return;
 
           if (historyIndex <= 0) {
-            historyIndex = inputHistory.length; // Loop around
+            historyIndex = inputHistory.length - 1; // Loop
+          } else {
+            historyIndex--; // Decrease index -> Go to older
           }
-          historyIndex--;
+
           const statement = inputHistory[historyIndex];
           input.value = statement;
         } else if (event.key == "ArrowDown") {
@@ -64,13 +68,15 @@ export const Terminal = Object.freeze({
 
           if (inputHistory.length == 0) return;
 
-          if (historyIndex >= inputHistory.length || historyIndex < 0) {
+          if (historyIndex >= inputHistory.length - 1) {
             input.value = "";
             return;
+          } else {
+            historyIndex++; // Increase index -> Go to more recent
           }
+
           const statement = inputHistory[historyIndex];
           input.value = statement;
-          historyIndex++;
         }
       });
     }
