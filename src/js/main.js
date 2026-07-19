@@ -207,6 +207,7 @@ function togglePauseSession() {
 function stepSession() {
   if (!isPaused) return;
 
+  Lua.callIfExists("process", TARGET_DELTA_TIME_MS / 1000.0);
   Lua.callIfExists("update", TARGET_DELTA_TIME_MS / 1000.0);
   Lua.callIfExists("draw");
 
