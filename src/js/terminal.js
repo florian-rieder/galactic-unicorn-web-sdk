@@ -1,7 +1,6 @@
 import { Lua, g_luaState } from "./lua/lua-runtime.js";
 
 const HISTORY_MAX_LENGTH = 25;
-const ASSIGNMENT_PATTERN = new RegExp("(?<![=~^><])=(?!=)"); // https://regex101.com/r/eVIUzS/1
 
 let output = null;
 let input = null;
@@ -44,10 +43,7 @@ export const Terminal = Object.freeze({
           }
 
           inputHistory.push(statement);
-          historyIndex = inputHistory.length - 1; // Place cursor at latest history item
-
           this.readEvalPrint(statement);
-
           historyIndex = -1;
           input.value = "";
         } else if (event.key == "ArrowUp") {
