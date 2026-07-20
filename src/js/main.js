@@ -160,6 +160,11 @@ function startSession() {
     return;
   }
 
+  // We executed the script successfully, we're up and running.
+  isRunning = true;
+  isPaused = false;
+  updateSessionButtons();
+
   // Call the setup function if it's defined in the lua script.
   // Missing callbacks are allowed; runtime errors stop the execution of the loop.
   const setupStatus = Lua.callIfExists("setup");
@@ -168,9 +173,6 @@ function startSession() {
     return;
   }
 
-  isRunning = true;
-  isPaused = false;
-  updateSessionButtons();
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
