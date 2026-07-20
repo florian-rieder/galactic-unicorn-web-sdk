@@ -157,7 +157,7 @@ export const Lua = Object.freeze({
     }
 
     return runWithExecutionBudget(g_luaState, () => {
-      // First, try preprending a return statement to the expression, so it returns values to us
+      // First, try prepending a return statement to the expression, so it returns values to us
       const expressionWithReturnBuffer = to_luastring(`return ${expression}`);
       const statusWithReturn = lauxlib.luaL_loadbuffer(
         g_luaState,
