@@ -24,6 +24,7 @@ function reloadDom() {
 }
 
 function onKeyDown(event) {
+  event.stopPropagation();
   // Enter
   if (event.key == "Enter") {
     const statement = input.value.trim();
