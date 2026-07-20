@@ -166,7 +166,6 @@ function startSession() {
   updateSessionButtons();
 
   // Call the setup function if it's defined in the lua script.
-  // Missing callbacks are allowed; runtime errors stop the execution of the loop.
   const setupStatus = Lua.callIfExists("setup");
   if (setupStatus === "error") {
     pauseOnError("setup");

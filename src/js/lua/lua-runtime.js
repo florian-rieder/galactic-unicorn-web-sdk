@@ -17,7 +17,7 @@ const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
 const REPL_IDENTIFIER = "stdin"; // The official Lua interpreter uses "stdin"
 
-export let g_luaState = null;
+let g_luaState = null;
 
 export const Lua = Object.freeze({
   /**
@@ -25,7 +25,7 @@ export const Lua = Object.freeze({
    * and register SDK functions and constants.
    */
   init() {
-    if (g_luaState !== null) {
+    if (this.hasSession()) {
       console.warn("Lua session already initialized. Call Lua.close() first.");
       return;
     }
@@ -36,6 +36,15 @@ export const Lua = Object.freeze({
   },
 
   /**
+   * Check whether Lua has been initialized
+   *
+   * @returns {boolean} whether a Lua state is in session
+   */
+  hasSession() {
+    return g_luaState !== null;
+  },
+
+  /**
    * Call a Lua global function if it exists.
    *
    * @param {string} functionName - The name of the function to call.
@@ -43,7 +52,7 @@ export const Lua = Object.freeze({
    * @returns {"ok"|"missing"|"missing_state"|"error"} `ok` if a function existed and ran successfully, `missing` if the global is not a function, `missing_state` if there is no Lua state, `error` if the function exists but raised an error.
    */
   callIfExists(functionName, ...args) {
-    if (g_luaState == null) {
+    if (this.hasSession()) {
       return "missing_state";
     }
 
@@ -92,7 +101,7 @@ export const Lua = Object.freeze({
    */
   run(script, entryPath) {
     // Close the current Lua state if it exists to start fresh.
-    if (g_luaState === null) {
+    if (this.hasSession()) {
       throw new Error("No Lua session to run code in. Call Lua.init() first.");
     }
 
@@ -125,7 +134,7 @@ export const Lua = Object.freeze({
    */
   close() {
     // Nothing to close if there is no Lua state.
-    if (g_luaState === null) return;
+    if (this.hasSession()) return;
 
     lua.lua_close(g_luaState); // Close the Lua state
     g_luaState = null; // Clear the current Lua state
@@ -141,7 +150,7 @@ export const Lua = Object.freeze({
    * @returns {Array<string>|null} The result of the evaluation or null if the expression failed to evaluate.
    */
   eval(expression) {
-    if (g_luaState === null) {
+    if (this.hasSession()) {
       throw new Error(
         "No Lua session to evaluate code in. Call Lua.init() first."
       );

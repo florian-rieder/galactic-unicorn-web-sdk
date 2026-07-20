@@ -1,8 +1,8 @@
-import { Lua, g_luaState } from "./lua/lua-runtime.js";
+import { Lua } from "./lua/lua-runtime.js";
 
 const HISTORY_MAX_LENGTH = 25;
 // Loop back to the start if we reach the end of history with up arrow
-const LOOP_HISTORY = false; // The official Lua interpreter stops at the end.
+const LOOP_HISTORY_WITH_UP_ARROW = false; // The official Lua interpreter stops at the end.
 
 let output = null;
 let input = null;
@@ -50,7 +50,7 @@ function onKeyDown(event) {
       historyIndex = inputHistory.length - 1;
     } else if (historyIndex == 0) {
       // We reached the end of history: loop back to the start or stop here
-      if (LOOP_HISTORY) {
+      if (LOOP_HISTORY_WITH_UP_ARROW) {
         historyIndex = inputHistory.length - 1;
       }
     } else {
@@ -66,8 +66,12 @@ function onKeyDown(event) {
 
     if (inputHistory.length == 0) return;
 
-    if (historyIndex >= inputHistory.length - 1) {
+    if (historyIndex < 0) {
+      // No history item is currently selected, so do nothing
+      return;
+    } else if (historyIndex >= inputHistory.length - 1) {
       input.value = "";
+      historyIndex = -1;
       return;
     } else {
       historyIndex++; // Increase index -> Go to more recent
@@ -106,7 +110,7 @@ export const Terminal = Object.freeze({
   },
 
   readEvalPrint(expression) {
-    if (g_luaState == null) {
+    if (!Lua.hasSession()) {
       this.printLine(
         "Lua is not running. Press 'Run' to launch Lua with the script open in the editor."
       );
