@@ -2,7 +2,7 @@ import { Lua, g_luaState } from "./lua/lua-runtime.js";
 
 const HISTORY_MAX_LENGTH = 25;
 // Loop back to the start if we reach the end of history with up arrow
-const LOOP_HISTORY = false;
+const LOOP_HISTORY = false; // The official Lua interpreter stops at the end.
 
 let output = null;
 let input = null;
@@ -24,6 +24,7 @@ function reloadDom() {
 }
 
 function onKeyDown(event) {
+  // Enter
   if (event.key == "Enter") {
     const statement = input.value.trim();
     if (statement === "") return;
@@ -37,7 +38,9 @@ function onKeyDown(event) {
     Terminal.readEvalPrint(statement);
     historyIndex = -1;
     input.value = "";
-  } else if (event.key == "ArrowUp") {
+  }
+  // Arrow up
+  else if (event.key == "ArrowUp") {
     event.preventDefault();
 
     if (inputHistory.length == 0) return;
@@ -56,7 +59,9 @@ function onKeyDown(event) {
 
     const statement = inputHistory[historyIndex];
     input.value = statement;
-  } else if (event.key == "ArrowDown") {
+  }
+  // Arrow down
+  else if (event.key == "ArrowDown") {
     event.preventDefault();
 
     if (inputHistory.length == 0) return;
@@ -125,8 +130,8 @@ export const Terminal = Object.freeze({
     if (results == null) return;
     if (results.length == 0) return;
 
-    for (const result of results) {
-      this.printLine(result);
-    }
+    // Format multiple values separated by tabs, like the official Lua interpreter
+    let resultString = results.join("\t");
+    this.printLine(resultString);
   },
 });
