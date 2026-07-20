@@ -1,6 +1,8 @@
 import { Lua, g_luaState } from "./lua/lua-runtime.js";
 
 const HISTORY_MAX_LENGTH = 25;
+// Loop back to the start if we reach the end of history with up arrow
+const LOOP_HISTORY = false;
 
 let output = null;
 let input = null;
@@ -51,8 +53,14 @@ export const Terminal = Object.freeze({
 
           if (inputHistory.length == 0) return;
 
-          if (historyIndex <= 0) {
-            historyIndex = inputHistory.length - 1; // Loop
+          if (historyIndex < 0) {
+            // < 0 means no history item is currently selected, so start at the latest item
+            historyIndex = inputHistory.length - 1;
+          } else if (historyIndex == 0) {
+            // We reached the end of history: loop back to the start or stop here
+            if (LOOP_HISTORY) {
+              historyIndex = inputHistory.length - 1;
+            }
           } else {
             historyIndex--; // Decrease index -> Go to older
           }
