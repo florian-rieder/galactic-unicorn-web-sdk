@@ -184,13 +184,19 @@ export const Lua = Object.freeze({
         return null; // Failed to evaluate the expression.
       }
 
-      const results = new Array();
-      const nresults = lua.lua_gettop(g_luaState); // How many results were returned (most of the time 0 or 1)
+      const results = [];
+
+      // How many results were returned (most of the time 0 or 1, but can be more)
+      const nresults = lua.lua_gettop(g_luaState);
 
       for (let i = 1; i <= nresults; i++) {
-        results.push(formatLuaValue(g_luaState, i));
-        lua.lua_pop(g_luaState, 1);
+        const result = formatLuaValue(g_luaState, i);
+        results.push(result);
       }
+
+      // Pop all the results from the stack at once, after we've read them (otherwise we'd mess up
+      // the stack and get unexpected results)
+      lua.lua_pop(g_luaState, nresults);
 
       Display.render(); // Render any changes to the buffer
 
