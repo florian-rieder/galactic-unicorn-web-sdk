@@ -11,9 +11,11 @@ const { lua, lauxlib, to_luastring } = fengari;
 import { Display } from "../display.js";
 import { Terminal } from "../terminal.js";
 import { openLuaVM } from "./lua-environment.js";
+import { formatLuaValue } from "./lua-utils.js";
 
 const LUA_EXECUTION_BUDGET_MS = 1000; // Stop Lua execution after N ms.
 const LUA_BUDGET_HOOK_INSTRUCTION_STEP = 1000; // Run the hook every N instructions.
+const REPL_IDENTIFIER = "stdin"; // The official Lua interpreter uses "stdin"
 
 let g_luaState = null;
 
@@ -23,7 +25,7 @@ export const Lua = Object.freeze({
    * and register SDK functions and constants.
    */
   init() {
-    if (g_luaState !== null) {
+    if (this.hasSession()) {
       console.warn("Lua session already initialized. Call Lua.close() first.");
       return;
     }
@@ -34,6 +36,15 @@ export const Lua = Object.freeze({
   },
 
   /**
+   * Check whether Lua has been initialized
+   *
+   * @returns {boolean} whether a Lua state is in session
+   */
+  hasSession() {
+    return g_luaState !== null;
+  },
+
+  /**
    * Call a Lua global function if it exists.
    *
    * @param {string} functionName - The name of the function to call.
@@ -41,7 +52,7 @@ export const Lua = Object.freeze({
    * @returns {"ok"|"missing"|"missing_state"|"error"} `ok` if a function existed and ran successfully, `missing` if the global is not a function, `missing_state` if there is no Lua state, `error` if the function exists but raised an error.
    */
   callIfExists(functionName, ...args) {
-    if (g_luaState == null) {
+    if (!this.hasSession()) {
       return "missing_state";
     }
 
@@ -84,13 +95,13 @@ export const Lua = Object.freeze({
   /**
    * Start a fresh Lua state to load and run some Lua code in.
    *
-   * @param {string} code - The code to run.
+   * @param {string} script - The Lua script to run.
    * @param {string} entryPath - The path to the entrypoint file.
    * @returns {boolean} - True if the code ran successfully, false otherwise.
    */
-  run(code, entryPath) {
+  run(script, entryPath) {
     // Close the current Lua state if it exists to start fresh.
-    if (g_luaState === null) {
+    if (!this.hasSession()) {
       throw new Error("No Lua session to run code in. Call Lua.init() first.");
     }
 
@@ -100,8 +111,8 @@ export const Lua = Object.freeze({
       // (For better error messages)
       lauxlib.luaL_loadbuffer(
         g_luaState,
-        to_luastring(code),
-        code.length,
+        to_luastring(script),
+        script.length,
         to_luastring(`@${entryPath}`)
       );
       // Run the code
@@ -109,7 +120,7 @@ export const Lua = Object.freeze({
     });
     if (runStatus != lua.LUA_OK) {
       const errorMessage = lua.lua_tojsstring(g_luaState, -1);
-      Terminal.printLine(`[Error] ${errorMessage}`);
+      Terminal.printLine(errorMessage);
       lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
       return false; // Failed to run the code.
     }
@@ -123,7 +134,7 @@ export const Lua = Object.freeze({
    */
   close() {
     // Nothing to close if there is no Lua state.
-    if (g_luaState === null) return;
+    if (!this.hasSession()) return;
 
     lua.lua_close(g_luaState); // Close the Lua state
     g_luaState = null; // Clear the current Lua state
@@ -136,29 +147,70 @@ export const Lua = Object.freeze({
    * Evaluate a Lua expression in the current Lua state.
    *
    * @param {string} expression - The expression to evaluate.
-   * @returns {string|null} The result of the evaluation or null if the expression failed to evaluate.
+   * @returns {Array<string>|null} The result of the evaluation or null if the expression failed to evaluate.
    */
   eval(expression) {
-    if (g_luaState === null) {
+    if (!this.hasSession()) {
       throw new Error(
         "No Lua session to evaluate code in. Call Lua.init() first."
       );
     }
 
     return runWithExecutionBudget(g_luaState, () => {
-      // Wrap the expression in a return statement so it returns a value.
-      const statement = "return " + expression;
-      const status = lauxlib.luaL_dostring(g_luaState, to_luastring(statement));
+      // First, try prepending a return statement to the expression, so it returns values to us
+      const expressionWithReturnBuffer = to_luastring(`return ${expression}`);
+      const statusWithReturn = lauxlib.luaL_loadbuffer(
+        g_luaState,
+        expressionWithReturnBuffer,
+        expressionWithReturnBuffer.length,
+        to_luastring(`=${REPL_IDENTIFIER}`)
+      );
+
+      if (statusWithReturn != lua.LUA_OK) {
+        lua.lua_pop(g_luaState, 1); // Discard the error message from the stack
+
+        // Load failed, let's retry without the return
+        const expressionBuffer = to_luastring(expression);
+        const statusWithoutReturn = lauxlib.luaL_loadbuffer(
+          g_luaState,
+          expressionBuffer,
+          expressionBuffer.length,
+          to_luastring(`=${REPL_IDENTIFIER}`)
+        );
+        if (statusWithoutReturn != lua.LUA_OK) {
+          const errorMessage = lua.lua_tojsstring(g_luaState, -1);
+          Terminal.printLine(errorMessage);
+          lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
+          return null; // Failed to evaluate the expression.
+        }
+      }
+
+      // Call the loaded buffer
+      const status = lua.lua_pcall(g_luaState, 0, lua.LUA_MULTRET, 0);
       if (status != lua.LUA_OK) {
         const errorMessage = lua.lua_tojsstring(g_luaState, -1);
-        Terminal.printLine(`[Error] ${errorMessage}`);
+        Terminal.printLine(errorMessage);
         lua.lua_pop(g_luaState, 1); // Pop the error message from the stack
         return null; // Failed to evaluate the expression.
       }
-      // Return the result as a string.
-      const result = lua.lua_tojsstring(g_luaState, -1);
-      lua.lua_pop(g_luaState, 1); // Pop the result from the stack
-      return result;
+
+      const results = [];
+
+      // How many results were returned (most of the time 0 or 1, but can be more)
+      const nresults = lua.lua_gettop(g_luaState);
+
+      for (let i = 1; i <= nresults; i++) {
+        const result = formatLuaValue(g_luaState, i);
+        results.push(result);
+      }
+
+      // Pop all the results from the stack at once, after we've read them (otherwise we'd mess up
+      // the stack and get unexpected results)
+      lua.lua_pop(g_luaState, nresults);
+
+      Display.render(); // Render any changes to the buffer
+
+      return results;
     });
   },
 });

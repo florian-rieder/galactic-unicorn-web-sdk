@@ -11,9 +11,9 @@ import { flashWithUi } from "./flash-ui.js";
 
 // Constants
 const TARGET_FPS = 60;
-const TARGET_DELTA_TIME = 1000 / TARGET_FPS;
-const DEFAULT_INPUT_REPEAT_DELAY = 0.25;
-const DEFAULT_INPUT_REPEAT_INTERVAL = 0.1;
+const TARGET_DELTA_TIME_MS = 1000 / TARGET_FPS;
+const DEFAULT_INPUT_REPEAT_DELAY_S = 0.25;
+const DEFAULT_INPUT_REPEAT_INTERVAL_S = 0.1;
 
 // State
 let lastProcessTime = null;
@@ -21,6 +21,7 @@ let lastFrameTime = null;
 let now = null;
 let frameId = null;
 let isRunning = false;
+let isPaused = false;
 
 // Initialize components and set up the initial state of the application.
 await Promise.all([BuiltinFiles.load(), MonacoEditor.init()]);
@@ -37,11 +38,26 @@ Display.init();
 
 // Toolbar control buttons
 const runButton = document.getElementById("run-btn");
+const pauseButton = document.getElementById("pause-btn");
+const stepButton = document.getElementById("step-btn");
 const stopButton = document.getElementById("stop-btn");
 const flashButton = document.getElementById("flash-btn");
 runButton.addEventListener("click", startSession);
+pauseButton.addEventListener("click", togglePauseSession);
+stepButton.addEventListener("click", stepSession);
 stopButton.addEventListener("click", stopSession);
 flashButton.addEventListener("click", startFlash);
+
+updateSessionButtons();
+
+/**
+ * Sync the enabled/disabled state of the session control buttons with the current session state.
+ */
+function updateSessionButtons() {
+  pauseButton.disabled = !isRunning;
+  stepButton.disabled = !isPaused;
+  stopButton.disabled = !isRunning;
+}
 
 /**
  * Flash project files to the connected ESP device.
@@ -79,8 +95,8 @@ window.addEventListener("blur", () => {
 });
 
 window.addEventListener("keydown", (event) => {
-  // If a script is running
-  if (!isRunning) return;
+  // If a script is running and not paused
+  if (!isRunning || isPaused) return;
 
   const key = Input.getKeyName(event.key);
 
@@ -127,8 +143,8 @@ function startSession() {
   // Clear any held keys from the previous session.
   Input.clearPressedKeys();
   // Set/reset default repeat delay and interval
-  Input.setRepeatDelay(DEFAULT_INPUT_REPEAT_DELAY);
-  Input.setRepeatInterval(DEFAULT_INPUT_REPEAT_INTERVAL);
+  Input.setRepeatDelay(DEFAULT_INPUT_REPEAT_DELAY_S);
+  Input.setRepeatInterval(DEFAULT_INPUT_REPEAT_INTERVAL_S);
 
   // Initialize the Lua session.
   Lua.init();
@@ -139,19 +155,23 @@ function startSession() {
 
   // Execute the script. If it fails, stop the session.
   if (!Lua.run(script, scriptFilePath)) {
+    // There's no point in pausing, the session contains no meaningful state to inspect.
     stopSession();
     return;
   }
+
+  // We executed the script successfully, we're up and running.
+  isRunning = true;
+  isPaused = false;
+  updateSessionButtons();
 
   // Call the setup function if it's defined in the lua script.
-  // Missing callbacks are allowed; runtime errors stop the execution of the loop.
   const setupStatus = Lua.callIfExists("setup");
   if (setupStatus === "error") {
-    stopSession();
+    pauseOnError("setup");
     return;
   }
 
-  isRunning = true;
   // Start the main loop
   frameId = requestAnimationFrame(mainLoop);
 }
@@ -166,6 +186,45 @@ function stopSession() {
   lastProcessTime = null;
   frameId = null;
   isRunning = false;
+  isPaused = false;
+  Display.clear();
+  Display.render();
+  updateSessionButtons();
+}
+
+function togglePauseSession() {
+  if (isPaused) {
+    // Unpause
+    isPaused = false;
+    lastFrameTime = null;
+    lastProcessTime = null;
+    // Restart the main loop
+    frameId = requestAnimationFrame(mainLoop);
+  } else {
+    // Pause
+    isPaused = true;
+    cancelAnimationFrame(frameId);
+  }
+  updateSessionButtons();
+}
+
+function pauseOnError(callbackName) {
+  Terminal.printLine(
+    `'${callbackName}' callback returned an error. Pausing session. Press 'Pause' to continue.`
+  );
+  isPaused = true;
+  updateSessionButtons();
+}
+
+function stepSession() {
+  if (!isPaused) return;
+
+  // We just ignore the return value since we're already paused anyways (no error spam in console)
+  Lua.callIfExists("process", TARGET_DELTA_TIME_MS / 1000.0);
+  Lua.callIfExists("update", TARGET_DELTA_TIME_MS / 1000.0);
+  Lua.callIfExists("draw");
+
+  Display.render();
 }
 
 function waitForNextFrame() {
@@ -174,7 +233,7 @@ function waitForNextFrame() {
   }
 
   const currentTime = performance.now();
-  return currentTime - lastFrameTime < TARGET_DELTA_TIME;
+  return currentTime - lastFrameTime < TARGET_DELTA_TIME_MS;
 }
 
 /**
@@ -191,7 +250,7 @@ function mainLoop() {
 
   const processStatus = Lua.callIfExists("process", processDeltaTime);
   if (processStatus === "error") {
-    stopSession();
+    pauseOnError("process");
     return;
   }
 
@@ -210,16 +269,16 @@ function mainLoop() {
   lastFrameTime = now;
 
   // Run update then draw from the lua script.
-  // Missing callbacks are allowed; runtime errors stop the loop.
+  // Missing callbacks are allowed; runtime errors pause the loop.
   const updateStatus = Lua.callIfExists("update", updateDeltaTime);
   if (updateStatus === "error") {
-    stopSession();
+    pauseOnError("update");
     return;
   }
 
   const drawStatus = Lua.callIfExists("draw");
   if (drawStatus === "error") {
-    stopSession();
+    pauseOnError("draw");
     return;
   }
 
