@@ -153,7 +153,8 @@ export const Lua = Object.freeze({
       const statusWithReturn = lauxlib.luaL_loadbuffer(
         g_luaState,
         expressionWithReturnBuffer,
-        expressionWithReturnBuffer.length
+        expressionWithReturnBuffer.length,
+        to_luastring(`=${REPL_IDENTIFIER}`)
       );
 
       if (statusWithReturn != lua.LUA_OK) {
