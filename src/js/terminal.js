@@ -11,78 +11,75 @@ let inputHistory = [];
 let historyIndex = -1;
 
 function scrollToBottom() {
-  if (output) {
-    output.scrollTop = output.scrollHeight;
-  }
+  if (!output) return;
+
+  output.scrollTop = output.scrollHeight;
 }
 
 function reloadDom() {
-  if (output) {
-    output.textContent = buffer;
-    scrollToBottom();
+  if (!output) return;
+
+  output.textContent = buffer;
+  scrollToBottom();
+}
+
+function onKeyDown(event) {
+  if (event.key == "Enter") {
+    const statement = input.value.trim();
+    if (statement === "") return;
+
+    // Shift the history if we reached its max length (forget oldest)
+    if (inputHistory.length >= HISTORY_MAX_LENGTH) {
+      inputHistory.shift();
+    }
+
+    inputHistory.push(statement);
+    Terminal.readEvalPrint(statement);
+    historyIndex = -1;
+    input.value = "";
+  } else if (event.key == "ArrowUp") {
+    event.preventDefault();
+
+    if (inputHistory.length == 0) return;
+
+    if (historyIndex < 0) {
+      // < 0 means no history item is currently selected, so start at the latest item
+      historyIndex = inputHistory.length - 1;
+    } else if (historyIndex == 0) {
+      // We reached the end of history: loop back to the start or stop here
+      if (LOOP_HISTORY) {
+        historyIndex = inputHistory.length - 1;
+      }
+    } else {
+      historyIndex--; // Decrease index -> Go to older
+    }
+
+    const statement = inputHistory[historyIndex];
+    input.value = statement;
+  } else if (event.key == "ArrowDown") {
+    event.preventDefault();
+
+    if (inputHistory.length == 0) return;
+
+    if (historyIndex >= inputHistory.length - 1) {
+      input.value = "";
+      return;
+    } else {
+      historyIndex++; // Increase index -> Go to more recent
+    }
+
+    const statement = inputHistory[historyIndex];
+    input.value = statement;
   }
 }
 
 export const Terminal = Object.freeze({
-  /**
-   * Bind console DOM elements. Safe to skip in tests; output stays in the in-memory buffer.
-   */
   init() {
     output = document.getElementById("console-output");
     input = document.getElementById("console-input");
 
     if (input) {
-      input.addEventListener("keydown", (event) => {
-        if (event.key == "Enter") {
-          event.preventDefault();
-
-          const statement = input.value.trim();
-          if (statement === "") return;
-
-          // Shift the history if we reached its max length (forget oldest)
-          if (inputHistory.length >= HISTORY_MAX_LENGTH) {
-            inputHistory.shift();
-          }
-
-          inputHistory.push(statement);
-          this.readEvalPrint(statement);
-          historyIndex = -1;
-          input.value = "";
-        } else if (event.key == "ArrowUp") {
-          event.preventDefault();
-
-          if (inputHistory.length == 0) return;
-
-          if (historyIndex < 0) {
-            // < 0 means no history item is currently selected, so start at the latest item
-            historyIndex = inputHistory.length - 1;
-          } else if (historyIndex == 0) {
-            // We reached the end of history: loop back to the start or stop here
-            if (LOOP_HISTORY) {
-              historyIndex = inputHistory.length - 1;
-            }
-          } else {
-            historyIndex--; // Decrease index -> Go to older
-          }
-
-          const statement = inputHistory[historyIndex];
-          input.value = statement;
-        } else if (event.key == "ArrowDown") {
-          event.preventDefault();
-
-          if (inputHistory.length == 0) return;
-
-          if (historyIndex >= inputHistory.length - 1) {
-            input.value = "";
-            return;
-          } else {
-            historyIndex++; // Increase index -> Go to more recent
-          }
-
-          const statement = inputHistory[historyIndex];
-          input.value = statement;
-        }
-      });
+      input.addEventListener("keydown", (event) => onKeyDown(event));
     }
 
     reloadDom();
