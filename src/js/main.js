@@ -95,8 +95,8 @@ window.addEventListener("blur", () => {
 });
 
 window.addEventListener("keydown", (event) => {
-  // If a script is running
-  if (!isRunning) return;
+  // If a script is running and not paused
+  if (!isRunning || isPaused) return;
 
   const key = Input.getKeyName(event.key);
 
@@ -155,6 +155,7 @@ function startSession() {
 
   // Execute the script. If it fails, stop the session.
   if (!Lua.run(script, scriptFilePath)) {
+    // There's no point in pausing, the session contains no meaningful state to inspect.
     stopSession();
     return;
   }
@@ -163,7 +164,7 @@ function startSession() {
   // Missing callbacks are allowed; runtime errors stop the execution of the loop.
   const setupStatus = Lua.callIfExists("setup");
   if (setupStatus === "error") {
-    stopSession();
+    pauseOnError("setup");
     return;
   }
 
@@ -204,9 +205,18 @@ function togglePauseSession() {
   updateSessionButtons();
 }
 
+function pauseOnError(callbackName) {
+  Terminal.printLine(
+    `'${callbackName}' callback returned an error. Pausing session. Press 'Pause' to continue.`
+  );
+  isPaused = true;
+  updateSessionButtons();
+}
+
 function stepSession() {
   if (!isPaused) return;
 
+  // We just ignore the return value since we're already paused anyways (no error spam in console)
   Lua.callIfExists("process", TARGET_DELTA_TIME_MS / 1000.0);
   Lua.callIfExists("update", TARGET_DELTA_TIME_MS / 1000.0);
   Lua.callIfExists("draw");
@@ -237,7 +247,7 @@ function mainLoop() {
 
   const processStatus = Lua.callIfExists("process", processDeltaTime);
   if (processStatus === "error") {
-    stopSession();
+    pauseOnError("process");
     return;
   }
 
@@ -256,16 +266,16 @@ function mainLoop() {
   lastFrameTime = now;
 
   // Run update then draw from the lua script.
-  // Missing callbacks are allowed; runtime errors stop the loop.
+  // Missing callbacks are allowed; runtime errors pause the loop.
   const updateStatus = Lua.callIfExists("update", updateDeltaTime);
   if (updateStatus === "error") {
-    stopSession();
+    pauseOnError("update");
     return;
   }
 
   const drawStatus = Lua.callIfExists("draw");
   if (drawStatus === "error") {
-    stopSession();
+    pauseOnError("draw");
     return;
   }
 
