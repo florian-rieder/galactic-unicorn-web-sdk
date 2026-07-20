@@ -187,6 +187,8 @@ function stopSession() {
   frameId = null;
   isRunning = false;
   isPaused = false;
+  Display.clear();
+  Display.render();
   updateSessionButtons();
 }
 
