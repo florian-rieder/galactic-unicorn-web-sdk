@@ -52,7 +52,7 @@ export const Lua = Object.freeze({
    * @returns {"ok"|"missing"|"missing_state"|"error"} `ok` if a function existed and ran successfully, `missing` if the global is not a function, `missing_state` if there is no Lua state, `error` if the function exists but raised an error.
    */
   callIfExists(functionName, ...args) {
-    if (this.hasSession()) {
+    if (!this.hasSession()) {
       return "missing_state";
     }
 
@@ -101,7 +101,7 @@ export const Lua = Object.freeze({
    */
   run(script, entryPath) {
     // Close the current Lua state if it exists to start fresh.
-    if (this.hasSession()) {
+    if (!this.hasSession()) {
       throw new Error("No Lua session to run code in. Call Lua.init() first.");
     }
 
@@ -134,7 +134,7 @@ export const Lua = Object.freeze({
    */
   close() {
     // Nothing to close if there is no Lua state.
-    if (this.hasSession()) return;
+    if (!this.hasSession()) return;
 
     lua.lua_close(g_luaState); // Close the Lua state
     g_luaState = null; // Clear the current Lua state
@@ -150,7 +150,7 @@ export const Lua = Object.freeze({
    * @returns {Array<string>|null} The result of the evaluation or null if the expression failed to evaluate.
    */
   eval(expression) {
-    if (this.hasSession()) {
+    if (!this.hasSession()) {
       throw new Error(
         "No Lua session to evaluate code in. Call Lua.init() first."
       );
