@@ -8,7 +8,7 @@ Browser-based SDK for developing Lua scripts for the Galactic Unicorn handheld: 
 
 ## Why this exists
 
-Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect output, repeat, without even needing access to the hardware.
+Developing directly on device is slow when every test requires another flash cycle. This SDK gives script authors and contributors a fast local loop: edit Lua, run immediately, inspect state and output, repeat, without even needing access to the hardware.
 
 ## What is included
 
@@ -17,6 +17,7 @@ Developing directly on device is slow when every test requires another flash cyc
 - Monaco-based (VS Code) in-browser Lua editor
 - Code completion and hover docs for the Galactic Unicorn API and Lua standard library
 - Console output panel for script logging and runtime errors
+- Terminal with Lua Read-Eval-Print-Loop
 - Virtual file system and file explorer
 - Export project as a zip file
 - Hardware filesystem flashing via Web Serial API (only available on Chromium-based browsers and Firefox 151+)
