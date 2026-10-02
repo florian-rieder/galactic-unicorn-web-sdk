@@ -82,7 +82,10 @@ export const EspFlasher = Object.freeze({
     let port = null;
     try {
       // Request port access (user will be prompted to select a device)
-      port = await navigator.serial.requestPort();
+      // Only show the ESP32-C6 (VendorID 0x303A ProductID 0x1001)
+      port = await navigator.serial.requestPort({
+        filters: [{ usbVendorId: 0x303A, usbProductId: 0x1001 }]
+      });
     } catch (error) {
       // User cancelled the port selection dialog, do nothing.
       return null;
