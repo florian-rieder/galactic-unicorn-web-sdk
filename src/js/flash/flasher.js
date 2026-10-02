@@ -13,6 +13,9 @@ import { Terminal } from "../terminal.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
+const ALLOWED_SERIAL_DEVICES = [
+  { usbVendorId: 0x303a, usbProductId: 0x1001 }, // ESP32-C6
+];
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
@@ -81,14 +84,30 @@ export const EspFlasher = Object.freeze({
   async flash({ onPortSelected, onConnecting, onProgress } = {}) {
     let port = null;
     try {
-      // Request port access (user will be prompted to select a device)
-      // Only show the ESP32-C6 (VendorID 0x303A ProductID 0x1001)
-      port = await navigator.serial.requestPort({
-        filters: [{ usbVendorId: 0x303A, usbProductId: 0x1001 }]
+      // Check if the user already allowed serial access to the console
+      const ports = await navigator.serial.getPorts();
+      port = ports.find((p) => {
+        const { usbVendorId, usbProductId } = p.getInfo();
+        return ALLOWED_SERIAL_DEVICES.some(
+          (device) =>
+            usbVendorId === device.usbVendorId &&
+            usbProductId === device.usbProductId
+        );
       });
+
+      // If the user hasn't already allowed serial access, request it.
+      if (!port) {
+        // User will be prompted to select the console and allow serial access
+        port = await navigator.serial.requestPort({
+          filters: ALLOWED_SERIAL_DEVICES,
+        });
+      }
     } catch (error) {
       // User cancelled the port selection dialog, do nothing.
-      return null;
+      if (error instanceof DOMException && error.name === "NotFoundError") {
+        return null;
+      }
+      throw error;
     }
 
     if (onPortSelected) {
@@ -123,7 +142,6 @@ export const EspFlasher = Object.freeze({
 
     Terminal.printLine(`Done. littlefs.bin (${littleFsImage.length} bytes)`);
 
-    // ESP-32 C6: VendorID 0x303a ProductID 0x1001
     // Create transport instance
     const transport = new Transport(port, DEBUG_TRANSPORT_TRACING);
 
@@ -144,8 +162,7 @@ export const EspFlasher = Object.freeze({
       if (onConnecting) onConnecting();
 
       // Connect and detect chip (this will reset the device)
-      const chipName = await esploader.main();
-      console.debug(`Connected to: ${chipName}`);
+      await esploader.main();
 
       // Start counting flash duration AFTER the chip has connected
       flashStart = performance.now();
@@ -171,12 +188,6 @@ export const EspFlasher = Object.freeze({
 
       // Reset the device after flashing so it boots the app (see HARD_RESET_SEQUENCE)
       await esploader.after("custom_reset", undefined, HARD_RESET_SEQUENCE);
-    } catch (error) {
-      throw new Error(
-        `Flash failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
     } finally {
       try {
         await transport.disconnect();
