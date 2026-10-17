@@ -10,12 +10,13 @@ import { createLittleFsImage } from "./littlefs-image.js";
 import { FileSystem } from "../fs/file-system.js";
 import { BuiltinFiles } from "../fs/builtin-files.js";
 import { Terminal } from "../terminal.js";
+import { requestPort } from "./serial-port.js";
+import { SerialMonitor } from "./serial-monitor.js";
 
 // Flavor text printed at the start of flashing
 const HEADER_LINE = "FUGU: Flashing Utility for Galactic Unicorn";
-const ALLOWED_SERIAL_DEVICES = [
-  { usbVendorId: 0x303a, usbProductId: 0x1001 }, // ESP32-C6
-];
+// Skip actually trying to request a port and connect over serial, for testing purposes. flashing returns null, like a failure.
+const DEBUG_SKIP_SERIAL = false;
 
 // esptool-js debug knobs
 const DEBUG_TRANSPORT_TRACING = false;
@@ -82,32 +83,14 @@ export const EspFlasher = Object.freeze({
    * @returns {Promise<number|null>} Elapsed ms on success, or null if cancelled or aborted.
    */
   async flash({ onPortSelected, onConnecting, onProgress } = {}) {
-    let port = null;
-    try {
-      // Check if the user already allowed serial access to the console
-      const ports = await navigator.serial.getPorts();
-      port = ports.find((p) => {
-        const { usbVendorId, usbProductId } = p.getInfo();
-        return ALLOWED_SERIAL_DEVICES.some(
-          (device) =>
-            usbVendorId === device.usbVendorId &&
-            usbProductId === device.usbProductId
-        );
-      });
+    // If the monitor is running, stop it to release the port.
+    await SerialMonitor.stop();
 
-      // If the user hasn't already allowed serial access, request it.
-      if (!port) {
-        // User will be prompted to select the console and allow serial access
-        port = await navigator.serial.requestPort({
-          filters: ALLOWED_SERIAL_DEVICES,
-        });
-      }
-    } catch (error) {
+    let port = null;
+    if (!DEBUG_SKIP_SERIAL) {
+      port = await requestPort();
       // User cancelled the port selection dialog, do nothing.
-      if (error instanceof DOMException && error.name === "NotFoundError") {
-        return null;
-      }
-      throw error;
+      if (!port) return null;
     }
 
     if (onPortSelected) {
@@ -141,6 +124,10 @@ export const EspFlasher = Object.freeze({
     }
 
     Terminal.printLine(`Done. littlefs.bin (${littleFsImage.length} bytes)`);
+
+    if (DEBUG_SKIP_SERIAL) {
+      return null;
+    }
 
     // Create transport instance
     const transport = new Transport(port, DEBUG_TRANSPORT_TRACING);

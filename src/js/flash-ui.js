@@ -5,6 +5,7 @@
 import Swal from "sweetalert2";
 
 import { EspFlasher } from "./flash/flasher.js";
+import { SerialMonitor } from "./flash/serial-monitor.js";
 import { Terminal } from "./terminal.js";
 
 const setStatus = (text) =>
@@ -82,6 +83,8 @@ export async function flashWithUi() {
 
     const seconds = (duration / 1000).toFixed(1);
 
+    startMonitor();
+
     await Swal.fire({
       icon: "success",
       title: "Flash complete",
@@ -98,4 +101,15 @@ export async function flashWithUi() {
       text: error.message,
     });
   }
+}
+
+/**
+ * Stream the console's serial output to the SDK terminal
+ */
+function startMonitor() {
+  SerialMonitor.start({
+    onConnect: () => Terminal.printLine("Monitoring device serial output..."),
+    onDisconnect: () => Terminal.printLine("Device disconnected."),
+    onData: (text) => Terminal.print(text),
+  });
 }
